@@ -1,68 +1,35 @@
 # QA Automation Lab
 
-Laboratorio isolado para estudar automacao Web e API com uma unica interface Web, uma unica API e suites separadas para Cypress e Playwright.
+Laboratorio local de estudos em QA Automation, reunindo uma interface Web, uma API REST, banco PostgreSQL com Docker e suites separadas para automacao com Cypress e Playwright.
 
 ## Visao Geral
 
-| Area | Pasta | Porta | Objetivo |
+| Pasta | Objetivo | Stack principal | CI / Evidencias |
 | --- | --- | --- | --- |
-| Web | `apps/web` | `3000` | Interface unica para automacao Web com Cypress e Playwright |
-| API | `apps/api` | `3030` | API Node.js com Express, Prisma e PostgreSQL |
-| Banco | `docker-compose.yml` | `5434` | PostgreSQL local para a API |
-| PgAdmin | `docker-compose.yml` | `15434` | Interface para visualizar o banco |
-| Cypress Web | `tests/cypress/web` | `3000` | Testes E2E da interface |
-| Cypress API | `tests/cypress/api` | `3030` | Testes HTTP da API |
-| Playwright Web | `tests/playwright/web` | `3000` | Testes E2E da mesma interface |
-| Playwright API | `tests/playwright/api` | `3030` | Testes HTTP da mesma API |
+| `apps/web/` | Interface Web unica para treinar fluxos E2E | HTML, CSS, JavaScript, Serve | Base para testes Web locais |
+| `apps/api/` | API REST para usuarios, login, senha e formularios | Node.js, Express, Prisma | Execucao local |
+| `database/` + `docker-compose.yml` | Banco e massa inicial para estudos | PostgreSQL, PgAdmin, Docker | Ambiente local isolado |
+| `tests/cypress/web/` | Automacao E2E da interface Web | Cypress 14, JavaScript | Suite Cypress Web local |
+| `tests/cypress/api/` | Testes HTTP da API | Cypress 14, cypress-plugin-api | Suite Cypress API local |
+| `tests/playwright/web/` | Automacao E2E Web alternativa | Playwright, JavaScript | Suite Playwright Web local |
+| `docs/` | Apoio para contrato, arquitetura e estrategia | Markdown | Documentacao base |
 
-## Fluxo
+## Estrutura
 
 ```text
-Docker -> PostgreSQL
-API Express -> Prisma -> PostgreSQL
-Web -> API Express
-Cypress Web -> Web
-Cypress API -> API
-Playwright Web -> Web
-Playwright API -> API
-```
-
-## Dados locais de estudo
-
-- Email administrador: `alab@hotmail.com`
-- Senha administrador: `123`
-
-Esses dados existem apenas para ambiente local de estudo. Nao use em producao.
-
-## Comandos principais
-
-```bash
-npm run docker:up
-npm --prefix apps/api install
-npm run api:migrate
-npm run api:seed
-npm run api:dev
-```
-
-Em outro terminal:
-
-```bash
-npm --prefix apps/web install
-npm run web:dev
-```
-
-Testes:
-
-```bash
-npm --prefix tests/cypress/web install
-npm run cypress:web
-
-npm --prefix tests/cypress/api install
-npm run cypress:api
-
-npm --prefix tests/playwright/web install
-npm run playwright:web
-
-npm --prefix tests/playwright/api install
-npm run playwright:api
+qa-automation-lab/
+|-- apps/
+|   |-- web/                  # Interface Web para automacao
+|   `-- api/                  # API Node.js + Express + Prisma
+|-- database/
+|   `-- seed/                 # Massa inicial local
+|-- tests/
+|   |-- cypress/
+|   |   |-- web/              # Cypress E2E Web
+|   |   `-- api/              # Cypress API
+|   `-- playwright/
+|       `-- web/              # Playwright E2E Web
+|-- docs/                     # Arquitetura, contrato e estrategia
+|-- docker-compose.yml        # PostgreSQL e PgAdmin
+`-- README.md
 ```

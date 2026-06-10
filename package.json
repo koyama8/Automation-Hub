@@ -4,7 +4,6 @@
   "private": true,
   "description": "Laboratorio de automacao Web e API com Cypress, Playwright, Express, Prisma e PostgreSQL.",
   "scripts": {
-    "dev": "npm --prefix apps/web run dev",
     "web:dev": "npm --prefix apps/web run dev",
     "api:dev": "npm --prefix apps/api run dev",
     "api:start": "npm --prefix apps/api start",
