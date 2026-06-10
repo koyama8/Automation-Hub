@@ -1,0 +1,38 @@
+services:
+  db:
+    container_name: qa-automation-lab-db
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=dba
+      - POSTGRES_PASSWORD=dba
+      - POSTGRES_DB=QALabDB
+      - TZ=America/Sao_Paulo
+    ports:
+      - "5434:5432"
+    volumes:
+      - qa-automation-lab-db-data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - qa-automation-lab-net
+
+  pgadmin:
+    container_name: qa-automation-lab-dbadm
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=dba@pgadmin.com
+      - PGADMIN_DEFAULT_PASSWORD=dba
+      - TZ=America/Sao_Paulo
+    ports:
+      - "15434:80"
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - qa-automation-lab-net
+
+volumes:
+  qa-automation-lab-db-data:
+
+networks:
+  qa-automation-lab-net:
+    driver: bridge

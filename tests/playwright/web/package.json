@@ -1,0 +1,14 @@
+{
+  "name": "qa-automation-lab-playwright-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Testes E2E Web com Playwright.",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}

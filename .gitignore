@@ -1,0 +1,9 @@
+node_modules/
+dist/assets/*.map
+.env
+playwright-report/
+test-results/
+cypress/videos/
+cypress/screenshots/
+coverage/
+generated/

@@ -1,0 +1,21 @@
+{
+  "name": "qa-automation-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Laboratorio de automacao Web e API com Cypress, Playwright, Express, Prisma e PostgreSQL.",
+  "scripts": {
+    "dev": "npm --prefix apps/web run dev",
+    "web:dev": "npm --prefix apps/web run dev",
+    "api:dev": "npm --prefix apps/api run dev",
+    "api:start": "npm --prefix apps/api start",
+    "api:migrate": "npm --prefix apps/api run prisma:migrate",
+    "api:seed": "npm --prefix apps/api run seed",
+    "cypress:web": "npm --prefix tests/cypress/web run cypress:open",
+    "cypress:api": "npm --prefix tests/cypress/api run cypress:open",
+    "cypress:web:run": "npm --prefix tests/cypress/web run cypress:run",
+    "cypress:api:run": "npm --prefix tests/cypress/api run cypress:run",
+    "playwright:web": "npm --prefix tests/playwright/web test",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  }
+}

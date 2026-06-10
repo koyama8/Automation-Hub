@@ -1,0 +1,1386 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QA Automation Lab</title>
+    <link rel="icon" href="/favicon.ico?v=45" sizes="any" />
+    <link rel="shortcut icon" href="/favicon.ico?v=45" />
+    <link rel="icon" type="image/png" href="/favicon.png?v=45" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=45" />
+    <link rel="apple-touch-icon" href="/favicon.png?v=45" />
+    <link rel="stylesheet" href="./assets/styles.css?v=51" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <section id="loginView" class="auth-layout" data-view="login">
+        <aside class="brand-panel logo-only-panel">
+          <div class="hero-content logo-hero-content" aria-label="Cypress QA Lab">
+            <img class="cypress-qa-hero-logo" src="./assets/cypressqalab.svg" alt="Cypress QA Lab" />
+          </div>
+        </aside>
+
+        <main class="auth-card">
+          <div class="brand-inline">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <strong>QA Automation Lab</strong>
+              <small>ambiente local de estudos</small>
+            </div>
+          </div>
+
+          <h1>Acesse sua conta</h1>
+          <p class="muted">O admin local entra mesmo se a API estiver desligada.</p>
+
+          <form data-form="login" novalidate>
+            <label>E-mail</label>
+            <input id="login-email" data-field="loginEmail" data-cy="login-email" name="login-email" type="email" placeholder="Digite seu e-mail" autocomplete="email" />
+            <p class="error" data-error-for="loginEmail"></p>
+
+            <label>Senha</label>
+            <input id="login-password" data-field="loginPassword" data-cy="login-password" name="login-password" type="password" placeholder="Digite sua senha" autocomplete="current-password" />
+            <p class="error" data-error-for="loginPassword"></p>
+
+            <button class="primary-btn" data-cy="login-submit" type="submit">Entrar</button>
+          </form>
+
+          <div class="auth-links">
+            <button class="link-btn" data-cy="go-forgot" type="button" data-target="forgotView">Esqueci minha senha</button>
+            <button class="link-btn" data-cy="go-register" type="button" data-target="registerView">Criar nova conta</button>
+          </div>
+        </main>
+
+        <aside class="login-assistant-widget" data-cy="login-assistant" aria-label="Assistente do QA Automation Lab">
+          <button class="assistant-launcher hidden" data-cy="assistant-open" type="button" aria-label="Abrir assistente">
+            <img src="./assets/cypressqalab.svg" alt="" aria-hidden="true" />
+            <span class="assistant-badge">2</span>
+          </button>
+
+          <section class="assistant-window" data-cy="assistant-window">
+            <header class="assistant-header">
+              <span class="assistant-avatar" aria-hidden="true">
+                <img src="./assets/cypressqalab.svg" alt="" />
+              </span>
+              <div>
+                <strong>Automation Live</strong>
+                <small>assistente local de QA</small>
+              </div>
+              <button class="assistant-close" data-cy="assistant-close" type="button" aria-label="Fechar assistente">&times;</button>
+            </header>
+
+            <div class="assistant-body" data-cy="assistant-messages" aria-live="polite">
+              <p class="assistant-message bot-message">
+                Olá! Sou seu assistente local de QA. Posso ajudar com login, cadastro e jornadas para automação web e API.
+              </p>
+              <div class="assistant-options">
+                <button type="button" data-assistant-action="credentials">Ver login local</button>
+                <button type="button" data-assistant-action="register">Criar conta de teste</button>
+                <button type="button" data-assistant-action="terms">Termos de uso</button>
+                <button type="button" data-assistant-action="dismiss">Agora não</button>
+              </div>
+            </div>
+
+            <form class="assistant-input-row" data-cy="assistant-form">
+              <input data-cy="assistant-input" name="assistant-message" type="text" placeholder="Digite sua dúvida de teste" autocomplete="off" />
+              <button data-cy="assistant-send" type="submit" aria-label="Enviar mensagem">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 8-16 8 4-8-4-8z" /></svg>
+              </button>
+            </form>
+
+            <footer class="assistant-footer">Powered by QA Automation Lab</footer>
+          </section>
+        </aside>
+      </section>
+
+      <section id="dashboardView" class="page hidden" data-view="dashboard">
+        <header class="hero">
+          <div class="hero-brand dashboard-hero-brand">
+            <span class="lab-mark">KO</span>
+            <div>
+              <h1 class="dashboard-title">Dashboard</h1>
+            </div>
+          </div>
+          <button class="ghost-btn" data-cy="logout" type="button">Sair da plataforma</button>
+        </header>
+
+        <main class="container">
+          <section class="profile-card">
+            <div class="avatar">LAB</div>
+            <div>
+              <h2 data-cy="user-name">QA Automation Lab</h2>
+              <p>Olá QA, esse é o seu ambiente para aprender Automação de Testes.</p>
+              <div class="profile-grid">
+                <span><strong>Email</strong><br /><span data-cy="user-email">qa@adminlab.com</span></span>
+                <span><strong>Data de acesso</strong><br /><span data-cy="access-date"></span></span>
+                <span><strong>Modo</strong><br /><span data-cy="session-mode">Local</span></span>
+              </div>
+            </div>
+          </section>
+
+          <section class="metric-grid" aria-label="Resumo dos fluxos">
+            <article><strong data-cy="metric-screens">0</strong><span>telas de treino</span></article>
+            <article><strong data-cy="metric-flows">0</strong><span>fluxos web</span></article>
+            <article><strong data-cy="metric-interface-port">0</strong><span>porta da interface</span></article>
+            <article><strong data-cy="metric-api-port">Indisponível</strong><span>API opcional</span></article>
+          </section>
+
+          <div class="section-heading">
+            <div>
+              <h2>Jornadas para automatizar</h2>
+            </div>
+          </div>
+
+          <section class="quick-grid">
+            <button class="feature-card" data-cy="card-register" data-target="registerView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Cadastro</strong>
+                <small>Criar usuário pela tela</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-users" data-target="usersView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Usuários</strong>
+                <small>Listagem da API ou massa local</small>
+              </span>
+            </button>
+            <button class="feature-card highlight" data-cy="card-form" data-target="formView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 3h6" /><path d="M10 9h4" /><path d="M10 13h4" /><path d="M10 17h4" /><rect x="5" y="5" width="14" height="18" rx="2" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Formulário completo</strong>
+                <small>Campos, radios, checks, upload e tags</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-forgot" data-target="forgotView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5" /><path d="M12 12l9-9" /><path d="M16 8l3 3" /><path d="M19 5l2 2" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Recuperar senha</strong>
+                <small>Fluxo com token local</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-visual" data-target="visualView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Estados visuais</strong>
+                <small>Sucesso, alerta e erro</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-upload" data-target="uploadView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 13V3" /><path d="m8 7 4-4 4 4" /><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" /><path d="M8 17h8" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Upload</strong>
+                <small>Anexar evidência de teste</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-table" data-target="tableView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h18" /><path d="M8 6v12" /><path d="M16 6v12" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Tabela dinâmica</strong>
+                <small>Adicionar e remover linhas</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-settings" data-target="settingsView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 21v-7" /><path d="M4 10V3" /><path d="M12 21v-9" /><path d="M12 8V3" /><path d="M20 21v-5" /><path d="M20 12V3" /><path d="M2 14h4" /><path d="M10 8h4" /><path d="M18 16h4" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Preferências</strong>
+                <small>Select, radio e toggle</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-modal" data-target="modalView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Modal e termos</strong>
+                <small>Abrir, validar e fechar</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-api" data-target="apiView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="8" rx="2" /><rect x="3" y="14" width="18" height="8" rx="2" /><path d="M7 8h.01" /><path d="M7 18h.01" /><path d="M11 8h6" /><path d="M11 18h6" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Status da API</strong>
+                <small>Checar disponibilidade</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-keyboard" data-target="keyboardView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2" /><path d="M6 10h.01" /><path d="M10 10h.01" /><path d="M14 10h.01" /><path d="M18 10h.01" /><path d="M7 14h10" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Teclado</strong>
+                <small>Enter, foco e submit</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-character" data-target="characterView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3l2.8 5.7 6.3.9-4.5 4.4 1.1 6.2L12 17.2l-5.7 3 1.1-6.2-4.5-4.4 6.3-.9L12 3z" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Cadastro de personagens</strong>
+                <small>Herois, animes e equipes</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-character-management" data-target="characterManagementView" data-tags="table search filter modal delete pagination" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z" /><path d="M8 4v16" /><path d="M16 4v16" /><path d="M4 9h16" /><path d="M4 15h16" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Gestao de personagens</strong>
+                <small>Busca, filtro, tabela, modal e exclusão</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-scenario-builder" data-target="scenarioBuilderView" data-tags="form select radio checkbox date range tags modal table" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Construtor de cenários</strong>
+                <small>Texto, select, checks, tags e tabela</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-hobby" data-target="hobbyView" data-tags="form file select toggle validation" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M8 4v16" /><path d="M16 4v16" /><path d="M4 8h16" /><path d="M4 16h16" /><path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Cadastro de hobbies</strong>
+                <small>Formulário, arquivo e destaque</small>
+              </span>
+            </button>
+          </section>
+          <nav class="feature-pagination" data-cy="feature-pagination" aria-label="Paginação das jornadas"></nav>
+        </main>
+      </section>
+
+      <section id="registerView" class="page hidden" data-view="register">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Cadastro</h1>
+              <p>Crie usuários para cenários positivos e negativos.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-back type="button">Voltar</button>
+        </header>
+
+        <main class="container narrow">
+          <form class="form-card" data-form="register" novalidate>
+            <label>Nome completo *</label>
+            <input id="register-name" data-field="registerName" data-cy="register-name" name="register-name" placeholder="Digite nome e sobrenome" />
+            <p class="error" data-error-for="registerName"></p>
+
+            <label>E-mail *</label>
+            <input id="register-email" data-field="registerEmail" data-cy="register-email" name="register-email" type="email" placeholder="usuario@email.com" />
+            <p class="error" data-error-for="registerEmail"></p>
+
+            <label>Senha *</label>
+            <input id="register-password" data-field="registerPassword" data-cy="register-password" name="register-password" type="password" placeholder="Digite uma senha" />
+            <p class="error" data-error-for="registerPassword"></p>
+
+            <button class="primary-btn" data-cy="register-submit" type="submit">Cadastrar usuário</button>
+          </form>
+        </main>
+      </section>
+
+      <section id="forgotView" class="page hidden" data-view="forgot">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Recuperar senha</h1>
+              <p>Simule o fluxo de token de recuperação.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-back="true" type="button">Voltar</button>
+        </header>
+
+        <main class="container narrow">
+          <form class="form-card" data-form="forgot" novalidate>
+            <label>E-mail *</label>
+            <input id="forgot-email" data-field="forgotEmail" name="forgot-email" type="email" placeholder="usuario@email.com" />
+            <p class="error" data-error-for="forgotEmail"></p>
+            <button class="primary-btn" type="submit">Gerar token</button>
+          </form>
+        </main>
+      </section>
+
+      <section id="formView" class="page hidden" data-view="form">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Formulário completo</h1>
+              <p>Formulário grande para treinar massa, seletores e validações.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container">
+          <form class="form-card wide-form" data-form="contact" novalidate>
+            <div class="form-section">
+              <h2>Dados do solicitante</h2>
+              <div class="form-grid">
+                <div>
+                  <label>Nome completo *</label>
+                  <input id="contact-name" data-field="contactName" name="contact-name" placeholder="Digite seu nome completo" />
+                  <p class="error" data-error-for="contactName"></p>
+                </div>
+                <div>
+                  <label>E-mail *</label>
+                  <input id="contact-email" data-field="contactEmail" data-cy="contact-email" name="contact-email" type="email" placeholder="usuario@email.com" />
+                  <p class="error" data-error-for="contactEmail"></p>
+                </div>
+                <div>
+                  <label>Telefone *</label>
+                  <input id="contact-phone" data-field="contactPhone" name="contact-phone" placeholder="11999999999" />
+                  <p class="error" data-error-for="contactPhone"></p>
+                </div>
+                <div>
+                  <label>Empresa ou time *</label>
+                  <input id="contact-company" data-field="contactCompany" name="contact-company" placeholder="QA Lab" />
+                  <p class="error" data-error-for="contactCompany"></p>
+                </div>
+                <div>
+                  <label>Documento *</label>
+                  <input id="contact-document" data-field="contactDocument" name="contact-document" placeholder="CPF ou CNPJ" />
+                  <p class="error" data-error-for="contactDocument"></p>
+                </div>
+                <div>
+                  <label>Data desejada *</label>
+                  <input data-field="contactDate" name="contact-date" type="date" />
+                  <p class="error" data-error-for="contactDate"></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h2>Contexto da automação</h2>
+              <div class="form-grid">
+                <div>
+                  <label>Tipo de automação *</label>
+                  <select data-field="contactSubject" data-cy="contact-subject" name="contact-subject">
+                    <option value="">Selecione</option>
+                    <option value="Cypress Web">Cypress Web</option>
+                    <option value="Cypress API">Cypress API</option>
+                    <option value="Playwright Web">Playwright Web</option>
+                    <option value="Playwright API">Playwright API</option>
+                  </select>
+                  <p class="error" data-error-for="contactSubject"></p>
+                </div>
+                <div>
+          <label>Nível do cenário *</label>
+                  <select data-field="contactLevel" name="contact-level">
+                    <option value="">Selecione</option>
+                    <option>Smoke</option>
+            <option>Regressão</option>
+                    <option>Contrato</option>
+            <option>Crítico</option>
+                  </select>
+                  <p class="error" data-error-for="contactLevel"></p>
+                </div>
+                <div>
+                  <label>Navegador alvo *</label>
+                  <select data-field="contactBrowser" name="contact-browser">
+                    <option value="">Selecione</option>
+                    <option>Chrome</option>
+                    <option>Edge</option>
+                    <option>Firefox</option>
+                    <option>Electron</option>
+                  </select>
+                  <p class="error" data-error-for="contactBrowser"></p>
+                </div>
+                <div>
+                  <label>Modo de execução *</label>
+                  <select data-field="contactExecution" name="contact-execution">
+                    <option value="">Selecione</option>
+                    <option>Headless</option>
+                    <option>Assistido</option>
+                    <option>Pipeline</option>
+                  </select>
+                  <p class="error" data-error-for="contactExecution"></p>
+                </div>
+                <div>
+                  <label>Ambiente *</label>
+                  <select data-field="contactEnvironment" name="contact-environment">
+                    <option value="">Selecione</option>
+                    <option>Local</option>
+                    <option>Staging</option>
+                    <option>Homologacao</option>
+                  </select>
+                  <p class="error" data-error-for="contactEnvironment"></p>
+                </div>
+                <div>
+                  <label>Endpoint relacionado</label>
+                  <input data-field="contactApiPath" name="contact-api-path" placeholder="/api/users/register" />
+                </div>
+              </div>
+            </div>
+
+            <fieldset class="choice-group">
+              <legend>Prioridade *</legend>
+              <label><input type="radio" name="priority" value="Baixa" /> Baixa</label>
+              <label><input type="radio" name="priority" value="Media" /> Media</label>
+              <label><input type="radio" name="priority" value="Alta" /> Alta</label>
+              <p class="error" data-error-for="priority"></p>
+            </fieldset>
+
+            <fieldset class="choice-group">
+          <legend>Canais de validação *</legend>
+              <label><input type="checkbox" name="channels" value="UI" /> UI</label>
+              <label><input type="checkbox" name="channels" value="API" /> API</label>
+              <label><input type="checkbox" name="channels" value="Banco" /> Banco</label>
+              <label><input type="checkbox" name="channels" value="Pipeline" /> Pipeline</label>
+              <label><input type="checkbox" name="channels" value="Acessibilidade" /> Acessibilidade</label>
+              <p class="error" data-error-for="channels"></p>
+            </fieldset>
+
+          <label>Anexar evidência</label>
+            <input data-field="evidenceFile" name="evidence-file" type="file" />
+
+            <label>Mensagem *</label>
+            <textarea data-field="contactMessage" name="contact-message" placeholder="Descreva o cenário, pré-condições e resultado esperado"></textarea>
+            <p class="error" data-error-for="contactMessage"></p>
+
+            <label>Tecnologias</label>
+            <input data-field="technologyInput" name="technology-input" placeholder="Digite uma tecnologia e pressione Enter" />
+            <div class="tag-list" data-role="technologyTags"></div>
+
+            <label class="terms-line">
+              <input data-field="contactTerms" name="contact-terms" type="checkbox" />
+              Li e aceito os termos de uso *
+            </label>
+            <p class="error" data-error-for="contactTerms"></p>
+
+            <button class="primary-btn" type="submit">Enviar formulário</button>
+          </form>
+        </main>
+      </section>
+
+      <section id="usersView" class="page hidden" data-view="users">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Usuários</h1>
+              <p>Lista retornada pela API Node ou pela massa local.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container">
+          <div class="toolbar">
+            <button class="secondary-btn" data-cy="refresh-users" type="button">Atualizar lista</button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Status</th>
+                <th>Acao</th>
+              </tr>
+            </thead>
+            <tbody data-cy="users-table"></tbody>
+          </table>
+          <p class="result-text users-result" data-cy="users-result">Nenhuma acao executada.</p>
+        </main>
+      </section>
+
+      <section id="visualView" class="page hidden" data-view="visual">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Estados visuais</h1>
+              <p>Use botoes e badges para validar classes, textos e cores.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container">
+          <section class="tool-surface">
+            <div class="status-row">
+              <button class="status-btn success" data-message="Cenario aprovado" type="button">Sucesso</button>
+              <button class="status-btn warning" data-message="Cenario em atencao" type="button">Alerta</button>
+          <button class="status-btn danger" data-message="Cenário com falha" type="button">Erro</button>
+            </div>
+            <p class="status-message" data-role="visualStatus">Nenhum estado selecionado.</p>
+          </section>
+        </main>
+      </section>
+
+      <section id="uploadView" class="page hidden" data-view="upload">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Upload</h1>
+              <p>Fluxo dedicado para anexar evidências de teste.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container narrow">
+          <section class="form-card">
+          <label>Arquivo de evidência *</label>
+            <input data-field="uploadEvidence" name="upload-evidence" type="file" />
+            <p class="error" data-error-for="uploadEvidence"></p>
+          <button class="primary-btn upload-action" type="button">Enviar evidência</button>
+            <p class="result-text" data-role="uploadResult">Nenhum arquivo enviado.</p>
+          </section>
+        </main>
+      </section>
+
+      <section id="tableView" class="page hidden" data-view="table">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+          <h1>Tabela dinâmica</h1>
+              <p>Adicione, valide e remova linhas pela automação.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container">
+          <section class="tool-surface">
+            <div class="inline-form">
+            <input data-field="tableName" data-cy="table-name" name="table-name" placeholder="Nome do cenário" />
+              <select data-field="tableStatus" data-cy="table-status" name="table-status">
+                <option value="Planejado">Planejado</option>
+                <option value="Automatizado">Automatizado</option>
+                <option value="Revisao">Revisao</option>
+              </select>
+              <select data-field="tableFilter" data-cy="table-filter" name="table-filter" aria-label="Filtrar status">
+                <option value="Todos">Listar todos</option>
+                <option value="Planejado">Planejado</option>
+                <option value="Automatizado">Automatizado</option>
+                <option value="Revisao">Revisao</option>
+              </select>
+              <button class="secondary-btn" data-cy="table-add" type="button">Adicionar</button>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Cenario</th>
+                  <th>Status</th>
+                  <th>Acao</th>
+                </tr>
+              </thead>
+              <tbody data-role="dynamicTable" data-cy="dynamic-table"></tbody>
+            </table>
+          </section>
+        </main>
+      </section>
+
+      <section id="settingsView" class="page hidden" data-view="settings">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Preferências</h1>
+              <p>Checks, radios, select e toggle para treino de seletores.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container preferences-lab">
+          <section class="form-card settings-card">
+            <div class="form-section">
+              <span class="section-kicker">Ambiente de teste</span>
+              <h2>Perfil da execução</h2>
+              <div class="form-grid settings-form-grid">
+                <div>
+                  <label>Navegador principal</label>
+                  <select data-field="browserSelect" name="browser-select">
+                    <option>Chrome</option>
+                    <option>Edge</option>
+                    <option>Firefox</option>
+                    <option>Safari</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label>Ambiente alvo</label>
+                  <select data-field="settingsEnvironment" name="settings-environment">
+                    <option>Local</option>
+                    <option>Homologacao</option>
+                    <option>Staging</option>
+                    <option>Producao controlada</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label>Modo de execução</label>
+                  <select data-field="executionMode" name="execution-mode">
+                    <option>Headed</option>
+                    <option>Headless</option>
+                    <option>Debug</option>
+                    <option>Pipeline CI</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label>Viewport padrao</label>
+                  <select data-field="viewportSelect" name="viewport-select">
+                    <option>Desktop 1440x900</option>
+                    <option>Notebook 1366x768</option>
+                    <option>Tablet 768x1024</option>
+                    <option>Mobile 390x844</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <fieldset class="choice-group framework-grid">
+                <legend>Framework preferido</legend>
+                <label><input type="radio" name="framework" value="Cypress" checked /> Cypress</label>
+                <label><input type="radio" name="framework" value="Playwright" /> Playwright</label>
+                <label><input type="radio" name="framework" value="Selenium" /> Selenium</label>
+                <label><input type="radio" name="framework" value="WebdriverIO" /> WebdriverIO</label>
+                <label><input type="radio" name="framework" value="Robot Framework" /> Robot Framework</label>
+              </fieldset>
+            </div>
+
+            <div class="form-section">
+              <span class="section-kicker">Evidências e estabilidade</span>
+              <div class="form-grid settings-form-grid compact-grid">
+                <div>
+                  <label>Tentativas por falha</label>
+                  <input data-field="retryCount" name="retry-count" type="number" min="0" max="5" value="2" />
+                </div>
+
+                <div>
+                  <label>Timeout por acao</label>
+                  <select data-field="timeoutSeconds" name="timeout-seconds">
+                    <option>5 segundos</option>
+                    <option selected>10 segundos</option>
+                    <option>20 segundos</option>
+                    <option>30 segundos</option>
+                  </select>
+                </div>
+
+                <div>
+          <label>Relatório final</label>
+                  <select data-field="reporterSelect" name="reporter-select">
+                    <option>HTML</option>
+                    <option>JUnit XML</option>
+                    <option>Allure</option>
+                    <option>Console simples</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label>Massa de dados</label>
+                  <select data-field="dataStrategy" name="data-strategy">
+                    <option>LocalStorage</option>
+                    <option>Fixture JSON</option>
+                    <option>API mockada</option>
+                    <option>Banco de homologacao</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="settings-check-grid">
+                <label class="setting-option">
+                  <input data-field="videoToggle" name="video-toggle" type="checkbox" />
+                  <span>
+                    <strong>Gerar vídeo da execução</strong>
+                    <small>Grava a jornada completa para evidência visual.</small>
+                  </span>
+                </label>
+                <label class="setting-option">
+                  <input data-field="screenshotToggle" name="screenshot-toggle" type="checkbox" checked />
+                  <span>
+                    <strong>Capturar screenshot em falha</strong>
+              <small>Salva imagem quando uma validação quebra.</small>
+                  </span>
+                </label>
+                <label class="setting-option">
+                  <input data-field="traceToggle" name="trace-toggle" type="checkbox" checked />
+                  <span>
+                    <strong>Salvar trace da execução</strong>
+                    <small>Registra passos, tempo e estado da tela.</small>
+                  </span>
+                </label>
+                <label class="setting-option">
+                  <input data-field="networkLogToggle" name="network-log-toggle" type="checkbox" />
+                  <span>
+                    <strong>Registrar logs de rede</strong>
+                    <small>Ajuda a analisar chamadas, status e payloads.</small>
+                  </span>
+                </label>
+                <label class="setting-option">
+                  <input data-field="accessibilityToggle" name="accessibility-toggle" type="checkbox" />
+                  <span>
+              <strong>Validar acessibilidade básica</strong>
+                    <small>Confere labels, foco e texto alternativo.</small>
+                  </span>
+                </label>
+                <label class="setting-option">
+                  <input data-field="cleanupToggle" name="cleanup-toggle" type="checkbox" checked />
+                  <span>
+                    <strong>Limpar massa apos o teste</strong>
+                    <small>Remove dados criados durante a execução.</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <button class="primary-btn settings-action" type="button">Salvar preferências</button>
+            <div class="result-text settings-result-panel" data-role="settingsResult">Nenhuma preferência salva.</div>
+          </section>
+        </main>
+      </section>
+
+      <section id="modalView" class="page hidden" data-view="modal">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Termos de uso</h1>
+        <p>Fluxo para abrir modal, validar conteúdo e confirmar aceite.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container narrow">
+          <section class="form-card terms-card">
+            <span class="section-kicker">Aceite do laboratorio</span>
+            <h2>Termos de uso do QA Automation Lab</h2>
+            <button class="primary-btn terms-open-action" type="button">Ler e aceitar termos</button>
+          </section>
+        </main>
+      </section>
+
+      <section id="apiView" class="page hidden" data-view="api">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Status da API</h1>
+              <p>Cheque se a API de apoio esta online para testes integrados.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container narrow">
+          <section class="form-card">
+            <label>Base URL</label>
+            <input data-field="apiUrl" name="api-url" value="http://localhost:3030" />
+            <button class="primary-btn api-check-action" type="button">Verificar API</button>
+            <p class="result-text" data-role="apiResult">Nenhuma verificacao executada.</p>
+          </section>
+        </main>
+      </section>
+
+      <section id="keyboardView" class="page hidden" data-view="keyboard">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Entrada por teclado</h1>
+        <p>Digite um cenário e pressione Enter para salvar na lista abaixo.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container keyboard-container">
+          <div class="keyboard-grid">
+            <form class="form-card keyboard-card" data-form="keyboard" novalidate>
+              <label>Cenario de teste *</label>
+              <input data-field="keyboardName" name="keyboard-scenario" placeholder="Ex: validar login sem senha" />
+              <p class="error" data-error-for="keyboardName"></p>
+          <button class="primary-btn" type="submit">Salvar cenário</button>
+          <p class="result-text" data-role="keyboardResult">Nenhum cenário salvo ainda.</p>
+            </form>
+
+            <section class="form-card keyboard-list-card" aria-label="Cenários salvos por teclado">
+              <div class="keyboard-list-header">
+                <div>
+                  <h2>Cenários salvos</h2>
+                  <p class="muted">Entradas criadas por Enter ou pelo botão salvar.</p>
+                </div>
+                <span class="keyboard-count" data-role="keyboardCount">0</span>
+              </div>
+              <ul class="keyboard-history" data-role="keyboardHistory"></ul>
+            </section>
+          </div>
+        </main>
+      </section>
+
+      <section id="characterView" class="page hidden character-page" data-view="character">
+        <main class="container character-container">
+          <form class="form-card character-form" data-form="character" novalidate>
+            <div class="character-form-head">
+              <div>
+                <span class="section-kicker">Catálogo fictício</span>
+                <h1>Cadastrar novo personagem</h1>
+                <p>Crie massas com personagens de herois, anime e universos famosos.</p>
+              </div>
+              <div class="character-actions">
+                <button class="ghost-btn" data-target="dashboardView" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                  Voltar
+                </button>
+                <button class="primary-btn" data-cy="character-submit" type="submit">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                  Cadastrar
+                </button>
+              </div>
+            </div>
+
+            <label>Nome do personagem *</label>
+            <input data-field="characterName" data-cy="character-name" name="character-name" placeholder="Ex: Batman, Naruto Uzumaki, Goku" />
+            <p class="error" data-error-for="characterName"></p>
+
+                <label>História do personagem *</label>
+            <textarea data-field="characterStory" data-cy="character-story" name="character-story" placeholder="Descreva origem, habilidades, equipe e motivação"></textarea>
+            <p class="error" data-error-for="characterStory"></p>
+
+            <div class="form-grid character-grid">
+              <div>
+                <label>Universo ou franquia *</label>
+                <select data-field="characterUniverse" data-cy="character-universe" name="character-universe">
+                  <option value="">Selecione...</option>
+                  <option value="Liga da Justica">Liga da Justica</option>
+                  <option value="Dragon Ball">Dragon Ball</option>
+                  <option value="Naruto">Naruto</option>
+                  <option value="Marvel">Marvel</option>
+                  <option value="One Piece">One Piece</option>
+                  <option value="Demon Slayer">Demon Slayer</option>
+                  <option value="My Hero Academia">My Hero Academia</option>
+                  <option value="Star Wars">Star Wars</option>
+                </select>
+                <p class="error" data-error-for="characterUniverse"></p>
+              </div>
+
+              <div>
+                <label>Ano de estreia *</label>
+                <select data-field="characterYear" data-cy="character-year" name="character-year">
+                  <option value="">Selecione...</option>
+                </select>
+                <p class="error" data-error-for="characterYear"></p>
+              </div>
+            </div>
+
+            <span class="field-label">Imagem do personagem</span>
+            <div class="character-file-row">
+              <label class="file-btn" for="characterImage">Escolher arquivo</label>
+              <span data-cy="character-image-name">Nenhum arquivo escolhido</span>
+              <input id="characterImage" class="sr-only" data-field="characterImage" data-cy="character-image" name="character-image" type="file" accept="image/*" />
+            </div>
+
+            <label class="character-toggle">
+              <span>Personagem destaque?</span>
+              <input data-field="characterFeatured" data-cy="character-featured" name="character-featured" type="checkbox" />
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+
+            <p class="result-text" data-cy="character-result">Nenhum personagem cadastrado.</p>
+          </form>
+        </main>
+      </section>
+
+      <section id="characterManagementView" class="page hidden management-page" data-view="character-management" data-testid="character-management-page">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Gerenciar personagens</h1>
+              <p>Busque, filtre e administre os personagens cadastrados.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container management-container">
+          <section class="tool-surface management-panel">
+            <div class="management-filter-grid">
+              <input type="text" name="search" placeholder="Buscar por personagem" data-testid="search-character" aria-label="Buscar por personagem" />
+              <select name="universe" data-testid="filter-universe" aria-label="Filtrar por universo">
+                <option value="">Todos os universos</option>
+              </select>
+              <select name="year" data-testid="filter-year" aria-label="Filtrar por ano">
+                <option value="">Todos os anos</option>
+              </select>
+              <button class="secondary-btn" type="button" data-testid="clear-character-filters">Limpar filtros</button>
+            </div>
+
+            <div class="management-results-bar">
+              <div data-testid="characters-count">0 resultados encontrados</div>
+            </div>
+
+            <div class="management-table-wrap">
+              <table class="data-table management-table" data-testid="characters-table">
+                <thead>
+                  <tr>
+                    <th>Imagem</th>
+                    <th>Personagem</th>
+                    <th>Universo</th>
+                    <th>Ano</th>
+                    <th>Destaque</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody data-role="charactersTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="empty-state" data-testid="empty-state" hidden>Nenhum personagem encontrado</div>
+
+            <div class="management-table-footer">
+              <nav class="table-pagination" data-testid="pagination" aria-label="Paginação da tabela de personagens"></nav>
+            </div>
+
+            <div class="delete-toast hidden" data-testid="delete-toast-success" role="status" aria-live="polite"></div>
+            <div class="delete-toast hidden" data-testid="edit-toast-success" role="status" aria-live="polite"></div>
+          </section>
+        </main>
+
+        <div class="modal-overlay" data-testid="delete-modal" role="dialog" aria-modal="true" aria-labelledby="characterDeleteTitle" hidden>
+          <div class="modal-card management-delete-card">
+            <span class="section-kicker">Exclusão de personagem</span>
+            <h2 id="characterDeleteTitle" data-testid="delete-modal-title">Confirmar exclusão</h2>
+            <p data-testid="delete-modal-description">Deseja realmente excluir este personagem?</p>
+            <div class="modal-actions split-actions">
+              <button class="secondary-btn" data-testid="cancel-delete" type="button">Cancelar</button>
+              <button class="primary-btn danger-action" data-testid="confirm-delete" type="button">Confirmar exclusão</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-overlay" data-testid="edit-modal" role="dialog" aria-modal="true" aria-labelledby="characterEditTitle" hidden>
+          <form class="modal-card management-edit-card" data-form="editCharacter" novalidate>
+            <span class="section-kicker">Edição de personagem</span>
+            <h2 id="characterEditTitle" data-testid="edit-modal-title">Editar personagem</h2>
+
+            <label>Nome do personagem *</label>
+            <input data-field="editCharacterName" data-testid="edit-character-name" name="edit-character-name" placeholder="Nome do personagem" />
+            <p class="error" data-error-for="editCharacterName"></p>
+
+            <label>História *</label>
+            <textarea data-field="editCharacterStory" data-testid="edit-character-story" name="edit-character-story" placeholder="História, habilidades e contexto"></textarea>
+            <p class="error" data-error-for="editCharacterStory"></p>
+
+            <div class="form-grid character-grid">
+              <div>
+                <label>Universo *</label>
+                <select data-field="editCharacterUniverse" data-testid="edit-character-universe" name="edit-character-universe">
+                  <option value="">Selecione...</option>
+                  <option value="Liga da Justica">Liga da Justica</option>
+                  <option value="Dragon Ball">Dragon Ball</option>
+                  <option value="Naruto">Naruto</option>
+                  <option value="Marvel">Marvel</option>
+                  <option value="One Piece">One Piece</option>
+                  <option value="Demon Slayer">Demon Slayer</option>
+                  <option value="My Hero Academia">My Hero Academia</option>
+                  <option value="Star Wars">Star Wars</option>
+                  <option value="Sailor Moon">Sailor Moon</option>
+                  <option value="Bleach">Bleach</option>
+                  <option value="Attack on Titan">Attack on Titan</option>
+                  <option value="Hunter x Hunter">Hunter x Hunter</option>
+                </select>
+                <p class="error" data-error-for="editCharacterUniverse"></p>
+              </div>
+
+              <div>
+                <label>Ano *</label>
+                <input data-field="editCharacterYear" data-testid="edit-character-year" name="edit-character-year" type="number" min="1930" max="2035" placeholder="Ex: 1999" />
+                <p class="error" data-error-for="editCharacterYear"></p>
+              </div>
+            </div>
+
+            <label class="character-toggle edit-toggle">
+              <span>Personagem destaque?</span>
+              <input data-field="editCharacterFeatured" data-testid="edit-character-featured" name="edit-character-featured" type="checkbox" />
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+
+            <div class="modal-actions split-actions">
+              <button class="secondary-btn" data-testid="cancel-edit" type="button">Cancelar</button>
+              <button class="primary-btn" data-testid="save-edit" type="submit">Salvar edição</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section id="scenarioBuilderView" class="page hidden scenario-page" data-view="scenario-builder">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Construtor de cenários</h1>
+              <p>Monte fluxos completos com campos, seletores, tags, modal e tabela.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container scenario-container">
+          <section class="tool-surface scenario-panel">
+            <div class="scenario-layout">
+              <form class="scenario-form" data-form="scenarioBuilder" novalidate>
+                <div class="form-section">
+                  <span class="section-kicker">Massa de automação</span>
+                  <h2>Novo cenário de teste</h2>
+
+                  <label>Nome do cenário *</label>
+                  <input data-field="scenarioName" name="scenario-name" placeholder="Ex: validar compra com cupom inválido" />
+                  <p class="error" data-error-for="scenarioName"></p>
+
+                  <div class="form-grid scenario-form-grid">
+                    <div>
+                      <label>Módulo *</label>
+                      <select data-field="scenarioModule" name="scenario-module">
+                        <option value="">Selecione...</option>
+                        <option>Login</option>
+                        <option>Cadastro</option>
+                        <option>Personagens</option>
+                        <option>Tabela dinâmica</option>
+                        <option>Preferências</option>
+                        <option>Checkout fictício</option>
+                      </select>
+                      <p class="error" data-error-for="scenarioModule"></p>
+                    </div>
+
+                    <div>
+                      <label>Prioridade</label>
+                      <select data-field="scenarioPriority" name="scenario-priority">
+                        <option>P0 - Crítico</option>
+                        <option>P1 - Alto</option>
+                        <option selected>P2 - Médio</option>
+                        <option>P3 - Baixo</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label>Data alvo</label>
+                      <input data-field="scenarioDate" name="scenario-date" type="date" />
+                    </div>
+
+                    <div>
+                      <label>Risco do fluxo: <span data-role="scenarioRiskValue">3</span></label>
+                      <input data-field="scenarioRisk" name="scenario-risk" type="range" min="1" max="5" value="3" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <fieldset class="choice-group scenario-radio-group">
+                    <legend>Tipo de teste</legend>
+                    <label><input type="radio" name="scenario-kind" value="Smoke" checked /> Smoke</label>
+                    <label><input type="radio" name="scenario-kind" value="Regressão" /> Regressão</label>
+                    <label><input type="radio" name="scenario-kind" value="E2E" /> E2E</label>
+                    <label><input type="radio" name="scenario-kind" value="Exploratório" /> Exploratório</label>
+                  </fieldset>
+
+                  <fieldset class="choice-group scenario-check-group">
+                    <legend>Cobertura desejada *</legend>
+                    <label><input name="scenario-coverage" value="Cypress" type="checkbox" checked /> Cypress</label>
+                    <label><input name="scenario-coverage" value="Playwright" type="checkbox" /> Playwright</label>
+                    <label><input name="scenario-coverage" value="API mock" type="checkbox" /> API mock</label>
+                    <label><input name="scenario-coverage" value="Banco local" type="checkbox" /> Banco local</label>
+                  </fieldset>
+                  <p class="error" data-error-for="scenarioCoverage"></p>
+                </div>
+
+                <div class="form-section">
+                  <label>Pré-condições</label>
+                  <textarea data-field="scenarioPreconditions" name="scenario-preconditions" placeholder="Descreva usuário, massa, permissão, rota inicial ou estado esperado"></textarea>
+
+                  <label>Etapas do fluxo *</label>
+                  <div class="scenario-step-row">
+                    <input data-field="scenarioStepInput" name="scenario-step" placeholder="Digite uma etapa e pressione Enter" />
+                    <button class="secondary-btn" data-action="add-step" type="button">Adicionar</button>
+                  </div>
+                  <p class="error" data-error-for="scenarioStepInput"></p>
+                  <ul class="scenario-step-list" data-role="scenarioSteps"></ul>
+                </div>
+
+                <label class="character-toggle scenario-toggle">
+                  <span>Cenário pronto para regressão?</span>
+                  <input data-field="scenarioRegressionReady" name="scenario-regression-ready" type="checkbox" />
+                  <span class="switch" aria-hidden="true"></span>
+                </label>
+
+                <div class="scenario-actions">
+                  <button class="secondary-btn" data-action="preview-scenario" type="button">Ver preview</button>
+                  <button class="primary-btn" type="submit">Salvar cenário</button>
+                </div>
+              </form>
+
+              <aside class="scenario-guide">
+                <span class="section-kicker">8 práticas na tela</span>
+                <h2>Cenários para automatizar</h2>
+                <ol>
+                  <li>Digitar nome e pré-condições.</li>
+                  <li>Selecionar módulo, prioridade e data.</li>
+                  <li>Alterar range de risco.</li>
+                  <li>Escolher tipo por radio.</li>
+                  <li>Marcar multiplas coberturas.</li>
+                  <li>Adicionar etapas com Enter.</li>
+                  <li>Abrir modal de preview.</li>
+                  <li>Salvar, buscar e remover linha da tabela.</li>
+                </ol>
+              </aside>
+            </div>
+
+            <section class="scenario-table-panel">
+              <div class="scenario-table-head">
+                <div>
+                  <h2>Cenários criados</h2>
+                  <p class="muted" data-role="scenarioCount">0 cenários salvos</p>
+                </div>
+                <input data-field="scenarioSearch" name="scenario-search" placeholder="Buscar cenário salvo" />
+              </div>
+
+              <div class="management-table-wrap">
+                <table class="data-table scenario-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Cenario</th>
+                      <th>Modulo</th>
+                      <th>Tipo</th>
+                      <th>Risco</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody data-role="scenarioRows"></tbody>
+                </table>
+              </div>
+
+              <div class="empty-state" data-role="scenarioEmpty">Nenhum cenário criado ainda</div>
+            </section>
+          </section>
+        </main>
+      </section>
+
+      <section id="hobbyView" class="page hidden hobby-page" data-view="hobby">
+        <main class="container hobby-container">
+          <form id="hobbyStudioForm" class="hobby-card" novalidate>
+            <div class="hobby-card-head">
+              <div>
+                <span class="section-kicker">Cadastro social</span>
+                <h1>Cadastrar novo hobby</h1>
+                <p>Monte uma massa de hobbies com categoria, rotina, temporada e evidência visual.</p>
+              </div>
+              <div class="hobby-actions">
+                <button class="ghost-btn" data-target="dashboardView" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                  Voltar
+                </button>
+                <button class="primary-btn hobby-submit-btn" type="submit">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                  Cadastrar
+                </button>
+              </div>
+            </div>
+
+            <section class="hobby-form-body">
+              <div class="hobby-main-fields">
+                <label for="hobbyTitle">Nome do hobby *</label>
+                <input id="hobbyTitle" name="hobby-title" placeholder="Ex: Futebol de domingo" />
+                <p class="error" data-error-for="hobbyTitle"></p>
+
+                <label>Descrição do hobby *</label>
+                <textarea class="hobby-description-field" name="hobby-description" placeholder="Descreva objetivo, rotina, local e como esse hobby entra no seu dia a dia"></textarea>
+                <p class="error" data-error-for="hobbyDescription"></p>
+
+                <div class="hobby-form-grid">
+                  <div>
+                    <label for="hobbyType">Tipo de hobby *</label>
+                    <select id="hobbyType" name="hobby-type">
+                      <option value="">Selecione...</option>
+                      <option>Futebol</option>
+                      <option>Corrida</option>
+                      <option>Musculação</option>
+                      <option>Ciclismo</option>
+                      <option>Leitura</option>
+                      <option>Fotografia</option>
+                      <option>Games</option>
+                      <option>Música</option>
+                    </select>
+                    <p class="error" data-error-for="hobbyType"></p>
+                  </div>
+
+                  <div class="frequency-field">
+                    <label>Frequência *</label>
+                    <select name="practice-frequency">
+                      <option value="">Selecione...</option>
+                      <option>Diária</option>
+                      <option>Semanal</option>
+                      <option>Quinzenal</option>
+                      <option>Mensal</option>
+                      <option>Eventual</option>
+                    </select>
+                    <p class="error" data-error-for="hobbyFrequency"></p>
+                  </div>
+
+                  <div class="season-field">
+                    <label>Temporada favorita</label>
+                    <select name="practice-season">
+                      <option>Qualquer período</option>
+                      <option>Verão</option>
+                      <option>Outono</option>
+                      <option>Inverno</option>
+                      <option>Primavera</option>
+                      <option>Férias</option>
+                    </select>
+                  </div>
+
+                  <div class="hobby-hours-field">
+                    <label>Horas por semana</label>
+                    <input name="weekly-hours" type="number" min="1" max="40" value="3" />
+                  </div>
+                </div>
+
+                <span class="field-label">Imagem ou comprovante</span>
+                <div class="hobby-file-row">
+                  <label class="file-btn" for="hobbyPoster">Escolher arquivo</label>
+                  <span class="hobby-file-name">Nenhum arquivo escolhido</span>
+                  <input id="hobbyPoster" class="sr-only" name="hobby-poster" type="file" accept="image/*,.pdf" />
+                </div>
+
+                <label class="character-toggle hobby-highlight-toggle">
+                  <span>Hobby principal da semana?</span>
+                  <input name="weekly-highlight" type="checkbox" />
+                  <span class="switch" aria-hidden="true"></span>
+                </label>
+
+                <p class="result-text hobby-result">Nenhum hobby cadastrado.</p>
+              </div>
+
+              <aside class="hobby-preview-card">
+                <span class="section-kicker">Preview</span>
+                <h2>Resumo do hobby</h2>
+                <div class="hobby-preview-icon">HB</div>
+                <dl>
+                  <div><dt>Nome</dt><dd data-preview="name">Aguardando preenchimento</dd></div>
+                  <div><dt>Tipo</dt><dd data-preview="type">Não selecionado</dd></div>
+                  <div><dt>Frequência</dt><dd data-preview="frequency">Não selecionada</dd></div>
+                  <div><dt>Temporada</dt><dd data-preview="season">Qualquer período</dd></div>
+                  <div><dt>Horas</dt><dd data-preview="hours">3h por semana</dd></div>
+                  <div><dt>Destaque</dt><dd data-preview="highlight">Não</dd></div>
+                </dl>
+              </aside>
+            </section>
+          </form>
+        </main>
+      </section>
+
+      <footer class="site-footer" data-cy="site-footer">
+        <div class="site-footer-inner">
+          <p class="footer-copy">&copy; 2026 QA Automation Lab. Todos os direitos reservados.</p>
+          <div class="footer-links" aria-label="Links oficiais">
+            <a class="footer-icon-link" data-cy="footer-github" href="https://github.com/CypressQALab" target="_blank" rel="noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.02c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.92 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23A11.45 11.45 0 0 1 12 5.82c1.02 0 2.04.14 3 .41 2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.6-2.81 5.61-5.48 5.91.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z" />
+              </svg>
+            </a>
+            <a class="footer-icon-link" data-cy="footer-cypress" href="https://www.cypress.io/" target="_blank" rel="noreferrer" aria-label="Site oficial do Cypress">
+              <img src="https://cdn.simpleicons.org/cypress/69D3A7" alt="" aria-hidden="true" />
+            </a>
+            <a class="footer-icon-link" data-cy="footer-playwright" href="https://playwright.dev/" target="_blank" rel="noreferrer" aria-label="Site oficial do Playwright">
+              <svg class="footer-playwright-logo" viewBox="0 0 64 44" aria-hidden="true">
+                <g class="playwright-red-mask" transform="rotate(-10 23 22)">
+                  <path d="M8.8 9.4c8.4-4 17.3-4 25.8 0 1.7.8 2.7 2.5 2.4 4.4l-1.9 12.3c-1 6.7-7.3 11.3-13.8 10-5.4-1.1-9.2-5.8-9.7-11.2l-1.2-11.1c-.2-1.9.7-3.6 2.4-4.4Z" />
+                  <circle cx="18.5" cy="20" r="2.1" />
+                  <path d="M19.3 27.6c3.5 1.5 7.2.6 9.8-2.3" />
+                </g>
+                <g class="playwright-green-mask" transform="rotate(8 41 22)">
+                  <path d="M29.4 8.4c8.8-4.2 18.2-4.2 27 0 1.8.9 2.8 2.6 2.5 4.6l-2 13c-1.1 7-7.6 11.8-14.5 10.4-5.7-1.1-9.8-6.1-10.2-11.8l-1.2-11.6c-.3-2 .7-3.7 2.4-4.6Z" />
+                  <circle cx="39.7" cy="19.8" r="2.1" />
+                  <circle cx="49.4" cy="19.8" r="2.1" />
+                  <path d="M38.9 27.4c4.2 3.2 9.1 3.2 13.3 0" />
+                </g>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </footer>
+
+      <div id="termsConsentModal" class="modal-overlay hidden" data-cy="terms-consent-modal" role="dialog" aria-modal="true" aria-labelledby="termsConsentTitle">
+        <div class="modal-card terms-modal-card">
+          <span class="section-kicker">Termos de uso</span>
+          <h2 id="termsConsentTitle">Deseja iniciar o aceite?</h2>
+          <p class="modal-copy">Confirme para abrir a etapa final de assinatura dos termos.</p>
+          <div class="modal-actions split-actions">
+            <button class="secondary-btn" data-cy="terms-consent-no" type="button">Não agora</button>
+            <button class="primary-btn" data-cy="terms-consent-yes" type="button">Sim, continuar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="termsSignatureModal" class="modal-overlay hidden" data-cy="terms-signature-modal" role="dialog" aria-modal="true" aria-labelledby="termsSignatureTitle">
+        <div class="modal-card terms-modal-card">
+          <span class="section-kicker">Assinatura do aceite</span>
+          <h2 id="termsSignatureTitle">Confirmacao final</h2>
+          <label class="terms-line modal-check-line">
+            <input data-cy="terms-accept-check" type="checkbox" />
+            Li e aceito os termos de uso
+          </label>
+          <p class="error" data-cy="terms-error"></p>
+          <div class="modal-actions split-actions">
+            <button class="secondary-btn" data-cy="terms-signature-cancel" type="button">Cancelar</button>
+            <button class="primary-btn" data-cy="terms-finalize" type="button">Finalizar aceite</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="successModal" class="modal-overlay hidden" data-cy="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-card" data-cy="success-modal">
+          <div class="modal-head">
+            <span class="modal-badge" data-cy="modal-badge">LAB</span>
+            <div>
+              <h2 class="modal-title" data-cy="modal-title">Sucesso!</h2>
+              <p class="modal-copy" data-cy="success-message">Operação realizada com sucesso.</p>
+            </div>
+          </div>
+          <ul class="modal-list hidden" data-cy="modal-list"></ul>
+          <div class="modal-actions split-actions">
+            <button class="secondary-btn hidden" data-cy="modal-secondary" type="button">Ir para usuários</button>
+            <button class="primary-btn" data-cy="modal-close" type="button">Fechar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast" class="toast hidden" data-cy="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <script src="./assets/app.js?v=51"></script>
+  </body>
+</html>
