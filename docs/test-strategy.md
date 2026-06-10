@@ -22,4 +22,4 @@
 
 ## Organizacao
 
-Cypress e Playwright testam a mesma Web e a mesma API. Isso reforca a logica de automacao sem duplicar aplicacao.
+Cypress cobre Web e API. Playwright cobre a Web como suite alternativa para reforcar a logica de automacao sem duplicar aplicacao.

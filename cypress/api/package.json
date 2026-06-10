@@ -1,14 +1,17 @@
 {
-  "name": "qa-automation-lab-api",
+  "name": "qa-automation-lab-cypress-api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "description": "API REST e testes de API com Cypress.",
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "seed": "node ../../database/seed/seed-admin.js"
+    "seed": "node ../../database/seed/seed-admin.js",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.0.0",
@@ -19,6 +22,8 @@
     "pg": "^8.16.3"
   },
   "devDependencies": {
+    "cypress": "^14.3.3",
+    "cypress-plugin-api": "^2.11.2",
     "nodemon": "^3.1.10",
     "prisma": "^7.0.0"
   }

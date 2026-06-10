@@ -9,9 +9,9 @@ A API principal usa Node.js com Express e Prisma. Python nao entra neste projeto
 ## Responsabilidades
 
 - `apps/web`: interface unica para automacao Web.
-- `apps/api`: API real consumida pela Web e pelos testes de API.
-- `tests/cypress`: automacao com Cypress separada por Web e API.
-- `tests/playwright`: automacao com Playwright separada por Web e API.
+- `cypress/api`: API real consumida pela Web e pelos testes de API.
+- `cypress/web`: automacao Web com Cypress.
+- `playwright`: automacao com Playwright separada por Web.
 - `docker-compose.yml`: banco PostgreSQL e PgAdmin.
 - `docs`: contrato, arquitetura e estrategia de testes.
 
