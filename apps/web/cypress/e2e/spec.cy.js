@@ -17,5 +17,6 @@ describe('Login', () => {
 
   it('deve exibir os elementos da tela de login', () => {
     cy.contains('Acesse sua conta').should('be.visible')
+    
   })
 })
