@@ -222,6 +222,34 @@ function setupLoginAssistant() {
   })
 }
 
+function setupPasswordToggles() {
+  document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+    if (button.dataset.ready === 'true') return
+
+    const input = getElement(button.dataset.passwordToggle)
+    if (!input) return
+
+    const showIcon = button.querySelector('[data-icon="show"]')
+    const hideIcon = button.querySelector('[data-icon="hide"]')
+
+    const setVisible = (isVisible) => {
+      input.type = isVisible ? 'text' : 'password'
+      button.setAttribute('aria-label', isVisible ? 'Ocultar senha' : 'Mostrar senha')
+      button.setAttribute('aria-pressed', String(isVisible))
+      showIcon?.classList.toggle('hidden', isVisible)
+      hideIcon?.classList.toggle('hidden', !isVisible)
+    }
+
+    button.dataset.ready = 'true'
+    button.addEventListener('click', () => {
+      setVisible(input.type === 'password')
+      input.focus({ preventScroll: true })
+    })
+
+    setVisible(false)
+  })
+}
+
 function openModal(message, options = {}) {
   const title = getElement('[data-cy="modal-title"]')
   const secondaryButton = getElement('[data-cy="modal-secondary"]')
@@ -1883,5 +1911,6 @@ getElement('[data-cy="modal-close"]').addEventListener('click', async (event) =>
 })
 
 setupLoginAssistant()
+setupPasswordToggles()
 populateCharacterYears()
 showView(getRouteView(), { replaceRoute: true })

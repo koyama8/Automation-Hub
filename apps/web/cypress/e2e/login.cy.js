@@ -22,20 +22,27 @@ describe('Login', () => {
 
     cy.contains('button', 'Entrar').should('be.visible')
     cy.contains('button', 'Esqueci minha senha').should('be.visible')
-    cy.contains('button', 'Criar nova conta').should('be.visible')
-
-    
+    cy.contains('button', 'Criar nova conta').should('be.visible') 
   })
 
 
-  it.only('deve fazer login com sucesso', () => {
+  it('deve fazer login com sucesso', () => {
     cy.submeterLogin('qa@adminlab.com', 'pwd123')
-    cy.contains('Dashboard').should('be.visible')
-    cy.wait(3000)
+    cy.url().should('include', '/dashboard')
+ })
+
+  it('não deve logar com email inválido', () => {
+    cy.submeterLogin('qa@adminla.com', 'pwd123')
+    cy.contains('Informe um e-mail valido de provedor conhecido').should('be.visible')
+ })
+
+ it('não deve logar com senha inválida', () =>{
+   cy.submeterLogin('qa@adminlab.com','pwd12345')
+   cy.contains('Senha incorreta').should('be.visible')
  })
 
  it('deve abrir o assistente Automation Live', () => {
-
+   cy.get('[data-cy="assistant-open"]').click()
  })
 
 })
