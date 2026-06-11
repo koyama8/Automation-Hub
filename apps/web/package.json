@@ -2,7 +2,7 @@
   "name": "qa-automation-lab-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Interface web local para automacao com Cypress e Playwright.",
+  "description": "Interface web local para automacao com Cypress.",
   "scripts": {
     "dev": "serve -s dist -p 3000",
     "cypress:open": "cypress open",

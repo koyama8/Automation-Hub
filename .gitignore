@@ -1,16 +1,32 @@
+# Dependencias
 **/node_modules/
+
+# Variaveis de ambiente
 **/.env
 !**/.env.example
 
-**/.dev-server*.log
+# Logs
 **/*.log
+**/.dev-server*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-dist/assets/*.map
+# Build, cache e cobertura
+**/dist/assets/*.map
+**/.cache/
+**/.vite/
 **/coverage/
 **/generated/
 
+# Cypress
 **/cypress/downloads/
 **/cypress/screenshots/
 **/cypress/videos/
+
+# Playwright
 **/playwright-report/
+**/blob-report/
 **/test-results/
+**/.playwright/
