@@ -1,30 +1,28 @@
 # QA Automation Lab
 
-Laboratorio local para estudos de QA Automation, com aplicacao Web, API REST, banco em Docker e automacoes separadas por ferramenta.
+Laboratorio local para estudos de QA Automation, com interface Web e automacoes separadas para Cypress e Playwright.
 
 ## Visao Geral
 
 | Pasta | Objetivo | Stack principal | CI / Evidencias |
 | --- | --- | --- | --- |
-| `apps/` | Interface Web base para estudos E2E | HTML, CSS, JavaScript, Serve | Execucao local |
-| `cypress/` | API REST e automacoes Web/API com Cypress | Node.js, Express, Prisma, Cypress 14 | Suite Cypress local |
-| `playwright/` | Automacao Web E2E alternativa | Playwright, JavaScript | Suite Playwright local |
-| `database/` | Banco e massa inicial do laboratorio | PostgreSQL, PgAdmin, Docker | Ambiente local |
-| `docs/` | Apoio tecnico do projeto | Markdown | Documentacao base |
+| `apps/web/` | Interface Web e automacao Cypress | HTML, CSS, JavaScript, Cypress 14 | Suite local |
+| `playwright/web/` | Automacao Web alternativa | Playwright, JavaScript | Suite local |
+| `database/` | Apoio para massa e banco local | PostgreSQL, Docker | Ambiente local |
 
 ## Estrutura
 
 ```text
 qa-automation-lab/
 |-- apps/
-|   `-- web/                  # Interface Web
-|-- cypress/
-|   |-- api/                  # API REST + Cypress API
-|   `-- web/                  # Testes Cypress Web
+|   `-- web/
+|       |-- cypress/          # Testes Cypress
+|       |-- dist/             # Interface Web
+|       |-- src/              # Organizacao da interface
+|       `-- package.json
 |-- playwright/
-|   `-- web/                  # Testes Playwright Web
-|-- database/                 # Seed e scripts de banco
-|-- docs/                     # Documentacao de apoio
+|   `-- web/                  # Testes Playwright
+|-- database/                 # Scripts e seed
 |-- docker-compose.yml
 `-- README.md
 ```
