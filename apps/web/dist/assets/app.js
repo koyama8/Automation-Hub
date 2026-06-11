@@ -175,6 +175,7 @@ function setupLoginAssistant() {
   launcher.dataset.ready = 'true'
   launcher.addEventListener('click', () => setAssistantOpen(true))
   closeButton?.addEventListener('click', () => setAssistantOpen(false))
+  setAssistantOpen(false)
 
   options?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-assistant-action]')
