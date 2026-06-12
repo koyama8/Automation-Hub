@@ -46,6 +46,8 @@ const VIEW_ROUTES = {
   registerView: '/admin/cadastro',
   usersView: '/admin/usuarios',
   forgotView: '/admin/recuperar-senha',
+  testDataView: '/admin/massa-de-testes',
+  checkoutView: '/admin/checkout',
   formView: '/admin/formulario',
   visualView: '/admin/estados-visuais',
   uploadView: '/admin/upload',
@@ -104,11 +106,79 @@ let tableRows = [
   { id: 3, name: 'Validação de modal', status: 'Revisão' },
 ]
 
+const CHECKOUT_PRODUCTS = [
+  {
+    id: 'curso-cypress',
+    name: 'Curso Cypress E2E',
+    category: 'curso',
+    categoryLabel: 'Curso',
+    badge: 'CY',
+    level: 'Intermediario',
+    price: 129.9,
+    detail: 'Fluxos web com login, modal, dashboard e checkout local.',
+    features: ['8 aulas praticas', 'Suite Cypress pronta', 'Massa local'],
+  },
+  {
+    id: 'curso-playwright',
+    name: 'Curso Playwright Web',
+    category: 'curso',
+    categoryLabel: 'Curso',
+    badge: 'PW',
+    level: 'Avancado',
+    price: 149.9,
+    detail: 'Automacao moderna com multiplos navegadores e cenarios E2E.',
+    features: ['Page objects', 'Trace viewer', 'Execucao paralela'],
+  },
+  {
+    id: 'template-regressao',
+    name: 'Template de regressao',
+    category: 'template',
+    categoryLabel: 'Template',
+    badge: 'RG',
+    level: 'Checklist',
+    price: 49.9,
+    detail: 'Checklist organizado para smoke, regressao e riscos do fluxo.',
+    features: ['Prioridade por rota', 'Mapa de risco', 'Evidencias'],
+  },
+  {
+    id: 'template-api',
+    name: 'Template API Testing',
+    category: 'template',
+    categoryLabel: 'Template',
+    badge: 'API',
+    level: 'Contrato',
+    price: 39.9,
+    detail: 'Matriz de verbos, status, payloads e validacao de contrato.',
+    features: ['GET/POST/PUT/DELETE', 'Status esperado', 'Payload exemplo'],
+  },
+  {
+    id: 'evidencia-video',
+    name: 'Pacote de evidencias',
+    category: 'evidencia',
+    categoryLabel: 'Evidencia',
+    badge: 'EV',
+    level: 'Relatorio',
+    price: 29.9,
+    detail: 'Padrao visual para prints, videos e relatorios de execucao.',
+    features: ['Template de bug', 'Video local', 'Resumo executivo'],
+  },
+]
+const CHECKOUT_COUPONS = {
+  QA10: 0.1,
+  E2E15: 0.15,
+}
+
 let keyboardRows = []
 let keyboardNextId = 1
 let scenarioRows = []
 let scenarioSteps = []
 let scenarioNextId = 1
+let checkoutCart = []
+let checkoutCoupon = ''
+let pendingCheckoutPayment = ''
+let pendingCheckoutSnapshot = null
+let checkoutPixExpiresAt = 0
+let checkoutPixTimer = null
 const recoveryTokenHistory = new Set()
 
 function getElement(selector) {
@@ -466,6 +536,10 @@ function showView(viewId, options = {}) {
 
   if (viewId === 'keyboardView') {
     renderKeyboardScenarios()
+  }
+
+  if (viewId === 'checkoutView') {
+    renderCheckout()
   }
 
   if (viewId === 'characterManagementView') {
@@ -887,6 +961,656 @@ async function request(path, options = {}) {
   return { response, body }
 }
 
+function writeJsonResult(selector, payload) {
+  getElement(selector).value = JSON.stringify(payload, null, 2)
+}
+
+function sanitizeSlug(value) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]+/g, '.')
+    .replace(/^\.+|\.+$/g, '') || 'qa.lab'
+}
+
+function getSelectedTestDataExtras() {
+  return Array.from(document.querySelectorAll('input[name="test-data-extra"]:checked')).map((input) => input.value)
+}
+
+function buildTestDataItem(index, profile, prefix, domain, extras) {
+  const padded = String(index + 1).padStart(2, '0')
+  const email = `${prefix}.${padded}@${domain}`
+  const item = {
+    id: `mass-${Date.now()}-${padded}`,
+    profile,
+    name: profile === 'empresa-qa' ? `QA Company ${padded}` : `Usuario QA ${padded}`,
+    email,
+  }
+
+  if (extras.includes('login')) {
+    item.password = 'pwd123'
+  }
+
+  if (extras.includes('telefone')) {
+    item.phone = `(11) 9999${index}-100${index}`
+  }
+
+  if (extras.includes('documento')) {
+    item.document = `000.000.00${index}-0${index}`
+  }
+
+  return item
+}
+
+function generateTestData() {
+  const form = getElement('#testDataForm')
+  clearFormErrors(form)
+
+  const profileValid = requireField('testDataProfile', 'Selecione um perfil de massa')
+  const quantityValid = requireField('testDataQuantity', 'Informe a quantidade')
+  const prefixValid = requireField('testDataPrefix', 'Informe o prefixo do e-mail')
+  const domainValid = requireField('testDataDomain', 'Selecione um dominio')
+  const quantity = Number(getElement('#testDataQuantity').value)
+
+  if (quantityValid && (quantity < 1 || quantity > 5)) {
+    setError('testDataQuantity', 'Informe um valor entre 1 e 5')
+    return
+  }
+
+  if (!profileValid || !quantityValid || !prefixValid || !domainValid) return
+
+  const profile = getElement('#testDataProfile').value
+  const prefix = sanitizeSlug(getElement('#testDataPrefix').value)
+  const domain = getElement('#testDataDomain').value
+  const extras = getSelectedTestDataExtras()
+  const data = Array.from({ length: quantity }, (_, index) => buildTestDataItem(index, profile, prefix, domain, extras))
+
+  writeJsonResult('#testDataOutput', {
+    status: 'gerado',
+    total: data.length,
+    extras,
+    data,
+  })
+  showToast('Massa de testes gerada')
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+}
+
+function getFilteredCheckoutProducts() {
+  const search = getElement('#checkoutSearch')?.value.trim().toLowerCase() || ''
+  const category = getElement('#checkoutCategory')?.value || 'todos'
+
+  return CHECKOUT_PRODUCTS.filter((product) => {
+    const matchesSearch = !search || product.name.toLowerCase().includes(search) || product.detail.toLowerCase().includes(search)
+    const matchesCategory = category === 'todos' || product.category === category
+
+    return matchesSearch && matchesCategory
+  })
+}
+
+function getCheckoutSubtotal() {
+  return checkoutCart.reduce((total, item) => total + item.price * item.quantity, 0)
+}
+
+function getCheckoutDiscount() {
+  const subtotal = getCheckoutSubtotal()
+  const couponRate = CHECKOUT_COUPONS[checkoutCoupon] || 0
+
+  return subtotal * couponRate
+}
+
+function getCheckoutTotal() {
+  return Math.max(getCheckoutSubtotal() - getCheckoutDiscount(), 0)
+}
+
+function getCheckoutPaymentLabel(payment) {
+  const labels = {
+    pix: 'Pix',
+    credito: 'Cartao de credito',
+    boleto: 'Boleto',
+  }
+
+  return labels[payment] || 'Nao informado'
+}
+
+function getCheckoutOrderCode() {
+  return `QA-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
+}
+
+function getCheckoutSnapshot(payment) {
+  return {
+    orderCode: getCheckoutOrderCode(),
+    payment,
+    paymentLabel: getCheckoutPaymentLabel(payment),
+    subtotal: getCheckoutSubtotal(),
+    discount: getCheckoutDiscount(),
+    total: getCheckoutTotal(),
+    items: checkoutCart.map((item) => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+    })),
+  }
+}
+
+function getCardBrand(cardNumber = '') {
+  const digits = cardNumber.replace(/\D/g, '')
+  if (digits.startsWith('4')) return 'VISA'
+  if (/^5[1-5]/.test(digits)) return 'MASTER'
+  if (/^3[47]/.test(digits)) return 'AMEX'
+
+  return 'QA CARD'
+}
+
+function formatCardNumber(value) {
+  return String(value).replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
+}
+
+function renderCheckoutProducts() {
+  const productList = getElement('#checkoutProducts')
+  if (!productList) return
+
+  const products = getFilteredCheckoutProducts()
+
+  if (!products.length) {
+    productList.innerHTML = '<p class="checkout-empty">Nenhum produto encontrado.</p>'
+    return
+  }
+
+  productList.innerHTML = products
+    .map(
+      (product) => `
+        <article id="product-${product.id}" class="checkout-product-card" data-cy="product-card" data-product-id="${product.id}">
+          <div class="checkout-product-head">
+            <span class="checkout-product-badge" aria-hidden="true">${escapeHtml(product.badge)}</span>
+            <div>
+              <span class="section-kicker">${escapeHtml(product.categoryLabel)}</span>
+              <h2>${escapeHtml(product.name)}</h2>
+            </div>
+          </div>
+          <p>${escapeHtml(product.detail)}</p>
+          <ul class="checkout-product-features" aria-label="Itens inclusos">
+            ${product.features.map((feature) => `<li>${escapeHtml(feature)}</li>`).join('')}
+          </ul>
+          <div class="checkout-product-footer">
+            <div>
+              <small>${escapeHtml(product.level)}</small>
+              <strong>${formatCurrency(product.price)}</strong>
+            </div>
+            <button class="secondary-btn" data-cy="add-product" data-checkout-add="${product.id}" type="button" value="${product.id}">Adicionar</button>
+          </div>
+        </article>
+      `,
+    )
+    .join('')
+}
+
+function renderCheckoutCart() {
+  const cartList = getElement('#checkoutCart')
+  if (!cartList) return
+
+  if (!checkoutCart.length) {
+    cartList.innerHTML = '<li class="checkout-empty">Carrinho vazio.</li>'
+  } else {
+    cartList.innerHTML = checkoutCart
+      .map(
+        (item) => `
+          <li id="cart-${item.id}" data-cy="checkout-cart-item" data-cart-id="${item.id}">
+            <div>
+              <strong>${escapeHtml(item.name)}</strong>
+              <small>${item.quantity} x ${formatCurrency(item.price)}</small>
+            </div>
+            <div class="checkout-quantity">
+              <button type="button" data-cy="decrease-product" data-checkout-decrease="${item.id}" value="${item.id}" aria-label="Diminuir ${escapeHtml(item.name)}">-</button>
+              <span data-cy="product-quantity">${item.quantity}</span>
+              <button type="button" data-cy="increase-product" data-checkout-increase="${item.id}" value="${item.id}" aria-label="Aumentar ${escapeHtml(item.name)}">+</button>
+            </div>
+          </li>
+        `,
+      )
+      .join('')
+  }
+
+  const subtotal = getCheckoutSubtotal()
+  const discount = getCheckoutDiscount()
+  getElement('#checkoutSubtotal').textContent = formatCurrency(subtotal)
+  getElement('#checkoutDiscount').textContent = formatCurrency(discount)
+  getElement('#checkoutTotal').textContent = formatCurrency(getCheckoutTotal())
+}
+
+function renderCheckout() {
+  renderCheckoutProducts()
+  renderCheckoutCart()
+  renderCheckoutPaymentPreview()
+}
+
+function showCheckoutAlert(message) {
+  const alert = getElement('#checkoutAlert')
+  if (!alert) return
+
+  alert.textContent = message
+  alert.classList.remove('hidden')
+}
+
+function clearCheckoutAlert() {
+  const alert = getElement('#checkoutAlert')
+  if (!alert) return
+
+  alert.textContent = ''
+  alert.classList.add('hidden')
+}
+
+function getPixTimerLabel() {
+  const remaining = Math.max(0, checkoutPixExpiresAt - Date.now())
+  const totalSeconds = Math.ceil(remaining / 1000)
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0')
+  const seconds = String(totalSeconds % 60).padStart(2, '0')
+  return `${minutes}:${seconds}`
+}
+
+function updateCheckoutPixTimerText() {
+  if (!checkoutPixExpiresAt) return
+
+  const label = getPixTimerLabel()
+  document.querySelectorAll('[data-pix-countdown]').forEach((element) => {
+    element.textContent = element.dataset.pixCountdown === 'inline' ? `Expira em ${label}` : label
+  })
+
+  if (label !== '00:00') return
+  clearInterval(checkoutPixTimer)
+  checkoutPixTimer = null
+}
+
+function startCheckoutPixTimer() {
+  if (!checkoutPixExpiresAt || checkoutPixExpiresAt <= Date.now()) {
+    checkoutPixExpiresAt = Date.now() + 10 * 60 * 1000
+  }
+
+  updateCheckoutPixTimerText()
+  if (checkoutPixTimer) return
+  checkoutPixTimer = setInterval(updateCheckoutPixTimerText, 1000)
+}
+
+function stopCheckoutPixTimer() {
+  clearInterval(checkoutPixTimer)
+  checkoutPixTimer = null
+  checkoutPixExpiresAt = 0
+}
+
+function updateCheckoutPaymentLayout(payment) {
+  const view = getElement('#checkoutView')
+  const layout = view?.querySelector('.checkout-layout')
+  const hasPayment = Boolean(payment)
+
+  view?.classList.toggle('checkout-expanded', hasPayment)
+  layout?.classList.toggle('payment-expanded', hasPayment)
+  layout?.classList.toggle('payment-card-expanded', payment === 'credito')
+  layout?.classList.toggle('payment-boleto-expanded', payment === 'boleto')
+  layout?.classList.toggle('payment-pix-expanded', payment === 'pix')
+}
+
+function renderCheckoutPaymentPreview() {
+  const preview = getElement('#checkoutPaymentPreview')
+  if (!preview) return
+
+  const payment = getElement('#checkoutPayment')?.value || ''
+  preview.className = 'checkout-payment-preview hidden'
+  updateCheckoutPaymentLayout(payment)
+
+  if (!payment) {
+    stopCheckoutPixTimer()
+    preview.innerHTML = ''
+    return
+  }
+
+  preview.classList.remove('hidden')
+  if (payment !== 'pix') stopCheckoutPixTimer()
+
+  if (payment === 'pix') {
+    startCheckoutPixTimer()
+    preview.classList.add('pix-payment-preview')
+    preview.innerHTML = `
+      <section class="payment-preview-card" data-cy="payment-pix-preview">
+        <div class="pix-qr" data-cy="pix-qr" aria-label="QR Code Pix ficticio"></div>
+        <div>
+          <span class="section-kicker">Pix copia e cola</span>
+          <h3>Pagamento instantaneo</h3>
+          <p>Use este bloco para validar QR Code, codigo Pix e tempo de expiracao.</p>
+          <div class="payment-token-row">
+            <strong data-cy="payment-pix-timer" data-pix-countdown="inline">Expira em ${getPixTimerLabel()}</strong>
+            <code data-cy="pix-copy-code">00020126580014BR.GOV.BCB.PIX0136QA-AUTOMATION-LAB</code>
+          </div>
+        </div>
+      </section>
+    `
+    updateCheckoutPixTimerText()
+    return
+  }
+
+  if (payment === 'credito') {
+    preview.classList.add('card-payment-preview')
+    preview.innerHTML = `
+      <section class="payment-preview-card" data-cy="payment-card-preview">
+        <div class="credit-card-preview" data-cy="credit-card-preview">
+          <div class="credit-card-top">
+            <span class="card-chip" aria-hidden="true"></span>
+            <span data-cy="card-brand">VISA</span>
+          </div>
+          <strong data-cy="card-preview-number">4111 1111 1111 1111</strong>
+          <div class="credit-card-bottom">
+            <small data-cy="card-preview-name">QA AUTOMATION</small>
+            <small data-cy="card-preview-expiry">12/30</small>
+          </div>
+        </div>
+        <div class="payment-card-fields">
+          <div class="payment-card-field">
+            <label for="checkout-card-number">Numero do cartao *</label>
+            <input id="checkout-card-number" data-field="checkoutCardNumber" data-cy="checkout-card-number" name="checkout-card-number" value="4111 1111 1111 1111" inputmode="numeric" maxlength="19" />
+            <p class="error" data-error-for="checkoutCardNumber"></p>
+          </div>
+          <div class="payment-card-field">
+            <label for="checkout-card-name">Nome impresso *</label>
+            <input id="checkout-card-name" data-field="checkoutCardName" data-cy="checkout-card-name" name="checkout-card-name" value="QA AUTOMATION" />
+            <p class="error" data-error-for="checkoutCardName"></p>
+          </div>
+          <div class="payment-card-mini-grid">
+            <div>
+              <label for="checkout-card-expiry">Validade *</label>
+              <input id="checkout-card-expiry" data-field="checkoutCardExpiry" data-cy="checkout-card-expiry" name="checkout-card-expiry" value="12/30" maxlength="5" />
+              <p class="error" data-error-for="checkoutCardExpiry"></p>
+            </div>
+            <div>
+              <label for="checkout-card-cvv">CVV *</label>
+              <input id="checkout-card-cvv" data-field="checkoutCardCvv" data-cy="checkout-card-cvv" name="checkout-card-cvv" value="123" inputmode="numeric" maxlength="4" />
+              <p class="error" data-error-for="checkoutCardCvv"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+    `
+    updateCheckoutCardPreview()
+    return
+  }
+
+  if (payment === 'boleto') {
+    preview.classList.add('boleto-payment-preview')
+    preview.innerHTML = `
+      <section class="payment-preview-card" data-cy="payment-boleto-preview">
+        <div class="boleto-mini">
+          <span>341-7</span>
+          <strong data-cy="boleto-preview-line">34191.79001 01043.510047 91020.150008 8 97370000018990</strong>
+        </div>
+        <div>
+          <span class="section-kicker">Boleto bancario</span>
+          <h3>Vencimento em 3 dias</h3>
+          <p>Ao finalizar, o boleto completo abre em um modal com linha digitavel, codigo de barras e botao de pagamento.</p>
+        </div>
+      </section>
+    `
+  }
+}
+
+function updateCheckoutCardPreview() {
+  const numberInput = getElement('#checkoutCardNumber')
+  const nameInput = getElement('#checkoutCardName')
+  const expiryInput = getElement('#checkoutCardExpiry')
+  if (!numberInput) return
+
+  numberInput.value = formatCardNumber(numberInput.value)
+  const brand = getCardBrand(numberInput.value)
+  const number = numberInput.value || '0000 0000 0000 0000'
+  const name = nameInput?.value.trim().toUpperCase() || 'QA AUTOMATION'
+  const expiry = expiryInput?.value.trim() || '12/30'
+
+  getElement('[data-cy="card-brand"]').textContent = brand
+  getElement('[data-cy="card-preview-number"]').textContent = number
+  getElement('[data-cy="card-preview-name"]').textContent = name
+  getElement('[data-cy="card-preview-expiry"]').textContent = expiry
+}
+
+function addCheckoutProduct(productId) {
+  const product = CHECKOUT_PRODUCTS.find((item) => item.id === productId)
+  if (!product) return
+
+  clearCheckoutAlert()
+  const cartItem = checkoutCart.find((item) => item.id === productId)
+  if (cartItem) {
+    cartItem.quantity += 1
+  } else {
+    checkoutCart.push({ ...product, quantity: 1 })
+  }
+
+  renderCheckoutCart()
+  showToast('Produto adicionado ao carrinho')
+}
+
+function updateCheckoutQuantity(productId, direction) {
+  const cartItem = checkoutCart.find((item) => item.id === productId)
+  if (!cartItem) return
+
+  cartItem.quantity += direction
+  checkoutCart = checkoutCart.filter((item) => item.quantity > 0)
+  if (checkoutCart.length) clearCheckoutAlert()
+  renderCheckoutCart()
+}
+
+function applyCheckoutCoupon() {
+  const couponField = getElement('#checkoutCoupon')
+  const message = getElement('#checkoutCouponMessage')
+  const coupon = couponField.value.trim().toUpperCase()
+
+  if (!coupon) {
+    checkoutCoupon = ''
+    message.textContent = 'Nenhum cupom aplicado.'
+    renderCheckoutCart()
+    return
+  }
+
+  if (!CHECKOUT_COUPONS[coupon]) {
+    checkoutCoupon = ''
+    message.textContent = 'Cupom invalido. Tente QA10 ou E2E15.'
+    renderCheckoutCart()
+    return
+  }
+
+  checkoutCoupon = coupon
+  couponField.value = coupon
+  message.textContent = `Cupom ${coupon} aplicado com sucesso.`
+  renderCheckoutCart()
+}
+
+function validateCheckoutCard() {
+  const numberField = getElement('#checkoutCardNumber')
+  const nameField = getElement('#checkoutCardName')
+  const expiryField = getElement('#checkoutCardExpiry')
+  const cvvField = getElement('#checkoutCardCvv')
+  const numberDigits = numberField?.value.replace(/\D/g, '') || ''
+  let valid = true
+
+  if (!numberField || numberDigits.length < 16) {
+    setError('checkoutCardNumber', 'Informe um cartao ficticio com 16 digitos')
+    valid = false
+  }
+
+  if (!nameField?.value.trim()) {
+    setError('checkoutCardName', 'Informe o nome impresso')
+    valid = false
+  }
+
+  if (!/^\d{2}\/\d{2}$/.test(expiryField?.value.trim() || '')) {
+    setError('checkoutCardExpiry', 'Use o formato MM/AA')
+    valid = false
+  }
+
+  if (!/^\d{3,4}$/.test(cvvField?.value.trim() || '')) {
+    setError('checkoutCardCvv', 'Informe 3 ou 4 digitos')
+    valid = false
+  }
+
+  return valid
+}
+
+function openCheckoutPaymentFlow(payment, snapshot) {
+  const modal = getElement('#paymentFlowModal')
+  const content = getElement('#paymentFlowContent')
+  const title = getElement('[data-cy="payment-flow-title"]')
+  const copy = getElement('[data-cy="payment-flow-copy"]')
+  const badge = getElement('[data-cy="payment-flow-badge"]')
+  const confirmButton = getElement('[data-cy="payment-flow-confirm"]')
+  const card = getElement('[data-cy="payment-flow-card"]')
+
+  pendingCheckoutPayment = payment
+  pendingCheckoutSnapshot = snapshot
+  badge.textContent = payment === 'pix' ? 'PIX' : payment === 'credito' ? 'CARD' : 'BOL'
+  card.dataset.payment = payment
+
+  if (payment === 'pix') {
+    startCheckoutPixTimer()
+    title.textContent = 'Confirmar Pix'
+    copy.textContent = 'Escaneie o QR Code ficticio ou valide o codigo copia e cola.'
+    confirmButton.textContent = 'Confirmar Pix'
+    content.innerHTML = `
+      <section class="payment-flow-grid pix-flow" data-cy="pix-payment-flow">
+        <div class="pix-qr large" data-cy="pix-modal-qr" aria-label="QR Code Pix ficticio"></div>
+        <div class="payment-flow-details">
+          <span class="section-kicker">Pedido ${escapeHtml(snapshot.orderCode)}</span>
+          <h3>${formatCurrency(snapshot.total)}</h3>
+          <p>Pagamento reservado por <strong data-cy="pix-modal-timer" data-pix-countdown="value">${getPixTimerLabel()}</strong>.</p>
+          <code data-cy="pix-modal-code">00020126580014BR.GOV.BCB.PIX0136${escapeHtml(snapshot.orderCode)}520400005303986540${snapshot.total.toFixed(2)}</code>
+        </div>
+      </section>
+    `
+    updateCheckoutPixTimerText()
+  }
+
+  if (payment === 'credito') {
+    const cardNumber = getElement('#checkoutCardNumber').value
+    const cardName = getElement('#checkoutCardName').value
+    const cardExpiry = getElement('#checkoutCardExpiry').value
+    title.textContent = 'Confirmar cartao'
+    copy.textContent = 'Valide o cartao ficticio antes de confirmar o pagamento.'
+    confirmButton.textContent = 'Confirmar cartao'
+    content.innerHTML = `
+      <section class="payment-flow-grid card-flow" data-cy="card-payment-flow">
+        <div class="credit-card-preview modal-card-preview">
+          <div class="credit-card-top">
+            <span class="card-chip" aria-hidden="true"></span>
+            <span data-cy="modal-card-brand">${escapeHtml(getCardBrand(cardNumber))}</span>
+          </div>
+          <strong data-cy="modal-card-number">${escapeHtml(cardNumber)}</strong>
+          <div class="credit-card-bottom">
+            <small data-cy="modal-card-name">${escapeHtml(cardName.toUpperCase())}</small>
+            <small data-cy="modal-card-expiry">${escapeHtml(cardExpiry)}</small>
+          </div>
+        </div>
+        <div class="payment-flow-details">
+          <span class="section-kicker">Autorizacao ficticia</span>
+          <h3>${formatCurrency(snapshot.total)}</h3>
+          <p data-cy="card-authorization-code">AUT-${escapeHtml(snapshot.orderCode)}</p>
+          <p>Ao confirmar, o pedido sera aprovado e o modal de sucesso sera exibido.</p>
+        </div>
+      </section>
+    `
+  }
+
+  if (payment === 'boleto') {
+    title.textContent = 'Boleto bancario'
+    copy.textContent = 'Confira os dados do boleto ficticio e clique em pagar.'
+    confirmButton.textContent = 'Pagar boleto'
+    content.innerHTML = `
+      <section class="boleto-slip" data-cy="boleto-payment-flow">
+        <header>
+          <strong>341-7</strong>
+          <span data-cy="boleto-line">34191.79001 01043.510047 91020.150008 8 97370000018990</span>
+        </header>
+        <dl>
+          <div><dt>Beneficiario</dt><dd>QA Automation Lab LTDA</dd></div>
+          <div><dt>Pagador</dt><dd>QA Admin Lab</dd></div>
+          <div><dt>Documento</dt><dd>${escapeHtml(snapshot.orderCode)}</dd></div>
+          <div><dt>Vencimento</dt><dd>15/06/2026</dd></div>
+          <div><dt>Valor</dt><dd>${formatCurrency(snapshot.total)}</dd></div>
+        </dl>
+        <div class="boleto-barcode" data-cy="boleto-barcode" aria-label="Codigo de barras ficticio"></div>
+      </section>
+    `
+  }
+
+  modal.classList.remove('hidden')
+}
+
+function closeCheckoutPaymentFlow() {
+  getElement('#paymentFlowModal').classList.add('hidden')
+  getElement('[data-cy="payment-flow-card"]').removeAttribute('data-payment')
+  pendingCheckoutPayment = ''
+  pendingCheckoutSnapshot = null
+}
+
+function resetCheckoutAfterPayment() {
+  getElement('#checkoutForm').reset()
+  checkoutCart = []
+  checkoutCoupon = ''
+  clearCheckoutAlert()
+  getElement('#checkoutCouponMessage').textContent = 'Nenhum cupom aplicado.'
+  renderCheckoutCart()
+  renderCheckoutPaymentPreview()
+}
+
+function completeCheckoutPayment() {
+  if (!pendingCheckoutPayment || !pendingCheckoutSnapshot) return
+
+  const payment = pendingCheckoutPayment
+  const snapshot = pendingCheckoutSnapshot
+  closeCheckoutPaymentFlow()
+  resetCheckoutAfterPayment()
+
+  const titles = {
+    pix: 'Pix realizado com sucesso',
+    credito: 'Cartao realizado com sucesso',
+    boleto: 'Boleto pago com sucesso',
+  }
+
+  openModal('Pedido finalizado com sucesso. Fluxo completo de checkout validado.', {
+    title: titles[payment],
+    icon: payment === 'pix' ? 'PIX' : payment === 'credito' ? 'OK' : 'BOL',
+    items: [
+      { label: 'Pedido', value: snapshot.orderCode },
+      { label: 'Pagamento', value: snapshot.paymentLabel },
+      { label: 'Produtos', value: String(snapshot.items.length) },
+      { label: 'Total', value: formatCurrency(snapshot.total) },
+    ],
+  })
+}
+
+function finishCheckout() {
+  const form = getElement('#checkoutForm')
+  clearFormErrors(form)
+  clearCheckoutAlert()
+
+  if (!checkoutCart.length) {
+    getElement('#checkoutCouponMessage').textContent = 'Adicione pelo menos um produto ao carrinho.'
+    showCheckoutAlert('Adicione pelo menos um produto ao carrinho antes de finalizar o pedido.')
+    return
+  }
+
+  const paymentValid = requireField('checkoutPayment', 'Selecione a forma de pagamento')
+  const termsValid = requireChecked('checkoutTerms', 'Confirme os dados do pedido')
+  if (!paymentValid || !termsValid) {
+    showCheckoutAlert('Revise os campos obrigatorios do checkout antes de finalizar.')
+    return
+  }
+
+  const payment = getElement('#checkoutPayment').value
+  if (payment === 'credito' && !validateCheckoutCard()) {
+    showCheckoutAlert('Revise os dados do cartao ficticio para continuar.')
+    return
+  }
+
+  openCheckoutPaymentFlow(payment, getCheckoutSnapshot(payment))
+}
+
 function completeLogin(user, mode) {
   currentSessionMode = mode
   localStorage.setItem('token', mode === 'api' ? 'api-session' : 'local-session')
@@ -1070,6 +1794,58 @@ getElement('#forgotForm').addEventListener('submit', async (event) => {
     showLocalToken()
   }
 })
+
+getElement('#testDataForm').addEventListener('submit', (event) => {
+  event.preventDefault()
+  generateTestData()
+})
+
+getElement('#checkoutSearch').addEventListener('input', renderCheckoutProducts)
+
+getElement('#checkoutCategory').addEventListener('change', renderCheckoutProducts)
+
+getElement('#checkoutPayment').addEventListener('change', () => {
+  clearFormErrors(getElement('#checkoutForm'))
+  clearCheckoutAlert()
+  renderCheckoutPaymentPreview()
+})
+
+getElement('#checkoutPaymentPreview').addEventListener('input', (event) => {
+  if (!event.target.closest('.payment-card-fields')) return
+  updateCheckoutCardPreview()
+})
+
+getElement('#checkoutProducts').addEventListener('click', (event) => {
+  const addButton = event.target.closest('[data-checkout-add]')
+  if (!addButton) return
+
+  addCheckoutProduct(addButton.dataset.checkoutAdd)
+})
+
+getElement('#checkoutCart').addEventListener('click', (event) => {
+  const increaseButton = event.target.closest('[data-checkout-increase]')
+  const decreaseButton = event.target.closest('[data-checkout-decrease]')
+
+  if (increaseButton) {
+    updateCheckoutQuantity(increaseButton.dataset.checkoutIncrease, 1)
+    return
+  }
+
+  if (decreaseButton) {
+    updateCheckoutQuantity(decreaseButton.dataset.checkoutDecrease, -1)
+  }
+})
+
+getElement('[data-cy="checkout-apply-coupon"]').addEventListener('click', applyCheckoutCoupon)
+
+getElement('#checkoutForm').addEventListener('submit', (event) => {
+  event.preventDefault()
+  finishCheckout()
+})
+
+getElement('[data-cy="payment-flow-cancel"]').addEventListener('click', closeCheckoutPaymentFlow)
+
+getElement('[data-cy="payment-flow-confirm"]').addEventListener('click', completeCheckoutPayment)
 
 getElement('#technologyInput').addEventListener('keydown', (event) => {
   if (event.key !== 'Enter') return

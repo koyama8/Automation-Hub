@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="/favicon.png?v=45" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=45" />
     <link rel="apple-touch-icon" href="/favicon.png?v=45" />
-    <link rel="stylesheet" href="/assets/styles.css?v=54" />
+    <link rel="stylesheet" href="/assets/styles.css?v=58" />
   </head>
   <body>
     <div class="app-shell">
@@ -145,13 +145,13 @@
           </div>
 
           <section class="quick-grid">
-            <button class="feature-card" data-cy="card-register" data-target="registerView" type="button">
+            <button class="feature-card" data-cy="card-test-data" data-target="testDataView" type="button">
               <span class="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></svg>
+                <svg viewBox="0 0 24 24"><path d="M4 7c0 2 3.6 3.5 8 3.5S20 9 20 7s-3.6-3.5-8-3.5S4 5 4 7z" /><path d="M4 7v5c0 2 3.6 3.5 8 3.5s8-1.5 8-3.5V7" /><path d="M4 12v5c0 2 3.6 3.5 8 3.5s8-1.5 8-3.5v-5" /></svg>
               </span>
               <span class="feature-copy">
-                <strong>Cadastro</strong>
-                <small>Criar usuário pela tela</small>
+                <strong>Massa de testes</strong>
+                <small>Gerar dados para automacao</small>
               </span>
             </button>
             <button class="feature-card" data-cy="card-users" data-target="usersView" type="button">
@@ -172,13 +172,13 @@
                 <small>Campos, radios, checks, upload e tags</small>
               </span>
             </button>
-            <button class="feature-card" data-cy="card-forgot" data-target="forgotView" type="button">
+            <button class="feature-card" data-cy="card-checkout" data-target="checkoutView" type="button">
               <span class="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5" /><path d="M12 12l9-9" /><path d="M16 8l3 3" /><path d="M19 5l2 2" /></svg>
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1" /><circle cx="18" cy="20" r="1" /><path d="M2 3h3l3 12h10l3-8H7" /><path d="M8 15h11" /></svg>
               </span>
               <span class="feature-copy">
-                <strong>Recuperar senha</strong>
-                <small>Fluxo com token local</small>
+                <strong>Checkout Web</strong>
+                <small>Carrinho, cupom e pagamento</small>
               </span>
             </button>
             <button class="feature-card" data-cy="card-visual" data-target="visualView" type="button">
@@ -335,6 +335,155 @@
             <p class="error" data-error-for="forgotEmail"></p>
             <button class="primary-btn" type="submit">Gerar token</button>
           </form>
+        </main>
+      </section>
+
+      <section id="testDataView" class="page hidden" data-view="test-data">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Massa de testes</h1>
+              <p>Gere dados locais para validar formularios, login e cenarios E2E.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container">
+          <section class="form-card training-card">
+            <form id="testDataForm" class="training-form" data-form="test-data" data-cy="test-data-form" novalidate>
+              <div class="form-grid">
+                <div>
+                  <label for="test-data-profile">Perfil da massa *</label>
+                  <select id="test-data-profile" data-field="testDataProfile" data-cy="test-data-profile" name="test-data-profile">
+                    <option value="">Selecione</option>
+                    <option value="usuario-admin">Usuario admin</option>
+                    <option value="usuario-web">Usuario web</option>
+                    <option value="contato-formulario">Contato do formulario</option>
+                    <option value="empresa-qa">Empresa QA</option>
+                  </select>
+                  <p class="error" data-error-for="testDataProfile"></p>
+                </div>
+
+                <div>
+                  <label for="test-data-quantity">Quantidade *</label>
+                  <input id="test-data-quantity" data-field="testDataQuantity" data-cy="test-data-quantity" name="test-data-quantity" type="number" min="1" max="5" value="1" />
+                  <p class="error" data-error-for="testDataQuantity"></p>
+                </div>
+
+                <div>
+                  <label for="test-data-prefix">Prefixo do e-mail *</label>
+                  <input id="test-data-prefix" data-field="testDataPrefix" data-cy="test-data-prefix" name="test-data-prefix" value="qa.lab" placeholder="qa.lab" />
+                  <p class="error" data-error-for="testDataPrefix"></p>
+                </div>
+
+                <div>
+                  <label for="test-data-domain">Dominio *</label>
+                  <select id="test-data-domain" data-field="testDataDomain" data-cy="test-data-domain" name="test-data-domain">
+                    <option value="adminlab.com">adminlab.com</option>
+                    <option value="gmail.com">gmail.com</option>
+                    <option value="hotmail.com">hotmail.com</option>
+                    <option value="outlook.com">outlook.com</option>
+                  </select>
+                  <p class="error" data-error-for="testDataDomain"></p>
+                </div>
+              </div>
+
+              <fieldset class="choice-group">
+                <legend>Dados extras</legend>
+                <label><input id="test-data-login" data-cy="test-data-login" name="test-data-extra" type="checkbox" value="login" checked /> Login</label>
+                <label><input id="test-data-phone" data-cy="test-data-phone" name="test-data-extra" type="checkbox" value="telefone" checked /> Telefone</label>
+                <label><input id="test-data-document" data-cy="test-data-document" name="test-data-extra" type="checkbox" value="documento" /> Documento</label>
+              </fieldset>
+
+              <button class="primary-btn" data-cy="test-data-generate" type="submit">Gerar massa</button>
+            </form>
+
+            <div class="training-output">
+              <label for="test-data-output">Resultado gerado</label>
+              <textarea id="test-data-output" data-cy="test-data-output" name="test-data-output" readonly>{
+  "status": "aguardando",
+  "message": "Preencha os campos e gere a massa."
+}</textarea>
+            </div>
+          </section>
+        </main>
+      </section>
+
+      <section id="checkoutView" class="page hidden" data-view="checkout">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">LAB</span>
+            <div>
+              <h1>Checkout Web</h1>
+              <p>Fluxo local para validar busca, carrinho, cupom, pagamento e pedido.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container">
+          <section class="checkout-layout">
+            <div class="form-card checkout-catalog">
+              <div class="checkout-toolbar">
+                <div>
+                  <label for="checkout-search">Buscar produto</label>
+                  <input id="checkout-search" data-field="checkoutSearch" data-cy="checkout-search" name="checkout-search" value="" placeholder="Ex: Cypress" />
+                </div>
+
+                <div>
+                  <label for="checkout-category">Categoria</label>
+                  <select id="checkout-category" data-field="checkoutCategory" data-cy="checkout-category" name="checkout-category">
+                    <option value="todos">Todos</option>
+                    <option value="curso">Cursos</option>
+                    <option value="template">Templates</option>
+                    <option value="evidencia">Evidencias</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="checkout-product-grid" data-role="checkoutProducts" data-cy="checkout-products"></div>
+            </div>
+
+            <form id="checkoutForm" class="form-card checkout-summary" data-form="checkout" data-cy="checkout-form" novalidate>
+              <h2>Resumo do pedido</h2>
+              <p id="checkout-alert" class="checkout-alert hidden" data-role="checkoutAlert" data-cy="checkout-alert" role="alert"></p>
+              <ul class="checkout-cart-list" data-role="checkoutCart" data-cy="checkout-cart"></ul>
+
+              <label for="checkout-coupon">Cupom</label>
+              <div class="checkout-coupon-row">
+                <input id="checkout-coupon" data-field="checkoutCoupon" data-cy="checkout-coupon" name="checkout-coupon" value="" placeholder="QA10" />
+                <button class="secondary-btn" data-cy="checkout-apply-coupon" type="button">Aplicar</button>
+              </div>
+              <p class="result-text checkout-coupon-message" data-role="checkoutCouponMessage" data-cy="checkout-coupon-message">Nenhum cupom aplicado.</p>
+
+              <label for="checkout-payment">Forma de pagamento *</label>
+              <select id="checkout-payment" data-field="checkoutPayment" data-cy="checkout-payment" name="checkout-payment">
+                <option value="">Selecione</option>
+                <option value="pix">Pix</option>
+                <option value="credito">Cartao de credito</option>
+                <option value="boleto">Boleto</option>
+              </select>
+              <p class="error" data-error-for="checkoutPayment"></p>
+
+              <div id="checkout-payment-preview" class="checkout-payment-preview hidden" data-role="checkoutPaymentPreview" data-cy="checkout-payment-preview"></div>
+
+              <label class="terms-line">
+                <input id="checkout-terms" data-field="checkoutTerms" data-cy="checkout-terms" name="checkout-terms" type="checkbox" value="accepted" />
+                Confirmo os dados do pedido *
+              </label>
+              <p class="error" data-error-for="checkoutTerms"></p>
+
+              <div class="checkout-totals" data-cy="checkout-totals">
+                <span>Subtotal <strong data-cy="checkout-subtotal">R$ 0,00</strong></span>
+                <span>Desconto <strong data-cy="checkout-discount">R$ 0,00</strong></span>
+                <span>Total <strong data-cy="checkout-total">R$ 0,00</strong></span>
+              </div>
+
+              <button class="primary-btn" data-cy="checkout-submit" type="submit">Finalizar pedido</button>
+            </form>
+          </section>
         </main>
       </section>
 
@@ -1392,9 +1541,26 @@
         </div>
       </div>
 
+      <div id="paymentFlowModal" class="modal-overlay hidden" data-cy="payment-flow-modal" role="dialog" aria-modal="true" aria-labelledby="paymentFlowTitle">
+        <div class="modal-card payment-flow-card" data-cy="payment-flow-card">
+          <div class="modal-head">
+            <span class="modal-badge" data-cy="payment-flow-badge">PAY</span>
+            <div>
+              <h2 id="paymentFlowTitle" class="modal-title" data-cy="payment-flow-title">Confirmar pagamento</h2>
+              <p class="modal-copy" data-cy="payment-flow-copy">Revise os dados antes de confirmar.</p>
+            </div>
+          </div>
+          <div class="payment-flow-content" data-role="paymentFlowContent" data-cy="payment-flow-content"></div>
+          <div class="modal-actions split-actions">
+            <button class="secondary-btn" data-cy="payment-flow-cancel" type="button">Cancelar</button>
+            <button class="primary-btn" data-cy="payment-flow-confirm" type="button">Confirmar pagamento</button>
+          </div>
+        </div>
+      </div>
+
       <div id="toast" class="toast hidden" data-cy="toast" role="status" aria-live="polite"></div>
     </div>
 
-    <script src="/assets/app.js?v=54"></script>
+    <script src="/assets/app.js?v=58"></script>
   </body>
 </html>
