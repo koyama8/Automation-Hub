@@ -136,6 +136,24 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;')
 }
 
+function formatPhone(value) {
+  const digits = String(value).replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits ? `(${digits}` : ''
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
+function setupPhoneMasks() {
+  const phoneInput = getElement('#contactPhone')
+  if (!phoneInput || phoneInput.dataset.maskReady === 'true') return
+
+  phoneInput.dataset.maskReady = 'true'
+  phoneInput.addEventListener('input', (event) => {
+    event.currentTarget.value = formatPhone(event.currentTarget.value)
+  })
+}
+
 function showToast(message, type = 'success') {
   toast.textContent = message
   toast.classList.toggle('error-toast', type === 'error')
@@ -1912,5 +1930,6 @@ getElement('[data-cy="modal-close"]').addEventListener('click', async (event) =>
 
 setupLoginAssistant()
 setupPasswordToggles()
+setupPhoneMasks()
 populateCharacterYears()
 showView(getRouteView(), { replaceRoute: true })

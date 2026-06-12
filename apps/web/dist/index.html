@@ -367,7 +367,7 @@
                 </div>
                 <div>
                   <label>Telefone *</label>
-                  <input id="contact-phone" data-field="contactPhone" name="contact-phone" placeholder="11999999999" />
+                  <input id="contact-phone" data-field="contactPhone" name="contact-phone" type="tel" inputmode="numeric" maxlength="15" placeholder="(11) 99999-1000" />
                   <p class="error" data-error-for="contactPhone"></p>
                 </div>
                 <div>
@@ -406,10 +406,10 @@
           <label>Nível do cenário *</label>
                   <select data-field="contactLevel" name="contact-level">
                     <option value="">Selecione</option>
-                    <option>Smoke</option>
-            <option>Regressão</option>
-                    <option>Contrato</option>
-            <option>Crítico</option>
+                    <option value="smoke">Smoke</option>
+            <option value="regressao">Regressão</option>
+                    <option value="contrato">Contrato</option>
+            <option value="critico">Crítico</option>
                   </select>
                   <p class="error" data-error-for="contactLevel"></p>
                 </div>
@@ -417,10 +417,10 @@
                   <label>Navegador alvo *</label>
                   <select data-field="contactBrowser" name="contact-browser">
                     <option value="">Selecione</option>
-                    <option>Chrome</option>
-                    <option>Edge</option>
-                    <option>Firefox</option>
-                    <option>Electron</option>
+                    <option value="chrome">Chrome</option>
+                    <option value="edge">Edge</option>
+                    <option value="firefox">Firefox</option>
+                    <option value="electron">Electron</option>
                   </select>
                   <p class="error" data-error-for="contactBrowser"></p>
                 </div>
@@ -428,9 +428,9 @@
                   <label>Modo de execução *</label>
                   <select data-field="contactExecution" name="contact-execution">
                     <option value="">Selecione</option>
-                    <option>Headless</option>
-                    <option>Assistido</option>
-                    <option>Pipeline</option>
+                    <option value="headless">Headless</option>
+                    <option value="assistido">Assistido</option>
+                    <option value="pipeline">Pipeline</option>
                   </select>
                   <p class="error" data-error-for="contactExecution"></p>
                 </div>
@@ -438,9 +438,9 @@
                   <label>Ambiente *</label>
                   <select data-field="contactEnvironment" name="contact-environment">
                     <option value="">Selecione</option>
-                    <option>Local</option>
-                    <option>Staging</option>
-                    <option>Homologacao</option>
+                    <option value="local">Local</option>
+                    <option value="staging">Staging</option>
+                    <option value="homologacao">Homologacao</option>
                   </select>
                   <p class="error" data-error-for="contactEnvironment"></p>
                 </div>
@@ -481,7 +481,7 @@
             <div class="tag-list" data-role="technologyTags"></div>
 
             <label class="terms-line">
-              <input data-field="contactTerms" name="contact-terms" type="checkbox" />
+              <input data-field="contactTerms" name="contact-terms" type="checkbox" value="accepted" />
               Li e aceito os termos de uso *
             </label>
             <p class="error" data-error-for="contactTerms"></p>
