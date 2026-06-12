@@ -214,6 +214,16 @@ function formatPhone(value) {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
 }
 
+function formatDocument(value) {
+  const digits = String(value).replace(/\D/g, '').slice(0, 14)
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+  if (digits.length <= 11) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
+  if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`
+}
+
 function setupPhoneMasks() {
   const phoneInput = getElement('#contactPhone')
   if (!phoneInput || phoneInput.dataset.maskReady === 'true') return
@@ -221,6 +231,16 @@ function setupPhoneMasks() {
   phoneInput.dataset.maskReady = 'true'
   phoneInput.addEventListener('input', (event) => {
     event.currentTarget.value = formatPhone(event.currentTarget.value)
+  })
+}
+
+function setupDocumentMasks() {
+  const documentInput = getElement('#contactDocument')
+  if (!documentInput || documentInput.dataset.maskReady === 'true') return
+
+  documentInput.dataset.maskReady = 'true'
+  documentInput.addEventListener('input', (event) => {
+    event.currentTarget.value = formatDocument(event.currentTarget.value)
   })
 }
 
@@ -2082,12 +2102,18 @@ getElement('#contactForm').addEventListener('submit', async (event) => {
 
   const valid = required.map(([id, message]) => requireField(id, message)).every(Boolean)
   const email = getElement('#contactEmail').value.trim()
+  const documentDigits = getElement('#contactDocument').value.replace(/\D/g, '')
   const priority = getElement('input[name="priority"]:checked')
   const selectedChannels = Array.from(document.querySelectorAll('input[name="channels"]:checked')).map((item) => item.value)
   const termsValid = requireChecked('contactTerms', 'Voce precisa aceitar os termos')
 
   if (email && !isEmail(email)) {
     setError('contactEmail', EMAIL_ERROR)
+    return
+  }
+
+  if (documentDigits && ![11, 14].includes(documentDigits.length)) {
+    setError('contactDocument', 'Informe um CPF com 11 digitos ou CNPJ com 14 digitos')
     return
   }
 
@@ -2707,5 +2733,6 @@ getElement('[data-cy="modal-close"]').addEventListener('click', async (event) =>
 setupLoginAssistant()
 setupPasswordToggles()
 setupPhoneMasks()
+setupDocumentMasks()
 populateCharacterYears()
 showView(getRouteView(), { replaceRoute: true })
