@@ -1,0 +1,17 @@
+[
+  {
+    "botao": "Sucesso",
+    "mensagem": "Cenario aprovado",
+    "toastErro": false
+  },
+  {
+    "botao": "Alerta",
+    "mensagem": "Cenario em atencao",
+    "toastErro": false
+  },
+  {
+    "botao": "Erro",
+    "mensagem": "Cenário com falha",
+    "toastErro": true
+  }
+]
