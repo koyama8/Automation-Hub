@@ -1,0 +1,10 @@
+{
+  "evidencias": [
+    "Gerar vídeo da execução",
+    "Capturar screenshot em falha",
+    "Salvar trace da execução",
+    "Registrar logs de rede",
+    "Validar acessibilidade básica",
+    "Limpar massa apos o teste"
+  ]
+}
