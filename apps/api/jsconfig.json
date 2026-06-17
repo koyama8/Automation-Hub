@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "types": ["cypress", "node"],
+    "checkJs": false
+  },
+  "include": ["cypress/**/*.js", "cypress.config.js", "index.js", "lib/**/*.js"]
+}
