@@ -1,33 +1,29 @@
-import 'dotenv/config'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '../../cypress/api/generated/prisma/client.js'
+import { prisma } from '../../apps/api/lib/prisma.js'
+import { hashPassword } from '../../apps/api/src/utils/password.js'
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-})
+const adminEmail = process.env.ADMIN_EMAIL || 'qa@adminlab.com'
+const adminPassword = process.env.ADMIN_PASSWORD || 'pwd123'
 
-const prisma = new PrismaClient({ adapter })
+try {
+  const passwordHash = await hashPassword(adminPassword)
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      name: 'QA Admin',
+      password: passwordHash,
+      role: 'admin',
+      active: true,
+    },
+    create: {
+      name: 'QA Admin',
+      email: adminEmail,
+      password: passwordHash,
+      role: 'admin',
+      active: true,
+    },
+  })
 
-const adminEmail = process.env.ADMIN_EMAIL || 'alab@hotmail.com'
-const adminPassword = process.env.ADMIN_PASSWORD || '123'
-
-await prisma.user.upsert({
-  where: { email: adminEmail },
-  update: {
-    name: 'QA Admin',
-    password: adminPassword,
-    role: 'admin',
-    active: true,
-  },
-  create: {
-    name: 'QA Admin',
-    email: adminEmail,
-    password: adminPassword,
-    role: 'admin',
-    active: true,
-  },
-})
-
-console.log(`Local admin ready: ${adminEmail}`)
-
-await prisma.$disconnect()
+  console.log(`Local admin ready: ${admin.email}`)
+} finally {
+  await prisma.$disconnect()
+}

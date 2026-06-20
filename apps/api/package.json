@@ -10,15 +10,18 @@
     "dev": "nodemon index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "node --env-file=.env ../../database/seed/seed-admin.js",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.21.0",
     "prisma": "^7.8.0"
   },
