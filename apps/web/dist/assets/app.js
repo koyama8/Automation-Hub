@@ -1,4 +1,5 @@
 const API_URL = 'http://localhost:3030'
+const API_HEALTH_TIMEOUT = 3000
 const ADMIN_EMAILS = ['qa@adminlab.com']
 const LEGACY_ADMIN_EMAILS = ['alab@hotmail.com', 'qa@cypressqalab.com']
 const ADMIN_PASSWORD = 'pwd123'
@@ -45,6 +46,7 @@ const VIEW_ROUTES = {
   dashboardView: '/admin/dashboard',
   registerView: '/admin/cadastro',
   usersView: '/admin/usuarios',
+  clientsView: '/admin/clientes',
   forgotView: '/admin/recuperar-senha',
   testDataView: '/admin/massa-de-testes',
   checkoutView: '/admin/checkout',
@@ -99,7 +101,12 @@ let characterManagementPage = 1
 let characterSearchTimer = null
 let pendingDeleteCharacterId = null
 let pendingEditCharacterId = null
+let clientsCache = []
+let editingClientId = null
+let pendingDeleteClientId = null
+let clientSearchTimer = null
 let currentSessionMode = 'local'
+let apiAvailability = 'unknown'
 let tableRows = [
   { id: 1, name: 'Login com sucesso', status: 'Automatizado' },
   { id: 2, name: 'Formulário obrigatório', status: 'Planejado' },
@@ -240,6 +247,19 @@ function setupDocumentMasks() {
 
   documentInput.dataset.maskReady = 'true'
   documentInput.addEventListener('input', (event) => {
+    event.currentTarget.value = formatDocument(event.currentTarget.value)
+  })
+}
+
+function setupClientMasks() {
+  const phoneInput = getElement('[data-field="clientPhone"]')
+  const documentInput = getElement('[data-field="clientDocument"]')
+
+  phoneInput?.addEventListener('input', (event) => {
+    event.currentTarget.value = formatPhone(event.currentTarget.value)
+  })
+
+  documentInput?.addEventListener('input', (event) => {
     event.currentTarget.value = formatDocument(event.currentTarget.value)
   })
 }
@@ -416,8 +436,8 @@ function openRegisterFeedback(type, userOrMessage) {
   const userName = typeof userOrMessage === 'object' ? userOrMessage.name?.trim() : ''
   const email = typeof userOrMessage === 'object' ? userOrMessage.email?.trim().toLowerCase() : ''
   const message = isSuccess
-    ? `O usuário '${userName || email}' foi salvo na massa local e já está disponível para login.`
-    : String(userOrMessage || 'Este e-mail já está cadastrado na base local. Informe outro e-mail para continuar.')
+    ? `O usuário '${userName || email}' foi cadastrado e já está disponível para login.`
+    : String(userOrMessage || 'Este e-mail já está cadastrado. Informe outro e-mail para continuar.')
 
   openModal(message, {
     title: isSuccess ? 'Cadastro realizado com sucesso' : 'Cadastro não concluído',
@@ -453,7 +473,7 @@ function generateRecoveryToken() {
 }
 
 function openRecoveryTokenModal(email, token = generateRecoveryToken()) {
-  openModal('Token local gerado com sucesso. Use este código para simular a próxima etapa da recuperação de senha.', {
+  openModal('Token gerado com sucesso. Use este código para concluir a redefinição de senha.', {
     title: 'Recuperação pronta',
     context: 'recovery',
     icon: 'QA',
@@ -461,8 +481,8 @@ function openRecoveryTokenModal(email, token = generateRecoveryToken()) {
     copyValue: token,
     items: [
       { label: 'E-mail validado', value: email },
-      { label: 'Token local', value: token },
-      { label: 'Validade', value: '10 minutos' },
+      { label: 'Token de recuperação', value: token },
+      { label: 'Validade', value: '15 minutos' },
     ],
   })
 }
@@ -543,11 +563,16 @@ function showView(viewId, options = {}) {
   if (viewId === 'dashboardView') {
     getElement('[data-cy="access-date"]').textContent = currentDate
     updateDashboardMetrics()
+    refreshApiAvailability()
     renderFeaturePagination()
   }
 
   if (viewId === 'usersView') {
     loadUsers()
+  }
+
+  if (viewId === 'clientsView') {
+    loadClients()
   }
 
   if (viewId === 'tableView') {
@@ -599,7 +624,64 @@ function updateDashboardMetrics() {
   getElement('[data-cy="metric-screens"]').textContent = String(screenCount)
   getElement('[data-cy="metric-flows"]').textContent = String(flowCount)
   getElement('[data-cy="metric-interface-port"]').textContent = getCurrentPort()
-  getElement('[data-cy="metric-api-port"]').textContent = currentSessionMode === 'api' ? getApiPort() : 'Indisponível'
+  getElement('[data-cy="metric-api-port"]').textContent = apiAvailability === 'online' ? getApiPort() : apiAvailability === 'checking' ? 'Verificando...' : 'Indisponível'
+}
+
+function getApiHealthUrl(baseUrl = API_URL) {
+  const normalizedUrl = baseUrl.trim().replace(/\/$/, '')
+  return normalizedUrl.endsWith('/api/health') ? normalizedUrl : `${normalizedUrl}/api/health`
+}
+
+async function checkApiHealth(baseUrl = API_URL) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), API_HEALTH_TIMEOUT)
+
+  try {
+    const response = await fetch(getApiHealthUrl(baseUrl), {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+    const body = await response.json().catch(() => ({}))
+    const operational = response.ok && body.status === 'ok' && body.database === 'connected'
+
+    return {
+      operational,
+      reached: true,
+      status: response.status,
+      body,
+    }
+  } catch (error) {
+    return {
+      operational: false,
+      reached: false,
+      status: 0,
+      body: {},
+    }
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+function applyApiAvailability(health) {
+  apiAvailability = health.operational ? 'online' : 'offline'
+  updateDashboardMetrics()
+
+  const mode = getElement('[data-cy="session-mode"]')
+  if (mode) {
+    mode.textContent = health.operational
+      ? currentSessionMode === 'api'
+        ? 'API conectada'
+        : 'Login local'
+      : 'API indisponível'
+  }
+}
+
+async function refreshApiAvailability() {
+  apiAvailability = 'checking'
+  updateDashboardMetrics()
+  const health = await checkApiHealth()
+  applyApiAvailability(health)
+  return health
 }
 
 function setError(fieldId, message = '') {
@@ -969,9 +1051,12 @@ function deleteLocalUser(userId) {
 }
 
 async function request(path, options = {}) {
+  const sessionToken = localStorage.getItem('token') || ''
+  const authorization = sessionToken.split('.').length === 3 ? `Bearer ${sessionToken}` : ''
   const response = await fetch(`${API_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(authorization ? { Authorization: authorization } : {}),
       ...(options.headers || {}),
     },
     ...options,
@@ -1631,9 +1716,10 @@ function finishCheckout() {
   openCheckoutPaymentFlow(payment, getCheckoutSnapshot(payment))
 }
 
-function completeLogin(user, mode) {
+function completeLogin(user, mode, token = '') {
   currentSessionMode = mode
-  localStorage.setItem('token', mode === 'api' ? 'api-session' : 'local-session')
+  apiAvailability = mode === 'api' ? 'online' : 'unknown'
+  localStorage.setItem('token', mode === 'api' ? token : 'local-session')
   getElement('[data-cy="user-name"]').textContent = user.name || 'QA Automation Lab'
   getElement('[data-cy="user-email"]').textContent = user.email || ADMIN_EMAILS[0]
   getElement('[data-cy="session-mode"]').textContent = mode === 'api' ? 'API conectada' : 'Login local'
@@ -1686,19 +1772,6 @@ getElement('#loginForm').addEventListener('submit', async (event) => {
 
   if (!emailValid || !passwordValid) return
 
-  const registeredLocalUser = findLocalUserByEmail(email)
-  if (registeredLocalUser && getLocalUserPassword(registeredLocalUser) !== password) {
-    setError('loginPassword', 'Senha incorreta')
-    return
-  }
-
-  const localUser = registeredLocalUser || findLocalUser(email, password)
-  if (localUser) {
-    completeLogin(localUser, 'local')
-    showToast('Login local realizado com sucesso')
-    return
-  }
-
   try {
     const { response, body } = await request('/api/auth/login', {
       method: 'POST',
@@ -1708,20 +1781,22 @@ getElement('#loginForm').addEventListener('submit', async (event) => {
     if (response.ok) {
       const authData = body.data || {}
       const apiUser = authData.user || authData
-      completeLogin({ name: apiUser.name, email: apiUser.email || email }, 'api')
+      completeLogin({ name: apiUser.name, email: apiUser.email || email }, 'api', authData.token)
       showToast('Login realizado com sucesso pela API')
       return
     }
 
-    const loginError = body.error || EMAIL_NOT_FOUND_ERROR
-    if (/senha|password/i.test(loginError)) {
-      setError('loginPassword', 'Senha incorreta')
+    setError('loginPassword', body.error || 'E-mail ou senha inválidos')
+  } catch (error) {
+    const localUser = findLocalUser(email, password)
+
+    if (localUser) {
+      completeLogin(localUser, 'local')
+      showToast('API indisponível: login local realizado', 'warning')
       return
     }
 
-    setError('loginEmail', loginError)
-  } catch (error) {
-    setError('loginEmail', EMAIL_NOT_FOUND_ERROR)
+    setError('loginEmail', 'API indisponível e usuário não encontrado na massa local')
   }
 })
 
@@ -1789,15 +1864,6 @@ getElement('#forgotForm').addEventListener('submit', async (event) => {
 
   if (!emailValid) return
 
-  if (!hasRegisteredEmail(email)) {
-    setError('forgotEmail', EMAIL_NOT_FOUND_ERROR)
-    return
-  }
-
-  const showLocalToken = () => {
-    openRecoveryTokenModal(email, generateRecoveryToken())
-  }
-
   try {
     const { response, body } = await request('/api/password/forgot', {
       method: 'POST',
@@ -1805,13 +1871,73 @@ getElement('#forgotForm').addEventListener('submit', async (event) => {
     })
 
     if (response.ok) {
-      showLocalToken()
+      const token = body.data?.token
+      getElement('#reset-token').value = token || ''
+      getElement('[data-recovery-reset]').classList.remove('hidden')
+      openRecoveryTokenModal(email, token)
       return
     }
 
-    showLocalToken()
+    setError('forgotEmail', body.error || EMAIL_NOT_FOUND_ERROR)
   } catch (error) {
-    showLocalToken()
+    if (hasRegisteredEmail(email)) {
+      const token = generateRecoveryToken()
+      getElement('#reset-token').value = token
+      openRecoveryTokenModal(email, token)
+      return
+    }
+
+    setError('forgotEmail', 'API indisponível para recuperar a senha')
+  }
+})
+
+getElement('[data-form="resetPassword"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const form = event.currentTarget
+  clearFormErrors(form)
+
+  const tokenValid = requireField('resetToken', 'Token é obrigatório')
+  const passwordValid = requireField('resetPassword', 'Nova senha é obrigatória')
+  const confirmationValid = requireField('resetPasswordConfirmation', 'Confirmação é obrigatória')
+  const password = getElement('#reset-password').value
+  const confirmation = getElement('#reset-password-confirmation').value
+
+  if (!tokenValid || !passwordValid || !confirmationValid) return
+
+  if (password.length < 6) {
+    setError('resetPassword', 'A senha deve ter pelo menos 6 caracteres')
+    return
+  }
+
+  if (password !== confirmation) {
+    setError('resetPasswordConfirmation', 'As senhas não conferem')
+    return
+  }
+
+  try {
+    const { response, body } = await request('/api/password/reset', {
+      method: 'POST',
+      body: JSON.stringify({
+        token: getElement('#reset-token').value.trim(),
+        newPassword: password,
+      }),
+    })
+
+    if (!response.ok) {
+      setError('resetToken', body.error || 'Não foi possível redefinir a senha')
+      return
+    }
+
+    form.reset()
+    form.classList.add('hidden')
+    showView('loginView')
+    openModal('Senha redefinida com sucesso. Você já pode entrar com a nova credencial.', {
+      title: 'Senha atualizada',
+      variant: 'success',
+      closeLabel: 'Ir para login',
+    })
+  } catch (error) {
+    setError('resetToken', 'API indisponível para redefinir a senha')
   }
 })
 
@@ -2352,12 +2478,12 @@ function renderUsers(users) {
 
   table.innerHTML = users
     .map(
-      (user, index) => {
+      (user) => {
         const isAdmin = ADMIN_EMAILS.includes(String(user.email || '').toLowerCase())
 
         return `
         <tr>
-          <td>${index + 1}</td>
+          <td>${escapeHtml(user.id)}</td>
           <td>${escapeHtml(user.name)}</td>
           <td>${escapeHtml(user.email)}</td>
           <td>${user.active === false ? 'Inativo' : 'Ativo'}</td>
@@ -2373,22 +2499,415 @@ function renderUsers(users) {
     .join('')
 }
 
-getElement('[data-cy="users-table"]').addEventListener('click', (event) => {
+getElement('[data-cy="users-table"]').addEventListener('click', async (event) => {
   const deleteButton = event.target.closest('[data-delete-user]')
   if (!deleteButton || deleteButton.disabled) return
 
-  const result = deleteLocalUser(deleteButton.dataset.deleteUser)
   const resultText = getElement('[data-cy="users-result"]')
 
-  if (result.error) {
-    resultText.textContent = result.error
-    showToast(result.error, 'error')
+  try {
+    const { response, body } = await request(`/api/users/${deleteButton.dataset.deleteUser}`, {
+      method: 'DELETE',
+    })
+
+    if (!response.ok) {
+      resultText.textContent = body.error || 'Não foi possível excluir o usuário'
+      showToast(resultText.textContent, 'error')
+      return
+    }
+
+    resultText.textContent = `Usuário excluído com sucesso: ${body.data.email}`
+    showToast('Usuário excluído com sucesso')
+    await loadUsers()
+  } catch (error) {
+    resultText.textContent = 'API indisponível para excluir o usuário'
+    showToast(resultText.textContent, 'error')
+  }
+})
+
+function getClientFilters() {
+  const search = getElement('[data-cy="clients-search"]').value.trim()
+  const status = getElement('[data-cy="clients-status-filter"]').value
+  const params = new URLSearchParams()
+
+  if (search) params.set('search', search)
+  if (status) params.set('status', status)
+  return params.toString()
+}
+
+function setClientsApiStatus(state, label) {
+  const badge = getElement('[data-cy="clients-api-status"]')
+  badge.dataset.state = state
+  badge.textContent = label
+}
+
+function setClientFeedback(state, title, message, options = {}) {
+  const feedback = getElement('[data-cy="clients-feedback"]')
+  feedback.dataset.state = state
+  getElement('[data-cy="clients-feedback-title"]').textContent = title
+  getElement('[data-cy="clients-feedback-message"]').textContent = message
+  getElement('[data-cy="clients-retry"]').classList.toggle('hidden', !options.retry)
+}
+
+function getClientErrorMessage(response, body, fallback) {
+  if (response.status === 401) return 'Sessão ausente ou expirada. Faça login novamente pela API.'
+  if (response.status === 404) return 'Cliente não encontrado. Atualize a lista e tente novamente.'
+  if (response.status === 409 && String(body.error || '').toLowerCase().includes('document')) return 'CPF ou CNPJ já cadastrado.'
+  if (response.status === 409) return 'E-mail já cadastrado.'
+  if (response.status === 503) return 'PostgreSQL indisponível. Verifique o Docker e tente novamente.'
+  return body.error || fallback
+}
+
+function renderClientsTableState(message, state = 'empty') {
+  getElement('[data-cy="clients-table-body"]').innerHTML = `
+    <tr class="table-state ${escapeHtml(state)}">
+      <td colspan="6">${escapeHtml(message)}</td>
+    </tr>
+  `
+}
+
+function reportClientResponseError(response, body, fallback) {
+  const message = getClientErrorMessage(response, body, fallback)
+  const authenticationError = response.status === 401
+  const apiFailure = response.status >= 500
+
+  setClientsApiStatus(apiFailure ? 'offline' : 'online', apiFailure ? 'Falha' : 'API online')
+  setClientFeedback(
+    apiFailure ? 'error' : 'warning',
+    authenticationError ? 'Autenticação necessária' : apiFailure ? 'Serviço indisponível' : 'Dados não aceitos',
+    message,
+    { retry: apiFailure },
+  )
+  getElement('[data-cy="client-result"]').textContent = message
+  showToast(message, 'error')
+  return message
+}
+
+async function loadClients(options = {}) {
+  const table = getElement('[data-cy="clients-table-body"]')
+  const query = getClientFilters()
+  setClientsApiStatus('checking', 'Verificando')
+  renderClientsTableState('Carregando clientes...', 'loading')
+  if (!options.silent) {
+    setClientFeedback('loading', 'Sincronizando dados', 'Consultando clientes na API e no PostgreSQL.')
+  }
+
+  try {
+    const { response, body } = await request(`/api/clients${query ? `?${query}` : ''}`)
+
+    if (!response.ok) {
+      clientsCache = []
+      getElement('[data-cy="clients-count"]').textContent = '0'
+      const message = reportClientResponseError(response, body, 'Não foi possível carregar os clientes.')
+      renderClientsTableState(message, 'error')
+      return
+    }
+
+    clientsCache = Array.isArray(body) ? body : body.data || []
+    renderClients(clientsCache)
+    setClientsApiStatus('online', 'API online')
+
+    if (!options.silent) {
+      const hasFilters = Boolean(query)
+      setClientFeedback(
+        clientsCache.length || !hasFilters ? 'success' : 'warning',
+        clientsCache.length ? 'Base sincronizada' : hasFilters ? 'Nenhum resultado' : 'Base conectada',
+        clientsCache.length
+          ? `${clientsCache.length} cliente(s) carregado(s) do PostgreSQL.`
+          : hasFilters
+            ? 'Nenhum cliente corresponde aos filtros informados.'
+            : 'A API está online e ainda não existem clientes cadastrados.',
+      )
+    }
+  } catch (error) {
+    clientsCache = []
+    getElement('[data-cy="clients-count"]').textContent = '0'
+    const message = 'API indisponível. Inicie a API e o Docker antes de consultar clientes.'
+    renderClientsTableState(message, 'error')
+    setClientsApiStatus('offline', 'Indisponível')
+    setClientFeedback('error', 'Sem conexão com a API', message, { retry: true })
+    getElement('[data-cy="client-result"]').textContent = message
+  }
+}
+
+function renderClients(clients) {
+  const table = getElement('[data-cy="clients-table-body"]')
+  getElement('[data-cy="clients-count"]').textContent = String(clients.length)
+
+  if (!clients.length) {
+    renderClientsTableState('Nenhum cliente encontrado.')
     return
   }
 
-  resultText.textContent = `Usuário excluído com sucesso: ${result.user.email}`
-  renderUsers(getLocalUsers())
-  showToast('Usuário excluído com sucesso')
+  table.innerHTML = clients
+    .map(
+      (client) => `
+        <tr data-client-row="${escapeHtml(client.id)}" data-cy="client-row-${escapeHtml(client.id)}">
+          <td>${escapeHtml(client.id)}</td>
+          <td>
+            <strong>${escapeHtml(client.name)}</strong>
+            <small>${escapeHtml(client.email)}</small>
+            <small>${escapeHtml(client.company || 'Sem empresa')}</small>
+          </td>
+          <td>${escapeHtml(formatDocument(client.document))}</td>
+          <td>${escapeHtml(formatPhone(client.phone))}</td>
+          <td><span class="status-badge ${escapeHtml(client.status)}">${client.status === 'active' ? 'Ativo' : 'Inativo'}</span></td>
+          <td>
+            <div class="client-row-actions">
+              <button class="secondary-btn" data-client-action="edit" data-client-id="${escapeHtml(client.id)}" data-cy="client-edit-${escapeHtml(client.id)}" type="button">Editar</button>
+              <button class="secondary-btn" data-client-action="status" data-client-id="${escapeHtml(client.id)}" data-cy="client-status-${escapeHtml(client.id)}" type="button">${client.status === 'active' ? 'Inativar' : 'Ativar'}</button>
+              <button class="danger-btn" data-client-action="delete" data-client-id="${escapeHtml(client.id)}" data-cy="client-delete-${escapeHtml(client.id)}" type="button">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      `,
+    )
+    .join('')
+}
+
+function resetClientForm(options = {}) {
+  const form = getElement('[data-form="client"]')
+  form.reset()
+  clearFormErrors(form)
+  editingClientId = null
+  getElement('[data-field="clientId"]').value = ''
+  getElement('[data-cy="client-form-title"]').textContent = 'Novo cliente'
+  getElement('[data-cy="client-submit"]').textContent = 'Cadastrar cliente'
+  getElement('[data-cy="client-cancel-edit"]').classList.add('hidden')
+  if (!options.preserveResult) {
+    getElement('[data-cy="client-result"]').textContent = options.message || 'Preencha os dados para iniciar.'
+  }
+}
+
+async function startClientEdit(clientId, actionButton) {
+  actionButton.disabled = true
+  actionButton.textContent = 'Carregando...'
+  setClientFeedback('loading', 'Carregando cliente', `Consultando o registro #${clientId} pela API.`)
+
+  try {
+    const { response, body } = await request(`/api/clients/${clientId}`)
+
+    if (!response.ok) {
+      reportClientResponseError(response, body, 'Não foi possível carregar o cliente para edição.')
+      return
+    }
+
+    const client = body.data
+    const cachedIndex = clientsCache.findIndex((item) => Number(item.id) === Number(client.id))
+    if (cachedIndex >= 0) clientsCache[cachedIndex] = client
+
+    editingClientId = client.id
+    getElement('[data-field="clientId"]').value = client.id
+    getElement('[data-field="clientName"]').value = client.name
+    getElement('[data-field="clientEmail"]').value = client.email
+    getElement('[data-field="clientDocument"]').value = formatDocument(client.document)
+    getElement('[data-field="clientPhone"]').value = formatPhone(client.phone)
+    getElement('[data-field="clientCompany"]').value = client.company || ''
+    getElement('[data-field="clientStatus"]').value = client.status
+    getElement('[data-cy="client-form-title"]').textContent = `Editar cliente #${client.id}`
+    getElement('[data-cy="client-submit"]').textContent = 'Salvar alterações'
+    getElement('[data-cy="client-cancel-edit"]').classList.remove('hidden')
+    getElement('[data-cy="client-result"]').textContent = `Editando cliente: ${client.name}`
+    setClientFeedback('success', 'Cliente carregado', `O registro #${client.id} está pronto para edição.`)
+    getElement('[data-form="client"]').scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } catch (error) {
+    const message = 'API indisponível durante a consulta do cliente.'
+    setClientsApiStatus('offline', 'Indisponível')
+    setClientFeedback('error', 'Falha ao abrir edição', message, { retry: true })
+    getElement('[data-cy="client-result"]').textContent = message
+    showToast(message, 'error')
+  } finally {
+    actionButton.disabled = false
+    actionButton.textContent = 'Editar'
+  }
+}
+
+getElement('[data-form="client"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const form = event.currentTarget
+  clearFormErrors(form)
+
+  const requiredFields = [
+    ['clientName', 'Nome é obrigatório'],
+    ['clientEmail', 'E-mail é obrigatório'],
+    ['clientDocument', 'CPF ou CNPJ é obrigatório'],
+    ['clientPhone', 'Telefone é obrigatório'],
+  ]
+  const valid = requiredFields.map(([field, message]) => requireField(field, message)).every(Boolean)
+  const email = getElement('[data-field="clientEmail"]').value.trim()
+  const document = getElement('[data-field="clientDocument"]').value.replace(/\D/g, '')
+  const phone = getElement('[data-field="clientPhone"]').value.replace(/\D/g, '')
+
+  if (email && !isEmail(email)) setError('clientEmail', EMAIL_ERROR)
+  if (document && ![11, 14].includes(document.length)) setError('clientDocument', 'Informe CPF com 11 ou CNPJ com 14 dígitos')
+  if (phone && ![10, 11].includes(phone.length)) setError('clientPhone', 'Informe telefone com 10 ou 11 dígitos')
+  if (!valid || !isEmail(email) || ![11, 14].includes(document.length) || ![10, 11].includes(phone.length)) {
+    setClientFeedback('warning', 'Revise o formulário', 'Existem campos obrigatórios ou dados inválidos antes do envio.')
+    getElement('[data-cy="client-result"]').textContent = 'Corrija os campos destacados para continuar.'
+    return
+  }
+
+  const payload = {
+    name: getElement('[data-field="clientName"]').value.trim(),
+    email,
+    document,
+    phone,
+    company: getElement('[data-field="clientCompany"]').value.trim(),
+    status: getElement('[data-field="clientStatus"]').value,
+  }
+  const path = editingClientId ? `/api/clients/${editingClientId}` : '/api/clients'
+  const method = editingClientId ? 'PUT' : 'POST'
+  const wasEditing = Boolean(editingClientId)
+  const submitButton = getElement('[data-cy="client-submit"]')
+  submitButton.disabled = true
+  submitButton.textContent = wasEditing ? 'Salvando alterações...' : 'Cadastrando...'
+  setClientFeedback('loading', wasEditing ? 'Atualizando cliente' : 'Cadastrando cliente', 'Enviando os dados para a API e o PostgreSQL.')
+
+  try {
+    const { response, body } = await request(path, { method, body: JSON.stringify(payload) })
+
+    if (!response.ok) {
+      reportClientResponseError(response, body, 'Não foi possível salvar o cliente.')
+      return
+    }
+
+    const successMessage = wasEditing
+      ? `Cliente atualizado com sucesso: ${body.data.name}`
+      : `Cliente cadastrado com sucesso: ${body.data.name}`
+    resetClientForm({ preserveResult: true })
+    await loadClients({ silent: true })
+    getElement('[data-cy="client-result"]').textContent = successMessage
+    setClientFeedback('success', wasEditing ? 'Alterações salvas' : 'Cliente cadastrado', successMessage)
+    showToast(wasEditing ? 'Cliente atualizado com sucesso' : 'Cliente cadastrado com sucesso')
+  } catch (error) {
+    const message = 'API indisponível para salvar o cliente. Verifique os serviços e tente novamente.'
+    setClientsApiStatus('offline', 'Indisponível')
+    setClientFeedback('error', 'Falha de conexão', message, { retry: true })
+    getElement('[data-cy="client-result"]').textContent = message
+    showToast(message, 'error')
+  } finally {
+    submitButton.disabled = false
+    submitButton.textContent = editingClientId ? 'Salvar alterações' : 'Cadastrar cliente'
+  }
+})
+
+getElement('[data-cy="client-cancel-edit"]').addEventListener('click', () => {
+  resetClientForm({ message: 'Edição cancelada. Nenhuma alteração foi enviada.' })
+  setClientFeedback('success', 'Edição cancelada', 'O formulário voltou ao modo de cadastro.')
+})
+
+getElement('[data-cy="clients-refresh"]').addEventListener('click', loadClients)
+getElement('[data-cy="clients-retry"]').addEventListener('click', loadClients)
+
+getElement('[data-cy="clients-clear-filters"]').addEventListener('click', () => {
+  getElement('[data-cy="clients-search"]').value = ''
+  getElement('[data-cy="clients-status-filter"]').value = ''
+  loadClients()
+})
+
+getElement('[data-cy="clients-status-filter"]').addEventListener('change', loadClients)
+
+getElement('[data-cy="clients-search"]').addEventListener('input', () => {
+  clearTimeout(clientSearchTimer)
+  clientSearchTimer = setTimeout(loadClients, 280)
+})
+
+getElement('[data-cy="clients-table-body"]').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-client-action]')
+  if (!button) return
+
+  const clientId = Number(button.dataset.clientId)
+  const client = clientsCache.find((item) => Number(item.id) === clientId)
+  if (!client) return
+
+  if (button.dataset.clientAction === 'edit') {
+    await startClientEdit(clientId, button)
+    return
+  }
+
+  if (button.dataset.clientAction === 'delete') {
+    pendingDeleteClientId = clientId
+    getElement('[data-cy="client-delete-message"]').textContent = `Deseja realmente excluir o cliente ${client.name}?`
+    getElement('[data-cy="client-delete-error"]').textContent = ''
+    getElement('#clientDeleteModal').classList.remove('hidden')
+    return
+  }
+
+  if (button.dataset.clientAction === 'status') {
+    button.disabled = true
+    const originalLabel = button.textContent
+    button.textContent = 'Atualizando...'
+
+    try {
+      const status = client.status === 'active' ? 'inactive' : 'active'
+      const { response, body } = await request(`/api/clients/${clientId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      })
+
+      if (!response.ok) {
+        reportClientResponseError(response, body, 'Não foi possível atualizar o status.')
+        return
+      }
+
+      await loadClients({ silent: true })
+      const message = `Cliente ${status === 'active' ? 'ativado' : 'inativado'} com sucesso: ${client.name}`
+      getElement('[data-cy="client-result"]').textContent = message
+      setClientFeedback('success', 'Status atualizado', message)
+      showToast(message)
+    } catch (error) {
+      const message = 'API indisponível durante a atualização do status.'
+      setClientsApiStatus('offline', 'Indisponível')
+      setClientFeedback('error', 'Falha de conexão', message, { retry: true })
+      showToast(message, 'error')
+    } finally {
+      button.disabled = false
+      button.textContent = originalLabel
+    }
+  }
+})
+
+getElement('[data-cy="client-delete-cancel"]').addEventListener('click', () => {
+  pendingDeleteClientId = null
+  getElement('[data-cy="client-delete-error"]').textContent = ''
+  getElement('#clientDeleteModal').classList.add('hidden')
+})
+
+getElement('[data-cy="client-delete-confirm"]').addEventListener('click', async () => {
+  if (!pendingDeleteClientId) return
+  const clientId = pendingDeleteClientId
+  const confirmButton = getElement('[data-cy="client-delete-confirm"]')
+  confirmButton.disabled = true
+  confirmButton.textContent = 'Excluindo...'
+  getElement('[data-cy="client-delete-error"]').textContent = ''
+
+  try {
+    const { response, body } = await request(`/api/clients/${clientId}`, { method: 'DELETE' })
+
+    if (!response.ok) {
+      const message = reportClientResponseError(response, body, 'Não foi possível excluir o cliente.')
+      getElement('[data-cy="client-delete-error"]').textContent = message
+      return
+    }
+
+    const message = `Cliente excluído com sucesso: ${body.data.name}`
+    if (Number(editingClientId) === Number(clientId)) resetClientForm({ preserveResult: true })
+    await loadClients({ silent: true })
+    getElement('[data-cy="client-result"]').textContent = message
+    setClientFeedback('success', 'Cliente excluído', message)
+    showToast('Cliente excluído com sucesso')
+    pendingDeleteClientId = null
+    getElement('#clientDeleteModal').classList.add('hidden')
+  } catch (error) {
+    const message = 'API indisponível durante a exclusão do cliente.'
+    getElement('[data-cy="client-delete-error"]').textContent = message
+    setClientsApiStatus('offline', 'Indisponível')
+    setClientFeedback('error', 'Falha de conexão', message, { retry: true })
+    showToast(message, 'error')
+  } finally {
+    confirmButton.disabled = false
+    confirmButton.textContent = 'Confirmar exclusão'
+  }
 })
 
 document.querySelectorAll('.status-btn').forEach((button) => {
@@ -2625,16 +3144,23 @@ getElement('.api-check-action').addEventListener('click', async () => {
   const result = getElement('[data-role="apiResult"]')
   const baseUrl = getElement('#apiUrl').value.trim().replace(/\/$/, '')
   result.textContent = 'Verificando API...'
+  const health = await checkApiHealth(baseUrl)
+  applyApiAvailability(health)
 
-  try {
-    const response = await fetch(baseUrl)
-    const body = await response.json().catch(() => ({}))
-    result.textContent = `API online. Status ${response.status}. Mensagem: ${body.message || 'sem mensagem'}`
-    showToast('API verificada com sucesso')
-  } catch (error) {
-    result.textContent = `API indisponível em ${baseUrl}`
-    showToast('API indisponível para este teste', 'error')
+  if (health.operational) {
+    result.textContent = `API e PostgreSQL online. Status ${health.status}. Serviço: ${health.body.service}`
+    showToast('API e banco verificados com sucesso')
+    return
   }
+
+  if (health.reached) {
+    result.textContent = `API respondeu, mas o PostgreSQL está indisponível. Status ${health.status}.`
+    showToast('Banco de dados indisponível', 'error')
+    return
+  }
+
+  result.textContent = `API indisponível em ${baseUrl}`
+  showToast('API indisponível para este teste', 'error')
 })
 
 getElement('#keyboardForm').addEventListener('submit', (event) => {
@@ -2734,5 +3260,6 @@ setupLoginAssistant()
 setupPasswordToggles()
 setupPhoneMasks()
 setupDocumentMasks()
+setupClientMasks()
 populateCharacterYears()
 showView(getRouteView(), { replaceRoute: true })

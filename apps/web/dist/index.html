@@ -235,6 +235,15 @@
                 <small>Checar disponibilidade</small>
               </span>
             </button>
+            <button class="feature-card" data-cy="card-clients" data-target="clientsView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Cadastro de clientes</strong>
+                <small>CRUD integrado com API e PostgreSQL</small>
+              </span>
+            </button>
             <button class="feature-card" data-cy="card-keyboard" data-target="keyboardView" type="button">
               <span class="feature-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2" /><path d="M6 10h.01" /><path d="M10 10h.01" /><path d="M14 10h.01" /><path d="M18 10h.01" /><path d="M7 14h10" /></svg>
@@ -334,6 +343,25 @@
             <input id="forgot-email" data-field="forgotEmail" name="forgot-email" type="email" placeholder="usuario@email.com" />
             <p class="error" data-error-for="forgotEmail"></p>
             <button class="primary-btn" type="submit">Gerar token</button>
+          </form>
+
+          <form class="form-card hidden" data-form="resetPassword" data-recovery-reset novalidate>
+            <h2>Redefinir senha</h2>
+            <p class="muted">Use o token gerado pela API para cadastrar uma nova senha.</p>
+
+            <label>Token *</label>
+            <input id="reset-token" data-field="resetToken" data-cy="reset-token" name="reset-token" autocomplete="off" placeholder="Cole o token de recuperacao" />
+            <p class="error" data-error-for="resetToken"></p>
+
+            <label>Nova senha *</label>
+            <input id="reset-password" data-field="resetPassword" data-cy="reset-password" name="reset-password" type="password" autocomplete="new-password" placeholder="Minimo de 6 caracteres" />
+            <p class="error" data-error-for="resetPassword"></p>
+
+            <label>Confirmar nova senha *</label>
+            <input id="reset-password-confirmation" data-field="resetPasswordConfirmation" data-cy="reset-password-confirmation" name="reset-password-confirmation" type="password" autocomplete="new-password" placeholder="Repita a nova senha" />
+            <p class="error" data-error-for="resetPasswordConfirmation"></p>
+
+            <button class="primary-btn" data-cy="reset-password-submit" type="submit">Redefinir senha</button>
           </form>
         </main>
       </section>
@@ -670,6 +698,137 @@
           </table>
           <p class="result-text users-result" data-cy="users-result">Nenhuma acao executada.</p>
         </main>
+      </section>
+
+      <section id="clientsView" class="page hidden" data-view="clients">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">CRM</span>
+            <div>
+              <h1>Cadastro de clientes</h1>
+              <p>Cadastre, consulte e atualize clientes persistidos no PostgreSQL.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container clients-container">
+          <section class="clients-feedback" data-cy="clients-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="clients-feedback-title">Verificando conexão</strong>
+                <p data-cy="clients-feedback-message">Aguarde enquanto consultamos a API e o PostgreSQL.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="clients-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="form-card clients-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Dados cadastrais</span>
+                <h2 data-cy="client-form-title">Novo cliente</h2>
+              </div>
+              <span class="status-badge api-status" data-cy="clients-api-status" data-state="checking">Verificando</span>
+            </div>
+
+            <form data-form="client" data-cy="client-form" novalidate>
+              <input data-field="clientId" name="client-id" type="hidden" />
+
+              <label>Nome completo *</label>
+              <input data-field="clientName" data-cy="client-name" name="client-name" placeholder="Nome do cliente" autocomplete="name" />
+              <p class="error" data-error-for="clientName"></p>
+
+              <label>E-mail *</label>
+              <input data-field="clientEmail" data-cy="client-email" name="client-email" type="email" placeholder="cliente@email.com" autocomplete="email" />
+              <p class="error" data-error-for="clientEmail"></p>
+
+              <div class="client-form-grid">
+                <div>
+                  <label>CPF ou CNPJ *</label>
+                  <input data-field="clientDocument" data-cy="client-document" name="client-document" type="tel" inputmode="numeric" maxlength="18" placeholder="000.000.000-00" />
+                  <p class="error" data-error-for="clientDocument"></p>
+                </div>
+                <div>
+                  <label>Telefone *</label>
+                  <input data-field="clientPhone" data-cy="client-phone" name="client-phone" type="tel" inputmode="numeric" maxlength="15" placeholder="(11) 99999-1000" />
+                  <p class="error" data-error-for="clientPhone"></p>
+                </div>
+              </div>
+
+              <label>Empresa</label>
+              <input data-field="clientCompany" data-cy="client-company" name="client-company" placeholder="Empresa ou time" autocomplete="organization" />
+
+              <label>Status *</label>
+              <select data-field="clientStatus" data-cy="client-status" name="client-status">
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+
+              <div class="client-form-actions">
+                <button class="secondary-btn hidden" data-cy="client-cancel-edit" type="button">Cancelar edição</button>
+                <button class="primary-btn" data-cy="client-submit" type="submit">Cadastrar cliente</button>
+              </div>
+            </form>
+
+            <p class="result-text" data-cy="client-result" aria-live="polite">Preencha os dados para iniciar.</p>
+          </section>
+
+          <section class="tool-surface clients-list-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Base de clientes</span>
+                <h2>Registros cadastrados</h2>
+              </div>
+              <strong class="clients-count" data-cy="clients-count">0</strong>
+            </div>
+
+            <div class="clients-filters">
+              <input data-cy="clients-search" type="search" placeholder="Buscar por nome, e-mail, documento ou empresa" />
+              <select data-cy="clients-status-filter">
+                <option value="">Todos os status</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+              </select>
+              <button class="secondary-btn" data-cy="clients-clear-filters" type="button">Limpar filtros</button>
+              <button class="secondary-btn" data-cy="clients-refresh" type="button">Atualizar</button>
+            </div>
+
+            <div class="table-scroll">
+              <table class="data-table clients-table" data-cy="clients-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Documento</th>
+                    <th>Telefone</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody data-cy="clients-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+
+        <div id="clientDeleteModal" class="modal-overlay hidden" data-cy="client-delete-modal" role="dialog" aria-modal="true" aria-labelledby="clientDeleteTitle">
+          <div class="modal-card">
+            <div class="modal-head">
+              <span class="modal-badge danger-badge">DEL</span>
+              <div>
+                <h2 id="clientDeleteTitle">Excluir cliente</h2>
+                <p data-cy="client-delete-message">Confirme a exclusão deste registro.</p>
+                <p class="error" data-cy="client-delete-error"></p>
+              </div>
+            </div>
+            <div class="modal-actions split-actions">
+              <button class="secondary-btn" data-cy="client-delete-cancel" type="button">Cancelar</button>
+              <button class="danger-btn" data-cy="client-delete-confirm" type="button">Confirmar exclusão</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="visualView" class="page hidden" data-view="visual">
