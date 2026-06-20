@@ -8,11 +8,11 @@ describe('Status da API', () => {
     cy.visit('/admin/status-api')
   })
 
-  it('deve exibir indisponibilidade ao verificar a API', () => {
-    cy.contains('button', 'Verificar API')
-      .click()
-    cy.get('.error-toast')
-      .should('be.visible')
+  it('deve informar quando a API estiver indisponivel', () => {
+    cy.contains('button', 'Verificar API').click()
+
+    cy.get('.error-toast').should('be.visible')
+
     cy.contains('p.result-text', 'API indisponível em http://localhost:3030')
       .should('be.visible')
   })

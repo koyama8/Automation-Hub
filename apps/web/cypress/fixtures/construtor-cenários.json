@@ -1,0 +1,12 @@
+{
+  "personal": {
+    "name": "Validar cartão invalido",
+    "conditions": "Usuário autenticado com perfil administrativo, massa local disponível, rota inicial acessível e ambiente preparado para criação e validação do cenário automatizado.",
+    "tipos": [
+      "Cypress",
+      "Playwright",
+      "API mock",
+      "Banco local"
+    ]
+  }
+}
