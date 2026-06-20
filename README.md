@@ -1,72 +1,71 @@
 # QA Automation Lab
 
-Laboratorio local para estudos de QA Automation, com interface Web, API REST, banco PostgreSQL local e automacoes com Cypress Web/API.
+Laboratorio local de QA Automation com interface Web, API REST, PostgreSQL e fluxos integrados para automacao E2E e de API com Cypress.
 
 ## Visao Geral
 
 | Pasta | Objetivo | Stack principal | Status |
 | --- | --- | --- | --- |
-| `apps/web/` | Interface Web local com login, dashboard, formulario e checkout | HTML, CSS, JavaScript, Serve | Execucao local |
-| `apps/web/cypress/e2e/` | Automacao Web E2E dos fluxos da interface | Cypress 14, JavaScript | Suite local |
-| `apps/api/` | API REST de usuarios para estudos de HTTP e banco | Node.js, Express, Prisma | Execucao local |
-| `apps/api/cypress/e2e/` | Testes API para criar, listar, atualizar, deletar e validar excecoes | Cypress 14, cypress-plugin-api | Suite local |
-| `database/` + `docker-compose.yml` | Banco local, PgAdmin e apoio para seed | PostgreSQL, PgAdmin, Docker | Ambiente local |
-| `.github/workflows/` | Base para CI futura | GitHub Actions | Em construcao |
-
-> Playwright nao possui pasta versionada neste momento; sera instalado/configurado por comando quando entrar na suite.
+| `apps/web/` | Interface Web com login, dashboard e jornadas de teste | HTML, CSS, JavaScript, Serve | Execucao local |
+| `apps/web/cypress/` | Automacao E2E dos fluxos Web | Cypress 14, JavaScript | Suite local |
+| `apps/api/src/` | Autenticacao JWT, usuarios, recuperacao de senha e clientes | Node.js, Express, Prisma | Execucao local |
+| `apps/api/cypress/` | Base para os testes automatizados de API | Cypress 14, cypress-plugin-api | Em construcao |
+| `apps/api/prisma/` | Modelos e historico de migrations | Prisma, PostgreSQL | Versionado |
+| `database/` + `docker-compose.yml` | Banco, PgAdmin e massa inicial | PostgreSQL, PgAdmin, Docker | Ambiente local |
+| `.github/workflows/` | Base para integracao continua | GitHub Actions | Em construcao |
 
 ## Estrutura
 
 ```text
 qa-automation-lab/
-|-- .github/
-|   `-- workflows/                  # CI em construcao
 |-- apps/
-|   |-- api/                        # API REST + Cypress API
-|   |   |-- cypress/
-|   |   |   |-- e2e/                # Testes HTTP
-|   |   |   |-- fixtures/           # Massa API
-|   |   |   `-- support/            # Commands e task de banco
-|   |   |-- lib/                    # Conexao Prisma
-|   |   |-- prisma/                 # Schema e migrations
-|   |   |-- .env.example
-|   |   |-- cypress.config.js
-|   |   |-- index.js
-|   |   |-- prisma.config.ts
-|   |   `-- package.json
-|   `-- web/                        # Interface Web
-|       |-- dist/                   # Tela local
-|       |-- cypress/                # Suite Cypress Web
-|       |   |-- e2e/                # Login, usuarios, consultoria e checkout
-|       |   |   |-- checkout-web.cy.js
-|       |   |   |-- consultancy.cy.js
-|       |   |   |-- login.cy.js
-|       |   |   `-- usuarios.cy.js
-|       |   |-- fixtures/           # Massa de dados
-|       |   `-- support/            # Commands e autocomplete
-|       |-- cypress.config.js
-|       |-- jsconfig.json
-|       `-- package.json
+|   |-- api/
+|   |   |-- cypress/               # Base da automacao de API
+|   |   |-- prisma/                # Schema e migrations
+|   |   |-- src/
+|   |   |   |-- config/            # Variaveis da aplicacao
+|   |   |   |-- controllers/       # Entrada HTTP
+|   |   |   |-- lib/               # Cliente Prisma
+|   |   |   |-- middlewares/       # Autenticacao e erros
+|   |   |   |-- repositories/      # Acesso ao Prisma
+|   |   |   |-- routes/            # Endpoints REST
+|   |   |   |-- services/          # Regras de negocio
+|   |   |   `-- utils/             # Validacoes e seguranca
+|   |   `-- index.js               # Inicializacao da API
+|   `-- web/
+|       |-- cypress/               # Suite Cypress Web
+|       `-- dist/                  # Interface local
 |-- database/
-|   |-- scripts/                    # Scripts de apoio
-|   `-- seed/                       # Massa inicial
-|-- docker-compose.yml              # PostgreSQL e PgAdmin
+|   `-- seed/                      # Massa inicial
+|-- docker-compose.yml
 `-- README.md
 ```
 
-## Comandos principais
+## Execucao local
 
-```bash
+```powershell
 docker compose up -d
 cd apps/api
 npm install
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
 npm run prisma:generate
 npm run prisma:migrate
+npm run prisma:seed
 npm run dev
 ```
 
-API local:
+Em outro terminal:
 
-```text
-http://localhost:3030
+```powershell
+cd apps/web
+npm install
+npm run dev
 ```
+
+- Interface: `http://localhost:3000`
+- API: `http://localhost:3030`
+- Health check: `http://localhost:3030/api/health`
+- PostgreSQL: `localhost:5434`
+- PgAdmin: `http://localhost:15434`
+
+A API possui CRUD de usuarios e clientes, autenticacao, recuperacao de senha e reset do ambiente de testes. As colecoes do Bruno permanecem fora do repositorio e a automacao de API sera desenvolvida separadamente em `apps/api/cypress/`.
