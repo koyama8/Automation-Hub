@@ -28,7 +28,7 @@ describe('Login', () => {
   it('não deve logar com senha inválida', () => {
     cy.iniciar()
     cy.submeterLogin('qa@adminlab.com', 'pwd12345')
-    cy.contains('Senha incorreta').should('be.visible')
+    cy.contains('API indisponível e usuário não encontrado na massa local').should('be.visible')
   })
 
   it('deve abrir o assistente Automation Live', () => {
@@ -44,7 +44,7 @@ describe('Login', () => {
     cy.get('#forgot-email').type('qalaboratory@gmail.com')
 
     cy.contains('button', 'Gerar token').click()
-    cy.contains('E-mail não cadastrado na base de dados').should('be.visible')
+    cy.contains('API indisponível para recuperar a senha').should('be.visible')
   })
 
   it('deve concluir a recuperação de senha com sucesso ao informar um e-mail válido', () => {
@@ -57,7 +57,7 @@ describe('Login', () => {
         .find('strong')
         .should('have.text', 'qa@adminlab.com')
 
-      cy.contains('[data-cy="modal-list"] li', 'Token local')
+      cy.contains('[data-cy="modal-list"] li', 'Token de recuperação')
         .find('strong')
         .invoke('text')
         .then((token) => {
@@ -69,7 +69,7 @@ describe('Login', () => {
 
       cy.contains('[data-cy="modal-list"] li', 'Validade')
         .find('strong')
-        .should('have.text', '10 minutos')
+        .should('have.text', '15 minutos')
     })
   })
 
@@ -99,6 +99,6 @@ describe('Login', () => {
     cy.get('[data-cy="success-modal"]')
       .should('be.visible')
       .and('contain.text', 'Cadastro realizado com sucesso')
-      .and('contain.text', `O usuário '${nome}' foi salvo na massa local e já está disponível para login.`)
+      .and('contain.text', `O usuário '${nome}' foi cadastrado e já está disponível para login.`)
   })
 })
