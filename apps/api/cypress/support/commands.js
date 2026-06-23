@@ -1,23 +1,16 @@
-Cypress.Commands.add('postUser', (user) => {
-  return cy.api({
-    method: 'POST',
-    url: '/api/users/register',
-    body: user,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    failOnStatusCode: false,
-  })
-})
+Cypress.Commands.add('loginApi', () => {
+  const user = {
+    email: 'qa@adminlab.com',
+    password: 'pwd123',
+  }
 
-Cypress.Commands.add('putUser', (userId, updatedUser) => {
-  return cy.api({
-    method: 'PUT',
-    url: `/api/users/${userId}`,
-    body: updatedUser,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    failOnStatusCode: false,
+  cy.api({
+    method: 'POST',
+    url: 'http://localhost:3030/api/auth/login',
+    body: user,
+  }).then((response) => {
+    expect(response.status).to.eq(200)
+
+    return response.body.data.token
   })
 })
