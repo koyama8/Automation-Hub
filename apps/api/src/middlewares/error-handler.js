@@ -14,8 +14,8 @@ export function errorHandler(error, req, res, next) {
   }
 
   if (error.code === 'P2002') {
-    const fields = Array.isArray(error.meta?.target) ? error.meta.target : []
-    const field = fields.includes('document') ? 'Document' : 'Email'
+    const conflictMetadata = JSON.stringify(error.meta || {}).toLowerCase()
+    const field = conflictMetadata.includes('document') ? 'Document' : 'Email'
     return res.status(409).json({ error: `${field} already exists!` })
   }
 

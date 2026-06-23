@@ -25,6 +25,14 @@ export function findClientById(id) {
   return prisma.client.findUnique({ where: { id } })
 }
 
+export function findClientByEmail(email) {
+  return prisma.client.findUnique({ where: { email } })
+}
+
+export function findClientByDocument(document) {
+  return prisma.client.findUnique({ where: { document } })
+}
+
 export function updateClient(id, data) {
   return prisma.client.update({ where: { id }, data })
 }

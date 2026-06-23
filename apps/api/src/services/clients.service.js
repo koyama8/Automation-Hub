@@ -43,8 +43,25 @@ function normalizeClient(payload = {}) {
   }
 }
 
-export function createClient(payload) {
-  return clientsRepository.createClient(normalizeClient(payload))
+async function ensureUniqueClientFields({ email, document }, ignoredClientId) {
+  const [clientWithEmail, clientWithDocument] = await Promise.all([
+    clientsRepository.findClientByEmail(email),
+    clientsRepository.findClientByDocument(document),
+  ])
+
+  if (clientWithEmail && clientWithEmail.id !== ignoredClientId) {
+    throw new AppError(409, 'Email already exists!')
+  }
+
+  if (clientWithDocument && clientWithDocument.id !== ignoredClientId) {
+    throw new AppError(409, 'Document already exists!')
+  }
+}
+
+export async function createClient(payload) {
+  const client = normalizeClient(payload)
+  await ensureUniqueClientFields(client)
+  return clientsRepository.createClient(client)
 }
 
 export function getClients(query = {}) {
@@ -64,7 +81,9 @@ export async function getClient(rawId) {
 export async function editClient(rawId, payload) {
   const id = parsePositiveId(rawId, 'Invalid client id!')
   await getClient(id)
-  return clientsRepository.updateClient(id, normalizeClient(payload))
+  const client = normalizeClient(payload)
+  await ensureUniqueClientFields(client, id)
+  return clientsRepository.updateClient(id, client)
 }
 
 export async function changeClientStatus(rawId, payload = {}) {
