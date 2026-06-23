@@ -1,0 +1,6 @@
+{
+  "watch": ["index.js", "src"],
+  "ext": "js,mjs,cjs,json",
+  "ignore": ["cypress/**", "node_modules/**", "generated/**"],
+  "delay": 200
+}
