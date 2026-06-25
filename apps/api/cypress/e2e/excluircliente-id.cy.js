@@ -1,6 +1,6 @@
 import { fakerPT_BR as faker } from '@faker-js/faker'
 
-describe('DELETE /api/clients/:id', () => {
+describe('DELETE /api/clients/:id - Exclusao de cliente por ID', () => {
   let token
   let clienteID
 

@@ -1,4 +1,4 @@
-describe('POST /api/clients', () => {
+describe('POST /api/clients - Cadastro de cliente', () => {
   let token
 
   beforeEach(() => {
@@ -7,7 +7,7 @@ describe('POST /api/clients', () => {
     })
   })
 
-  it('deve cadastrar um cliente', () => {
+  it('deve cadastrar um cliente com sucesso', () => {
     const user = {
       name: 'Cliente Bruno',
       email: 'cliente.bruno@gmail.com',

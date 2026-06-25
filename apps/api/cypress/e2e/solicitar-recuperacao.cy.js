@@ -1,4 +1,4 @@
-describe('POST /api/password/forgot', () => {
+describe('POST /api/password/forgot - Recuperacao de senha', () => {
   it('deve gerar um token de recuperacao para um email cadastrado', () => {
     const email = 'usuario.bruno@gmail.com'
 

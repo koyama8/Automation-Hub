@@ -1,4 +1,4 @@
-describe('POST /api/password/reset', () => {
+describe('POST /api/password/reset - Redefinicao de senha', () => {
   it('deve redefinir a senha usando um token valido', () => {
     let email = 'usuario.bruno@gmail.com'
     let tokengerado

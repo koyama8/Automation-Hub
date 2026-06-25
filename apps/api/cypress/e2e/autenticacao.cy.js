@@ -1,4 +1,4 @@
-describe('POST /api/auth/login', () => {
+describe('POST /api/auth/login - Autenticacao', () => {
   it('deve realizar login com credenciais validas', () => {
     // Credenciais exigidas pelo contrato do endpoint de login.
     const user = {

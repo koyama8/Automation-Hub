@@ -1,4 +1,4 @@
-describe('GET /api/clients', () => {
+describe('GET /api/clients - Listagem de clientes', () => {
   let token
 
   const user = {

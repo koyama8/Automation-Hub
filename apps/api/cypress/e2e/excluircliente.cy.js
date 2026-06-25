@@ -1,6 +1,6 @@
 import { fakerPT_BR as faker } from '@faker-js/faker'
 
-describe('DELETE /api/clients', () => {
+describe('DELETE /api/clients - Limpeza de clientes', () => {
   let token
 
   const user = {
@@ -29,7 +29,7 @@ describe('DELETE /api/clients', () => {
     })
   })
 
-  it('deve excluir todos os clientes', () => {
+  it('deve limpar todos os clientes cadastrados', () => {
     cy.api({
       method: 'DELETE',
       url: 'http://localhost:3030/api/clients',

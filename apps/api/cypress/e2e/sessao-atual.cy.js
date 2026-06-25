@@ -1,4 +1,4 @@
-describe('GET /api/auth/me', () => {
+describe('GET /api/auth/me - Sessao atual', () => {
   it('deve realizar login com credenciais validas', () => {
     const user = {
       email: 'qa@adminlab.com',
