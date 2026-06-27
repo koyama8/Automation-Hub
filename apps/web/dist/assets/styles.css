@@ -1676,10 +1676,28 @@ textarea:focus {
 }
 
 .status-badge.inactive,
+.status-badge.canceled,
 .danger-badge {
   border-color: rgba(248, 113, 113, 0.45);
   background: rgba(248, 113, 113, 0.1);
   color: #fca5a5;
+}
+
+.contracts-table {
+  min-width: 860px;
+}
+
+.contracts-table td:nth-child(2) strong,
+.contracts-table td:nth-child(2) small,
+.contracts-table td:nth-child(3) strong,
+.contracts-table td:nth-child(3) small {
+  display: block;
+}
+
+.contracts-table td:nth-child(2) small,
+.contracts-table td:nth-child(3) small {
+  margin-top: 4px;
+  color: var(--muted);
 }
 
 .data-table {

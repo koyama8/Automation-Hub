@@ -47,6 +47,7 @@ const VIEW_ROUTES = {
   registerView: '/admin/cadastro',
   usersView: '/admin/usuarios',
   clientsView: '/admin/clientes',
+  contractsView: '/admin/contratos',
   forgotView: '/admin/recuperar-senha',
   testDataView: '/admin/massa-de-testes',
   checkoutView: '/admin/checkout',
@@ -105,6 +106,11 @@ let clientsCache = []
 let editingClientId = null
 let pendingDeleteClientId = null
 let clientSearchTimer = null
+let contractsCache = []
+let contractClientsCache = []
+let editingContractId = null
+let pendingDeleteContractId = null
+let contractSearchTimer = null
 let currentSessionMode = 'local'
 let apiAvailability = 'unknown'
 let tableRows = [
@@ -573,6 +579,10 @@ function showView(viewId, options = {}) {
 
   if (viewId === 'clientsView') {
     loadClients()
+  }
+
+  if (viewId === 'contractsView') {
+    loadContracts()
   }
 
   if (viewId === 'tableView') {
@@ -2907,6 +2917,467 @@ getElement('[data-cy="client-delete-confirm"]').addEventListener('click', async 
   } finally {
     confirmButton.disabled = false
     confirmButton.textContent = 'Confirmar exclusão'
+  }
+})
+
+function getContractFilters() {
+  const search = getElement('[data-cy="contracts-search"]').value.trim()
+  const status = getElement('[data-cy="contracts-status-filter"]').value
+  const params = new URLSearchParams()
+
+  if (search) params.set('search', search)
+  if (status) params.set('status', status)
+  return params.toString()
+}
+
+function setContractsApiStatus(state, label) {
+  const badge = getElement('[data-cy="contracts-api-status"]')
+  badge.dataset.state = state
+  badge.textContent = label
+}
+
+function setContractFeedback(state, title, message, options = {}) {
+  const feedback = getElement('[data-cy="contracts-feedback"]')
+  feedback.dataset.state = state
+  getElement('[data-cy="contracts-feedback-title"]').textContent = title
+  getElement('[data-cy="contracts-feedback-message"]').textContent = message
+  getElement('[data-cy="contracts-retry"]').classList.toggle('hidden', !options.retry)
+}
+
+function getContractErrorMessage(response, body, fallback) {
+  if (response.status === 401) return 'Sessao ausente ou expirada. Faca login novamente pela API.'
+  if (response.status === 404) return body.error || 'Contrato ou cliente nao encontrado.'
+  if (response.status === 503) return 'PostgreSQL indisponivel. Verifique o Docker e tente novamente.'
+  return body.error || fallback
+}
+
+function reportContractResponseError(response, body, fallback) {
+  const message = getContractErrorMessage(response, body, fallback)
+  const authenticationError = response.status === 401
+  const apiFailure = response.status >= 500
+
+  setContractsApiStatus(apiFailure ? 'offline' : 'online', apiFailure ? 'Falha' : 'API online')
+  setContractFeedback(
+    apiFailure ? 'error' : 'warning',
+    authenticationError ? 'Autenticacao necessaria' : apiFailure ? 'Servico indisponivel' : 'Dados nao aceitos',
+    message,
+    { retry: apiFailure },
+  )
+  getElement('[data-cy="contract-result"]').textContent = message
+  showToast(message, 'error')
+  return message
+}
+
+function renderContractsTableState(message, state = 'empty') {
+  getElement('[data-cy="contracts-table-body"]').innerHTML = `
+    <tr class="table-state ${escapeHtml(state)}">
+      <td colspan="6">${escapeHtml(message)}</td>
+    </tr>
+  `
+}
+
+function formatDateForInput(value) {
+  if (!value) return ''
+  return String(value).slice(0, 10)
+}
+
+function formatDateForDisplay(value, fallback = 'Sem fim') {
+  if (!value) return fallback
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Data invalida'
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(date)
+}
+
+function formatCents(value) {
+  return formatCurrency(Number(value || 0) / 100)
+}
+
+function renderContractClientOptions(selectedClientId = '') {
+  const select = getElement('[data-field="contractClientId"]')
+  const selected = String(selectedClientId || select.value || '')
+
+  if (!contractClientsCache.length) {
+    select.innerHTML = '<option value="">Cadastre um cliente antes</option>'
+    return
+  }
+
+  select.innerHTML = [
+    '<option value="">Selecione um cliente</option>',
+    ...contractClientsCache.map((client) => {
+      const isSelected = String(client.id) === selected ? ' selected' : ''
+      const company = client.company ? ` - ${client.company}` : ''
+      return `<option value="${escapeHtml(client.id)}"${isSelected}>${escapeHtml(client.name)}${escapeHtml(company)}</option>`
+    }),
+  ].join('')
+}
+
+async function loadContractClients(options = {}) {
+  try {
+    const { response, body } = await request('/api/clients')
+
+    if (!response.ok) {
+      contractClientsCache = []
+      renderContractClientOptions()
+      if (!options.silent) reportContractResponseError(response, body, 'Nao foi possivel carregar clientes.')
+      return false
+    }
+
+    contractClientsCache = Array.isArray(body) ? body : body.data || []
+    renderContractClientOptions(options.selectedClientId)
+    return true
+  } catch (error) {
+    contractClientsCache = []
+    renderContractClientOptions()
+    if (!options.silent) {
+      const message = 'API indisponivel para carregar clientes.'
+      setContractsApiStatus('offline', 'Indisponivel')
+      setContractFeedback('error', 'Sem clientes', message, { retry: true })
+      getElement('[data-cy="contract-result"]').textContent = message
+    }
+    return false
+  }
+}
+
+async function loadContracts(options = {}) {
+  const query = getContractFilters()
+  setContractsApiStatus('checking', 'Verificando')
+  renderContractsTableState('Carregando contratos...', 'loading')
+  if (!options.silent) {
+    setContractFeedback('loading', 'Sincronizando dados', 'Consultando contratos, assinaturas e clientes na API.')
+  }
+
+  await loadContractClients({ silent: true })
+  if (!editingContractId && !getElement('[data-field="contractStartDate"]').value) {
+    getElement('[data-field="contractStartDate"]').value = getTodayInputValue()
+  }
+
+  try {
+    const { response, body } = await request(`/api/contracts${query ? `?${query}` : ''}`)
+
+    if (!response.ok) {
+      contractsCache = []
+      getElement('[data-cy="contracts-count"]').textContent = '0'
+      const message = reportContractResponseError(response, body, 'Nao foi possivel carregar os contratos.')
+      renderContractsTableState(message, 'error')
+      return
+    }
+
+    contractsCache = Array.isArray(body) ? body : body.data || []
+    renderContracts(contractsCache)
+    setContractsApiStatus('online', 'API online')
+
+    if (!options.silent) {
+      const hasFilters = Boolean(query)
+      setContractFeedback(
+        contractsCache.length || !hasFilters ? 'success' : 'warning',
+        contractsCache.length ? 'Base sincronizada' : hasFilters ? 'Nenhum resultado' : 'Base conectada',
+        contractsCache.length
+          ? `${contractsCache.length} contrato(s) carregado(s) do PostgreSQL.`
+          : hasFilters
+            ? 'Nenhum contrato corresponde aos filtros informados.'
+            : 'A API esta online e ainda nao existem contratos cadastrados.',
+      )
+    }
+  } catch (error) {
+    contractsCache = []
+    getElement('[data-cy="contracts-count"]').textContent = '0'
+    const message = 'API indisponivel. Inicie a API e o Docker antes de consultar contratos.'
+    renderContractsTableState(message, 'error')
+    setContractsApiStatus('offline', 'Indisponivel')
+    setContractFeedback('error', 'Sem conexao com a API', message, { retry: true })
+    getElement('[data-cy="contract-result"]').textContent = message
+  }
+}
+
+function renderContracts(contracts) {
+  const table = getElement('[data-cy="contracts-table-body"]')
+  getElement('[data-cy="contracts-count"]').textContent = String(contracts.length)
+
+  if (!contracts.length) {
+    renderContractsTableState('Nenhum contrato encontrado.')
+    return
+  }
+
+  table.innerHTML = contracts
+    .map((contract) => {
+      const isActive = contract.status === 'active'
+      const client = contract.client || {}
+      return `
+        <tr data-contract-row="${escapeHtml(contract.id)}" data-cy="contract-row-${escapeHtml(contract.id)}">
+          <td>${escapeHtml(contract.id)}</td>
+          <td>
+            <strong>${escapeHtml(client.name || `Cliente #${contract.clientId}`)}</strong>
+            <small>${escapeHtml(client.email || 'Sem e-mail')}</small>
+          </td>
+          <td>
+            <strong>${escapeHtml(contract.title)}</strong>
+            <small>${escapeHtml(contract.plan)} | ${escapeHtml(formatDateForDisplay(contract.startDate))} ate ${escapeHtml(formatDateForDisplay(contract.endDate))}</small>
+          </td>
+          <td>${escapeHtml(formatCents(contract.amountCents))}</td>
+          <td><span class="status-badge ${escapeHtml(contract.status)}">${isActive ? 'Ativo' : 'Cancelado'}</span></td>
+          <td>
+            <div class="client-row-actions">
+              <button class="secondary-btn" data-contract-action="edit" data-contract-id="${escapeHtml(contract.id)}" data-cy="contract-edit-${escapeHtml(contract.id)}" type="button">Editar</button>
+              <button class="secondary-btn" data-contract-action="status" data-contract-id="${escapeHtml(contract.id)}" data-cy="contract-status-${escapeHtml(contract.id)}" type="button">${isActive ? 'Cancelar' : 'Ativar'}</button>
+              <button class="danger-btn" data-contract-action="delete" data-contract-id="${escapeHtml(contract.id)}" data-cy="contract-delete-${escapeHtml(contract.id)}" type="button">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      `
+    })
+    .join('')
+}
+
+function resetContractForm(options = {}) {
+  const form = getElement('[data-form="contract"]')
+  form.reset()
+  clearFormErrors(form)
+  editingContractId = null
+  getElement('[data-field="contractId"]').value = ''
+  getElement('[data-field="contractStartDate"]').value = getTodayInputValue()
+  getElement('[data-cy="contract-form-title"]').textContent = 'Novo contrato'
+  getElement('[data-cy="contract-submit"]').textContent = 'Cadastrar contrato'
+  getElement('[data-cy="contract-cancel-edit"]').classList.add('hidden')
+  renderContractClientOptions()
+  if (!options.preserveResult) {
+    getElement('[data-cy="contract-result"]').textContent = options.message || 'Selecione um cliente para iniciar.'
+  }
+}
+
+async function startContractEdit(contractId, actionButton) {
+  actionButton.disabled = true
+  actionButton.textContent = 'Carregando...'
+  setContractFeedback('loading', 'Carregando contrato', `Consultando o contrato #${contractId} pela API.`)
+
+  try {
+    const { response, body } = await request(`/api/contracts/${contractId}`)
+
+    if (!response.ok) {
+      reportContractResponseError(response, body, 'Nao foi possivel carregar o contrato para edicao.')
+      return
+    }
+
+    const contract = body.data
+    const cachedIndex = contractsCache.findIndex((item) => Number(item.id) === Number(contract.id))
+    if (cachedIndex >= 0) contractsCache[cachedIndex] = contract
+
+    await loadContractClients({ silent: true, selectedClientId: contract.clientId })
+
+    editingContractId = contract.id
+    getElement('[data-field="contractId"]').value = contract.id
+    getElement('[data-field="contractClientId"]').value = contract.clientId
+    getElement('[data-field="contractTitle"]').value = contract.title
+    getElement('[data-field="contractPlan"]').value = contract.plan
+    getElement('[data-field="contractAmountCents"]').value = contract.amountCents
+    getElement('[data-field="contractStartDate"]').value = formatDateForInput(contract.startDate)
+    getElement('[data-field="contractEndDate"]').value = formatDateForInput(contract.endDate)
+    getElement('[data-field="contractStatus"]').value = contract.status
+    getElement('[data-field="contractNotes"]').value = contract.notes || ''
+    getElement('[data-cy="contract-form-title"]').textContent = `Editar contrato #${contract.id}`
+    getElement('[data-cy="contract-submit"]').textContent = 'Salvar alteracoes'
+    getElement('[data-cy="contract-cancel-edit"]').classList.remove('hidden')
+    getElement('[data-cy="contract-result"]').textContent = `Editando contrato: ${contract.title}`
+    setContractFeedback('success', 'Contrato carregado', `O contrato #${contract.id} esta pronto para edicao.`)
+    getElement('[data-form="contract"]').scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } catch (error) {
+    const message = 'API indisponivel durante a consulta do contrato.'
+    setContractsApiStatus('offline', 'Indisponivel')
+    setContractFeedback('error', 'Falha ao abrir edicao', message, { retry: true })
+    getElement('[data-cy="contract-result"]').textContent = message
+    showToast(message, 'error')
+  } finally {
+    actionButton.disabled = false
+    actionButton.textContent = 'Editar'
+  }
+}
+
+getElement('[data-form="contract"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const form = event.currentTarget
+  clearFormErrors(form)
+
+  const requiredFields = [
+    ['contractClientId', 'Cliente e obrigatorio'],
+    ['contractTitle', 'Titulo e obrigatorio'],
+    ['contractPlan', 'Plano e obrigatorio'],
+    ['contractAmountCents', 'Valor e obrigatorio'],
+    ['contractStartDate', 'Data de inicio e obrigatoria'],
+  ]
+  const valid = requiredFields.map(([field, message]) => requireField(field, message)).every(Boolean)
+  const clientId = Number(getElement('[data-field="contractClientId"]').value)
+  const amountCents = Number(getElement('[data-field="contractAmountCents"]').value)
+  const startDate = getElement('[data-field="contractStartDate"]').value
+  const endDate = getElement('[data-field="contractEndDate"]').value
+
+  if (!Number.isInteger(clientId) || clientId <= 0) setError('contractClientId', 'Selecione um cliente valido')
+  if (!Number.isInteger(amountCents) || amountCents <= 0) setError('contractAmountCents', 'Informe um valor inteiro positivo em centavos')
+  if (endDate && startDate && new Date(endDate) < new Date(startDate)) setError('contractEndDate', 'Fim deve ser maior ou igual ao inicio')
+  if (!valid || !Number.isInteger(clientId) || clientId <= 0 || !Number.isInteger(amountCents) || amountCents <= 0 || (endDate && startDate && new Date(endDate) < new Date(startDate))) {
+    setContractFeedback('warning', 'Revise o formulario', 'Existem campos obrigatorios ou dados invalidos antes do envio.')
+    getElement('[data-cy="contract-result"]').textContent = 'Corrija os campos destacados para continuar.'
+    return
+  }
+
+  const payload = {
+    clientId,
+    title: getElement('[data-field="contractTitle"]').value.trim(),
+    plan: getElement('[data-field="contractPlan"]').value.trim(),
+    amountCents,
+    startDate,
+    endDate: endDate || null,
+    status: getElement('[data-field="contractStatus"]').value,
+    notes: getElement('[data-field="contractNotes"]').value.trim(),
+  }
+  const path = editingContractId ? `/api/contracts/${editingContractId}` : '/api/contracts'
+  const method = editingContractId ? 'PUT' : 'POST'
+  const wasEditing = Boolean(editingContractId)
+  const submitButton = getElement('[data-cy="contract-submit"]')
+  submitButton.disabled = true
+  submitButton.textContent = wasEditing ? 'Salvando alteracoes...' : 'Cadastrando...'
+  setContractFeedback('loading', wasEditing ? 'Atualizando contrato' : 'Cadastrando contrato', 'Enviando os dados para a API e o PostgreSQL.')
+
+  try {
+    const { response, body } = await request(path, { method, body: JSON.stringify(payload) })
+
+    if (!response.ok) {
+      reportContractResponseError(response, body, 'Nao foi possivel salvar o contrato.')
+      return
+    }
+
+    const successMessage = wasEditing
+      ? `Contrato atualizado com sucesso: ${body.data.title}`
+      : `Contrato cadastrado com sucesso: ${body.data.title}`
+    resetContractForm({ preserveResult: true })
+    await loadContracts({ silent: true })
+    getElement('[data-cy="contract-result"]').textContent = successMessage
+    setContractFeedback('success', wasEditing ? 'Alteracoes salvas' : 'Contrato cadastrado', successMessage)
+    showToast(wasEditing ? 'Contrato atualizado com sucesso' : 'Contrato cadastrado com sucesso')
+  } catch (error) {
+    const message = 'API indisponivel para salvar o contrato. Verifique os servicos e tente novamente.'
+    setContractsApiStatus('offline', 'Indisponivel')
+    setContractFeedback('error', 'Falha de conexao', message, { retry: true })
+    getElement('[data-cy="contract-result"]').textContent = message
+    showToast(message, 'error')
+  } finally {
+    submitButton.disabled = false
+    submitButton.textContent = editingContractId ? 'Salvar alteracoes' : 'Cadastrar contrato'
+  }
+})
+
+getElement('[data-cy="contract-cancel-edit"]').addEventListener('click', () => {
+  resetContractForm({ message: 'Edicao cancelada. Nenhuma alteracao foi enviada.' })
+  setContractFeedback('success', 'Edicao cancelada', 'O formulario voltou ao modo de cadastro.')
+})
+
+getElement('[data-cy="contracts-refresh"]').addEventListener('click', loadContracts)
+getElement('[data-cy="contracts-retry"]').addEventListener('click', loadContracts)
+
+getElement('[data-cy="contracts-clear-filters"]').addEventListener('click', () => {
+  getElement('[data-cy="contracts-search"]').value = ''
+  getElement('[data-cy="contracts-status-filter"]').value = ''
+  loadContracts()
+})
+
+getElement('[data-cy="contracts-status-filter"]').addEventListener('change', loadContracts)
+
+getElement('[data-cy="contracts-search"]').addEventListener('input', () => {
+  clearTimeout(contractSearchTimer)
+  contractSearchTimer = setTimeout(loadContracts, 280)
+})
+
+getElement('[data-cy="contracts-table-body"]').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-contract-action]')
+  if (!button) return
+
+  const contractId = Number(button.dataset.contractId)
+  const contract = contractsCache.find((item) => Number(item.id) === contractId)
+  if (!contract) return
+
+  if (button.dataset.contractAction === 'edit') {
+    await startContractEdit(contractId, button)
+    return
+  }
+
+  if (button.dataset.contractAction === 'delete') {
+    pendingDeleteContractId = contractId
+    getElement('[data-cy="contract-delete-message"]').textContent = `Deseja realmente excluir o contrato ${contract.title}?`
+    getElement('[data-cy="contract-delete-error"]').textContent = ''
+    getElement('#contractDeleteModal').classList.remove('hidden')
+    return
+  }
+
+  if (button.dataset.contractAction === 'status') {
+    button.disabled = true
+    const originalLabel = button.textContent
+    button.textContent = 'Atualizando...'
+
+    try {
+      const willActivate = contract.status !== 'active'
+      const action = willActivate ? 'activate' : 'cancel'
+      const { response, body } = await request(`/api/contracts/${contractId}/${action}`, { method: 'PATCH' })
+
+      if (!response.ok) {
+        reportContractResponseError(response, body, 'Nao foi possivel atualizar o status.')
+        return
+      }
+
+      await loadContracts({ silent: true })
+      const message = `Contrato ${willActivate ? 'ativado' : 'cancelado'} com sucesso: ${contract.title}`
+      getElement('[data-cy="contract-result"]').textContent = message
+      setContractFeedback('success', 'Status atualizado', message)
+      showToast(message)
+    } catch (error) {
+      const message = 'API indisponivel durante a atualizacao do status.'
+      setContractsApiStatus('offline', 'Indisponivel')
+      setContractFeedback('error', 'Falha de conexao', message, { retry: true })
+      showToast(message, 'error')
+    } finally {
+      button.disabled = false
+      button.textContent = originalLabel
+    }
+  }
+})
+
+getElement('[data-cy="contract-delete-cancel"]').addEventListener('click', () => {
+  pendingDeleteContractId = null
+  getElement('[data-cy="contract-delete-error"]').textContent = ''
+  getElement('#contractDeleteModal').classList.add('hidden')
+})
+
+getElement('[data-cy="contract-delete-confirm"]').addEventListener('click', async () => {
+  if (!pendingDeleteContractId) return
+  const contractId = pendingDeleteContractId
+  const confirmButton = getElement('[data-cy="contract-delete-confirm"]')
+  confirmButton.disabled = true
+  confirmButton.textContent = 'Excluindo...'
+  getElement('[data-cy="contract-delete-error"]').textContent = ''
+
+  try {
+    const { response, body } = await request(`/api/contracts/${contractId}`, { method: 'DELETE' })
+
+    if (!response.ok) {
+      const message = reportContractResponseError(response, body, 'Nao foi possivel excluir o contrato.')
+      getElement('[data-cy="contract-delete-error"]').textContent = message
+      return
+    }
+
+    const message = `Contrato excluido com sucesso: ${body.data.title}`
+    if (Number(editingContractId) === Number(contractId)) resetContractForm({ preserveResult: true })
+    await loadContracts({ silent: true })
+    getElement('[data-cy="contract-result"]').textContent = message
+    setContractFeedback('success', 'Contrato excluido', message)
+    showToast('Contrato excluido com sucesso')
+    pendingDeleteContractId = null
+    getElement('#contractDeleteModal').classList.add('hidden')
+  } catch (error) {
+    const message = 'API indisponivel durante a exclusao do contrato.'
+    getElement('[data-cy="contract-delete-error"]').textContent = message
+    setContractsApiStatus('offline', 'Indisponivel')
+    setContractFeedback('error', 'Falha de conexao', message, { retry: true })
+    showToast(message, 'error')
+  } finally {
+    confirmButton.disabled = false
+    confirmButton.textContent = 'Confirmar exclusao'
   }
 })
 

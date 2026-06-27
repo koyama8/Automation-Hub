@@ -3,14 +3,15 @@ import { publicUserSelect } from './users.repository.js'
 
 export function resetLabData(adminData) {
   return prisma.$transaction(async (transaction) => {
-    const [deletedClients, deletedUsers, deletedTokens] = await Promise.all([
+    const [deletedClients, deletedContracts, deletedUsers, deletedTokens] = await Promise.all([
       transaction.client.count(),
+      transaction.contract.count(),
       transaction.user.count(),
       transaction.passwordResetToken.count(),
     ])
 
     await transaction.$executeRawUnsafe(
-      'TRUNCATE TABLE "PasswordResetToken", "Client", "User" RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE "PasswordResetToken", "Contract", "Client", "User" RESTART IDENTITY CASCADE',
     )
 
     const admin = await transaction.user.create({
@@ -20,6 +21,7 @@ export function resetLabData(adminData) {
 
     return {
       deletedClients,
+      deletedContracts,
       deletedUsers,
       deletedTokens,
       admin,

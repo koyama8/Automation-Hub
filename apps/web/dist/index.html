@@ -244,6 +244,15 @@
                 <small>CRUD integrado com API e PostgreSQL</small>
               </span>
             </button>
+            <button class="feature-card" data-cy="card-contracts" data-target="contractsView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z" /><path d="M15 3v5h5" /><path d="M10 13h7" /><path d="M10 17h5" /><path d="M4 7v14" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Contratos / Assinaturas</strong>
+                <small>Cadastro vinculado ao cliente</small>
+              </span>
+            </button>
             <button class="feature-card" data-cy="card-keyboard" data-target="keyboardView" type="button">
               <span class="feature-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2" /><path d="M6 10h.01" /><path d="M10 10h.01" /><path d="M14 10h.01" /><path d="M18 10h.01" /><path d="M7 14h10" /></svg>
@@ -826,6 +835,152 @@
             <div class="modal-actions split-actions">
               <button class="secondary-btn" data-cy="client-delete-cancel" type="button">Cancelar</button>
               <button class="danger-btn" data-cy="client-delete-confirm" type="button">Confirmar exclusão</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="contractsView" class="page hidden" data-view="contracts">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">ASS</span>
+            <div>
+              <h1>Contratos / Assinaturas</h1>
+              <p>Cadastre contratos para clientes e gerencie status ativo ou cancelado.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container clients-container contracts-container">
+          <section class="clients-feedback contracts-feedback" data-cy="contracts-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="contracts-feedback-title">Verificando conexao</strong>
+                <p data-cy="contracts-feedback-message">Aguarde enquanto consultamos contratos e clientes na API.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="contracts-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="form-card clients-form-panel contracts-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Dados do contrato</span>
+                <h2 data-cy="contract-form-title">Novo contrato</h2>
+              </div>
+              <span class="status-badge api-status" data-cy="contracts-api-status" data-state="checking">Verificando</span>
+            </div>
+
+            <form data-form="contract" data-cy="contract-form" novalidate>
+              <input data-field="contractId" name="contract-id" type="hidden" />
+
+              <label>Cliente *</label>
+              <select data-field="contractClientId" data-cy="contract-client" name="contract-client">
+                <option value="">Carregando clientes...</option>
+              </select>
+              <p class="error" data-error-for="contractClientId"></p>
+
+              <label>Titulo *</label>
+              <input data-field="contractTitle" data-cy="contract-title" name="contract-title" placeholder="Assinatura QA Pro" />
+              <p class="error" data-error-for="contractTitle"></p>
+
+              <div class="client-form-grid contract-form-grid">
+                <div>
+                  <label>Plano *</label>
+                  <input data-field="contractPlan" data-cy="contract-plan" name="contract-plan" placeholder="Pro mensal" />
+                  <p class="error" data-error-for="contractPlan"></p>
+                </div>
+                <div>
+                  <label>Valor em centavos *</label>
+                  <input data-field="contractAmountCents" data-cy="contract-amount-cents" name="contract-amount-cents" type="number" min="1" step="1" placeholder="19990" />
+                  <p class="error" data-error-for="contractAmountCents"></p>
+                </div>
+              </div>
+
+              <div class="client-form-grid contract-form-grid">
+                <div>
+                  <label>Inicio *</label>
+                  <input data-field="contractStartDate" data-cy="contract-start-date" name="contract-start-date" type="date" />
+                  <p class="error" data-error-for="contractStartDate"></p>
+                </div>
+                <div>
+                  <label>Fim</label>
+                  <input data-field="contractEndDate" data-cy="contract-end-date" name="contract-end-date" type="date" />
+                  <p class="error" data-error-for="contractEndDate"></p>
+                </div>
+              </div>
+
+              <label>Status *</label>
+              <select data-field="contractStatus" data-cy="contract-status" name="contract-status">
+                <option value="active">Ativo</option>
+                <option value="canceled">Cancelado</option>
+              </select>
+
+              <label>Observacoes</label>
+              <textarea data-field="contractNotes" data-cy="contract-notes" name="contract-notes" placeholder="Detalhes da assinatura, condicoes e observacoes"></textarea>
+
+              <div class="client-form-actions">
+                <button class="secondary-btn hidden" data-cy="contract-cancel-edit" type="button">Cancelar edicao</button>
+                <button class="primary-btn" data-cy="contract-submit" type="submit">Cadastrar contrato</button>
+              </div>
+            </form>
+
+            <p class="result-text" data-cy="contract-result" aria-live="polite">Selecione um cliente para iniciar.</p>
+          </section>
+
+          <section class="tool-surface clients-list-panel contracts-list-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Base de contratos</span>
+                <h2>Assinaturas cadastradas</h2>
+              </div>
+              <strong class="clients-count" data-cy="contracts-count">0</strong>
+            </div>
+
+            <div class="clients-filters contracts-filters">
+              <input data-cy="contracts-search" type="search" placeholder="Buscar por contrato, plano ou cliente" />
+              <select data-cy="contracts-status-filter">
+                <option value="">Todos os status</option>
+                <option value="active">Ativos</option>
+                <option value="canceled">Cancelados</option>
+              </select>
+              <button class="secondary-btn" data-cy="contracts-clear-filters" type="button">Limpar filtros</button>
+              <button class="secondary-btn" data-cy="contracts-refresh" type="button">Atualizar</button>
+            </div>
+
+            <div class="table-scroll">
+              <table class="data-table clients-table contracts-table" data-cy="contracts-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Contrato</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody data-cy="contracts-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+
+        <div id="contractDeleteModal" class="modal-overlay hidden" data-cy="contract-delete-modal" role="dialog" aria-modal="true" aria-labelledby="contractDeleteTitle">
+          <div class="modal-card">
+            <div class="modal-head">
+              <span class="modal-badge danger-badge">DEL</span>
+              <div>
+                <h2 id="contractDeleteTitle">Excluir contrato</h2>
+                <p data-cy="contract-delete-message">Confirme a exclusao deste contrato.</p>
+                <p class="error" data-cy="contract-delete-error"></p>
+              </div>
+            </div>
+            <div class="modal-actions split-actions">
+              <button class="secondary-btn" data-cy="contract-delete-cancel" type="button">Cancelar</button>
+              <button class="danger-btn" data-cy="contract-delete-confirm" type="button">Confirmar exclusao</button>
             </div>
           </div>
         </div>

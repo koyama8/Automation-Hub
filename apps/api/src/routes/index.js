@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
 import { authRouter } from './auth.routes.js'
 import { clientsRouter } from './clients.routes.js'
+import { contractsRouter } from './contracts.routes.js'
 import { passwordRouter } from './password.routes.js'
 import { systemRouter } from './system.routes.js'
 import { usersRouter } from './users.routes.js'
@@ -34,6 +35,7 @@ routes.get('/api/health', async (req, res) => {
 
 routes.use('/api/auth', authRouter)
 routes.use('/api/clients', clientsRouter)
+routes.use('/api/contracts', contractsRouter)
 routes.use('/api/password', passwordRouter)
 routes.use('/api/system', systemRouter)
 routes.use('/api/users', usersRouter)

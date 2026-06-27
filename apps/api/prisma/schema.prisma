@@ -41,4 +41,23 @@ model Client {
   status    String   @default("active")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  contracts Contract[]
+}
+
+model Contract {
+  id          Int       @id @default(autoincrement())
+  clientId    Int
+  title       String
+  plan        String
+  amountCents Int
+  startDate   DateTime
+  endDate     DateTime?
+  status      String    @default("active")
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([status])
 }
