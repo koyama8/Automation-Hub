@@ -1701,11 +1701,39 @@ textarea:focus {
 }
 
 .commerce-container {
-  width: min(1500px, calc(100% - 32px));
+  width: min(1600px, calc(100% - 32px));
 }
 
 .commerce-table {
-  min-width: 860px;
+  min-width: 1080px;
+}
+
+.commerce-table th:nth-child(1) {
+  width: 56px;
+}
+
+.commerce-table th:nth-child(2) {
+  width: 220px;
+}
+
+.commerce-table th:nth-child(3) {
+  width: 170px;
+}
+
+.commerce-table th:nth-child(4) {
+  width: 130px;
+}
+
+.commerce-table th:nth-child(5) {
+  width: 140px;
+}
+
+.commerce-table th:nth-child(6) {
+  width: 320px;
+}
+
+.commerce-table td {
+  vertical-align: middle;
 }
 
 .commerce-table td:nth-child(2) strong,
@@ -1718,6 +1746,30 @@ textarea:focus {
 .commerce-table td small {
   margin-top: 4px;
   color: var(--muted);
+}
+
+.commerce-table .status-badge {
+  min-width: 92px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.commerce-table .client-row-actions {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.commerce-table .client-row-actions button {
+  min-width: 86px;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+.commerce-table .client-row-actions [data-cart-action='decrease'],
+.commerce-table .client-row-actions [data-cart-action='increase'] {
+  width: 38px;
+  min-width: 38px;
+  padding-inline: 0;
 }
 
 .commerce-draft-list {

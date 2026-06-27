@@ -3451,6 +3451,22 @@ function reportCommerceError(scope, response, body, fallback, resultSelector) {
   return message
 }
 
+function formatCommerceStatus(status) {
+  const labels = {
+    active: 'Ativo',
+    inactive: 'Inativo',
+    pending: 'Pendente',
+    processing: 'Processando',
+    paid: 'Pago',
+    canceled: 'Cancelado',
+    approved: 'Aprovado',
+    declined: 'Recusado',
+    refunded: 'Estornado',
+    expired: 'Expirado',
+  }
+  return labels[status] || status
+}
+
 async function loadCommerceClients() {
   const { response, body } = await request('/api/clients')
   if (!response.ok) throw new Error(body.error || 'Clientes indisponiveis')
@@ -3882,7 +3898,7 @@ function renderOrders(orders) {
           <td><strong>${escapeHtml(order.client?.name || `Cliente #${order.clientId}`)}</strong><small>${escapeHtml(order.client?.email || '')}</small></td>
           <td>${escapeHtml(itemText)}</td>
           <td>${escapeHtml(formatCents(order.totalCents))}</td>
-          <td><span class="status-badge ${escapeHtml(order.status)}">${escapeHtml(order.status)}</span></td>
+          <td><span class="status-badge ${escapeHtml(order.status)}">${escapeHtml(formatCommerceStatus(order.status))}</span></td>
           <td>
             <div class="client-row-actions">
               <button class="secondary-btn" data-order-action="processing" data-order-id="${escapeHtml(order.id)}" type="button">Processar</button>
@@ -4028,7 +4044,7 @@ function renderPayments(payments) {
           <td><strong>#${escapeHtml(payment.orderId)}</strong><small>${escapeHtml(payment.order?.client?.name || '')}</small></td>
           <td>${escapeHtml(payment.method)}${payment.cardLast4 ? `<small>final ${escapeHtml(payment.cardLast4)}</small>` : ''}</td>
           <td>${escapeHtml(formatCents(payment.amountCents))}</td>
-          <td><span class="status-badge ${escapeHtml(payment.status)}">${escapeHtml(payment.status)}</span></td>
+          <td><span class="status-badge ${escapeHtml(payment.status)}">${escapeHtml(formatCommerceStatus(payment.status))}</span></td>
           <td>
             <div class="client-row-actions">
               <button class="secondary-btn" data-payment-action="confirm" data-payment-id="${escapeHtml(payment.id)}" type="button">Confirmar</button>
