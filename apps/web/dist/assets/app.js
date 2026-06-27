@@ -48,6 +48,10 @@ const VIEW_ROUTES = {
   usersView: '/admin/usuarios',
   clientsView: '/admin/clientes',
   contractsView: '/admin/contratos',
+  productsView: '/admin/produtos',
+  cartView: '/admin/carrinho',
+  ordersView: '/admin/pedidos',
+  paymentsView: '/admin/pagamentos',
   forgotView: '/admin/recuperar-senha',
   testDataView: '/admin/massa-de-testes',
   checkoutView: '/admin/checkout',
@@ -111,6 +115,15 @@ let contractClientsCache = []
 let editingContractId = null
 let pendingDeleteContractId = null
 let contractSearchTimer = null
+let productsCache = []
+let editingProductId = null
+let productSearchTimer = null
+let commerceClientsCache = []
+let cartData = null
+let orderDraftItems = []
+let ordersCache = []
+let orderSearchTimer = null
+let paymentsCache = []
 let currentSessionMode = 'local'
 let apiAvailability = 'unknown'
 let tableRows = [
@@ -583,6 +596,22 @@ function showView(viewId, options = {}) {
 
   if (viewId === 'contractsView') {
     loadContracts()
+  }
+
+  if (viewId === 'productsView') {
+    loadProducts()
+  }
+
+  if (viewId === 'cartView') {
+    setupCartView()
+  }
+
+  if (viewId === 'ordersView') {
+    setupOrdersView()
+  }
+
+  if (viewId === 'paymentsView') {
+    setupPaymentsView()
   }
 
   if (viewId === 'tableView') {
@@ -3380,6 +3409,682 @@ getElement('[data-cy="contract-delete-confirm"]').addEventListener('click', asyn
     confirmButton.textContent = 'Confirmar exclusao'
   }
 })
+
+function setCommerceApiStatus(scope, state, label) {
+  const badge = getElement(`[data-cy="${scope}-api-status"]`)
+  if (!badge) return
+  badge.dataset.state = state
+  badge.textContent = label
+}
+
+function setCommerceFeedback(scope, state, title, message, options = {}) {
+  const feedback = getElement(`[data-cy="${scope}-feedback"]`)
+  if (!feedback) return
+  feedback.dataset.state = state
+  getElement(`[data-cy="${scope}-feedback-title"]`).textContent = title
+  getElement(`[data-cy="${scope}-feedback-message"]`).textContent = message
+  getElement(`[data-cy="${scope}-retry"]`)?.classList.toggle('hidden', !options.retry)
+}
+
+function getCommerceError(response, body, fallback) {
+  if (response.status === 401) return 'Sessao ausente ou expirada. Faca login novamente.'
+  if (response.status === 404) return body.error || 'Registro nao encontrado.'
+  if (response.status >= 500) return body.error || 'Servico indisponivel.'
+  return body.error || fallback
+}
+
+function renderCommerceState(selector, colspan, message, state = 'empty') {
+  getElement(selector).innerHTML = `
+    <tr class="table-state ${escapeHtml(state)}">
+      <td colspan="${colspan}">${escapeHtml(message)}</td>
+    </tr>
+  `
+}
+
+function reportCommerceError(scope, response, body, fallback, resultSelector) {
+  const message = getCommerceError(response, body, fallback)
+  const apiFailure = response.status >= 500
+  setCommerceApiStatus(scope, apiFailure ? 'offline' : 'online', apiFailure ? 'Falha' : 'API online')
+  setCommerceFeedback(scope, apiFailure ? 'error' : 'warning', apiFailure ? 'Servico indisponivel' : 'Dados nao aceitos', message, { retry: apiFailure })
+  if (resultSelector) getElement(resultSelector).textContent = message
+  showToast(message, 'error')
+  return message
+}
+
+async function loadCommerceClients() {
+  const { response, body } = await request('/api/clients')
+  if (!response.ok) throw new Error(body.error || 'Clientes indisponiveis')
+  commerceClientsCache = Array.isArray(body) ? body : body.data || []
+  return commerceClientsCache
+}
+
+function renderClientOptions(selector, selectedId = '') {
+  const select = getElement(selector)
+  const selected = String(selectedId || select.value || '')
+  if (!commerceClientsCache.length) {
+    select.innerHTML = '<option value="">Cadastre um cliente antes</option>'
+    return
+  }
+  select.innerHTML = [
+    '<option value="">Selecione um cliente</option>',
+    ...commerceClientsCache.map((client) => {
+      const isSelected = String(client.id) === selected ? ' selected' : ''
+      return `<option value="${escapeHtml(client.id)}"${isSelected}>${escapeHtml(client.name)}${client.company ? ` - ${escapeHtml(client.company)}` : ''}</option>`
+    }),
+  ].join('')
+}
+
+function renderProductOptions(selector, selectedId = '') {
+  const select = getElement(selector)
+  const selected = String(selectedId || select.value || '')
+  const activeProducts = productsCache.filter((product) => product.status === 'active')
+  if (!activeProducts.length) {
+    select.innerHTML = '<option value="">Cadastre produto ativo antes</option>'
+    return
+  }
+  select.innerHTML = [
+    '<option value="">Selecione um produto</option>',
+    ...activeProducts.map((product) => {
+      const isSelected = String(product.id) === selected ? ' selected' : ''
+      return `<option value="${escapeHtml(product.id)}"${isSelected}>${escapeHtml(product.name)} - ${escapeHtml(formatCents(product.priceCents))}</option>`
+    }),
+  ].join('')
+}
+
+function getProductFilters() {
+  const search = getElement('[data-cy="products-search"]').value.trim()
+  const status = getElement('[data-cy="products-status-filter"]').value
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  if (status) params.set('status', status)
+  return params.toString()
+}
+
+async function loadProducts(options = {}) {
+  const query = getProductFilters()
+  setCommerceApiStatus('products', 'checking', 'Verificando')
+  renderCommerceState('[data-cy="products-table-body"]', 6, 'Carregando produtos...', 'loading')
+  if (!options.silent) setCommerceFeedback('products', 'loading', 'Sincronizando catalogo', 'Consultando produtos na API.')
+
+  try {
+    const { response, body } = await request(`/api/products${query ? `?${query}` : ''}`)
+    if (!response.ok) {
+      productsCache = []
+      getElement('[data-cy="products-count"]').textContent = '0'
+      const message = reportCommerceError('products', response, body, 'Nao foi possivel carregar produtos.', '[data-cy="product-result"]')
+      renderCommerceState('[data-cy="products-table-body"]', 6, message, 'error')
+      return
+    }
+
+    productsCache = Array.isArray(body) ? body : body.data || []
+    renderProducts(productsCache)
+    setCommerceApiStatus('products', 'online', 'API online')
+    if (!options.silent) {
+      setCommerceFeedback('products', 'success', 'Catalogo sincronizado', `${productsCache.length} produto(s) carregado(s).`)
+    }
+  } catch (error) {
+    productsCache = []
+    getElement('[data-cy="products-count"]').textContent = '0'
+    const message = 'API indisponivel para produtos.'
+    renderCommerceState('[data-cy="products-table-body"]', 6, message, 'error')
+    setCommerceApiStatus('products', 'offline', 'Indisponivel')
+    setCommerceFeedback('products', 'error', 'Falha de conexao', message, { retry: true })
+  }
+}
+
+function renderProducts(products) {
+  getElement('[data-cy="products-count"]').textContent = String(products.length)
+  if (!products.length) {
+    renderCommerceState('[data-cy="products-table-body"]', 6, 'Nenhum produto encontrado.')
+    return
+  }
+
+  getElement('[data-cy="products-table-body"]').innerHTML = products
+    .map(
+      (product) => `
+        <tr data-product-row="${escapeHtml(product.id)}">
+          <td>${escapeHtml(product.id)}</td>
+          <td><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.sku)}${product.description ? ` | ${escapeHtml(product.description)}` : ''}</small></td>
+          <td>${escapeHtml(formatCents(product.priceCents))}</td>
+          <td>${escapeHtml(product.stock)}</td>
+          <td><span class="status-badge ${escapeHtml(product.status)}">${product.status === 'active' ? 'Ativo' : 'Inativo'}</span></td>
+          <td>
+            <div class="client-row-actions">
+              <button class="secondary-btn" data-product-action="edit" data-product-id="${escapeHtml(product.id)}" type="button">Editar</button>
+              <button class="secondary-btn" data-product-action="status" data-product-id="${escapeHtml(product.id)}" type="button">${product.status === 'active' ? 'Inativar' : 'Ativar'}</button>
+              <button class="danger-btn" data-product-action="delete" data-product-id="${escapeHtml(product.id)}" type="button">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      `,
+    )
+    .join('')
+}
+
+function resetProductForm(options = {}) {
+  const form = getElement('[data-form="product"]')
+  form.reset()
+  clearFormErrors(form)
+  editingProductId = null
+  getElement('[data-field="productId"]').value = ''
+  getElement('[data-cy="product-form-title"]').textContent = 'Novo produto'
+  getElement('[data-cy="product-submit"]').textContent = 'Cadastrar produto'
+  getElement('[data-cy="product-cancel-edit"]').classList.add('hidden')
+  if (!options.preserveResult) getElement('[data-cy="product-result"]').textContent = options.message || 'Preencha os dados para iniciar.'
+}
+
+getElement('[data-form="product"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const form = event.currentTarget
+  clearFormErrors(form)
+  const required = [
+    ['productName', 'Nome e obrigatorio'],
+    ['productSku', 'SKU e obrigatorio'],
+    ['productPriceCents', 'Preco e obrigatorio'],
+    ['productStock', 'Estoque e obrigatorio'],
+  ]
+  const valid = required.map(([field, message]) => requireField(field, message)).every(Boolean)
+  const priceCents = Number(getElement('[data-field="productPriceCents"]').value)
+  const stock = Number(getElement('[data-field="productStock"]').value)
+  if (!Number.isInteger(priceCents) || priceCents <= 0) setError('productPriceCents', 'Informe preco positivo em centavos')
+  if (!Number.isInteger(stock) || stock < 0) setError('productStock', 'Estoque nao pode ser negativo')
+  if (!valid || !Number.isInteger(priceCents) || priceCents <= 0 || !Number.isInteger(stock) || stock < 0) return
+
+  const payload = {
+    name: getElement('[data-field="productName"]').value.trim(),
+    sku: getElement('[data-field="productSku"]').value.trim(),
+    description: getElement('[data-field="productDescription"]').value.trim(),
+    priceCents,
+    stock,
+    status: getElement('[data-field="productStatus"]').value,
+  }
+  const path = editingProductId ? `/api/products/${editingProductId}` : '/api/products'
+  const method = editingProductId ? 'PUT' : 'POST'
+  const wasEditing = Boolean(editingProductId)
+  const submitButton = getElement('[data-cy="product-submit"]')
+  submitButton.disabled = true
+  submitButton.textContent = wasEditing ? 'Salvando...' : 'Cadastrando...'
+
+  try {
+    const { response, body } = await request(path, { method, body: JSON.stringify(payload) })
+    if (!response.ok) {
+      reportCommerceError('products', response, body, 'Nao foi possivel salvar produto.', '[data-cy="product-result"]')
+      return
+    }
+    const message = wasEditing ? `Produto atualizado: ${body.data.name}` : `Produto cadastrado: ${body.data.name}`
+    resetProductForm({ preserveResult: true })
+    await loadProducts({ silent: true })
+    getElement('[data-cy="product-result"]').textContent = message
+    setCommerceFeedback('products', 'success', wasEditing ? 'Produto atualizado' : 'Produto cadastrado', message)
+    showToast(message)
+  } catch (error) {
+    const message = 'API indisponivel para salvar produto.'
+    setCommerceApiStatus('products', 'offline', 'Indisponivel')
+    setCommerceFeedback('products', 'error', 'Falha de conexao', message, { retry: true })
+    showToast(message, 'error')
+  } finally {
+    submitButton.disabled = false
+    submitButton.textContent = editingProductId ? 'Salvar alteracoes' : 'Cadastrar produto'
+  }
+})
+
+getElement('[data-cy="products-table-body"]').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-product-action]')
+  if (!button) return
+  const productId = Number(button.dataset.productId)
+  const product = productsCache.find((item) => Number(item.id) === productId)
+  if (!product) return
+
+  if (button.dataset.productAction === 'edit') {
+    editingProductId = product.id
+    getElement('[data-field="productId"]').value = product.id
+    getElement('[data-field="productName"]').value = product.name
+    getElement('[data-field="productSku"]').value = product.sku
+    getElement('[data-field="productPriceCents"]').value = product.priceCents
+    getElement('[data-field="productStock"]').value = product.stock
+    getElement('[data-field="productStatus"]').value = product.status
+    getElement('[data-field="productDescription"]').value = product.description || ''
+    getElement('[data-cy="product-form-title"]').textContent = `Editar produto #${product.id}`
+    getElement('[data-cy="product-submit"]').textContent = 'Salvar alteracoes'
+    getElement('[data-cy="product-cancel-edit"]').classList.remove('hidden')
+    getElement('[data-cy="product-result"]').textContent = `Editando produto: ${product.name}`
+    getElement('[data-form="product"]').scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return
+  }
+
+  if (button.dataset.productAction === 'status') {
+    const status = product.status === 'active' ? 'inactive' : 'active'
+    const { response, body } = await request(`/api/products/${productId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    })
+    if (!response.ok) {
+      reportCommerceError('products', response, body, 'Nao foi possivel atualizar status.', '[data-cy="product-result"]')
+      return
+    }
+    await loadProducts({ silent: true })
+    showToast(`Produto ${status === 'active' ? 'ativado' : 'inativado'} com sucesso`)
+    return
+  }
+
+  if (button.dataset.productAction === 'delete' && window.confirm(`Excluir produto ${product.name}?`)) {
+    const { response, body } = await request(`/api/products/${productId}`, { method: 'DELETE' })
+    if (!response.ok) {
+      reportCommerceError('products', response, body, 'Nao foi possivel excluir produto.', '[data-cy="product-result"]')
+      return
+    }
+    await loadProducts({ silent: true })
+    showToast('Produto excluido com sucesso')
+  }
+})
+
+getElement('[data-cy="product-cancel-edit"]').addEventListener('click', () => resetProductForm({ message: 'Edicao cancelada.' }))
+getElement('[data-cy="products-refresh"]').addEventListener('click', loadProducts)
+getElement('[data-cy="products-retry"]').addEventListener('click', loadProducts)
+getElement('[data-cy="products-clear-filters"]').addEventListener('click', () => {
+  getElement('[data-cy="products-search"]').value = ''
+  getElement('[data-cy="products-status-filter"]').value = ''
+  loadProducts()
+})
+getElement('[data-cy="products-status-filter"]').addEventListener('change', loadProducts)
+getElement('[data-cy="products-search"]').addEventListener('input', () => {
+  clearTimeout(productSearchTimer)
+  productSearchTimer = setTimeout(loadProducts, 280)
+})
+
+async function setupCartView() {
+  setCommerceApiStatus('cart', 'checking', 'Verificando')
+  setCommerceFeedback('cart', 'loading', 'Carregando dados', 'Consultando clientes, produtos e carrinho.')
+  try {
+    await Promise.all([loadCommerceClients(), loadProducts({ silent: true })])
+    renderClientOptions('[data-field="cartClientId"]')
+    renderProductOptions('[data-field="cartProductId"]')
+    await loadCart()
+    setCommerceApiStatus('cart', 'online', 'API online')
+  } catch (error) {
+    setCommerceApiStatus('cart', 'offline', 'Indisponivel')
+    setCommerceFeedback('cart', 'error', 'Falha de conexao', error.message, { retry: true })
+    renderCommerceState('[data-cy="cart-table-body"]', 6, error.message, 'error')
+  }
+}
+
+async function loadCart() {
+  const clientId = getElement('[data-field="cartClientId"]').value || commerceClientsCache[0]?.id
+  if (!clientId) {
+    renderCommerceState('[data-cy="cart-table-body"]', 6, 'Selecione um cliente.')
+    return
+  }
+  getElement('[data-field="cartClientId"]').value = clientId
+  const { response, body } = await request(`/api/cart/${clientId}`)
+  if (!response.ok) {
+    const message = reportCommerceError('cart', response, body, 'Nao foi possivel carregar carrinho.', '[data-cy="cart-result"]')
+    renderCommerceState('[data-cy="cart-table-body"]', 6, message, 'error')
+    return
+  }
+  cartData = body.data
+  renderCart(cartData)
+  setCommerceFeedback('cart', 'success', 'Carrinho carregado', `${cartData.totalItems} item(ns), subtotal ${formatCents(cartData.subtotalCents)}.`)
+}
+
+function renderCart(cart) {
+  getElement('[data-cy="cart-subtotal"]').textContent = formatCents(cart?.subtotalCents || 0)
+  if (!cart?.items?.length) {
+    renderCommerceState('[data-cy="cart-table-body"]', 6, 'Carrinho vazio.')
+    return
+  }
+  getElement('[data-cy="cart-table-body"]').innerHTML = cart.items
+    .map(
+      (item) => `
+        <tr>
+          <td>${escapeHtml(item.id)}</td>
+          <td><strong>${escapeHtml(item.product.name)}</strong><small>${escapeHtml(item.product.sku)}</small></td>
+          <td>${escapeHtml(item.quantity)}</td>
+          <td>${escapeHtml(formatCents(item.unitPriceCents))}</td>
+          <td>${escapeHtml(formatCents(item.subtotalCents))}</td>
+          <td>
+            <div class="client-row-actions">
+              <button class="secondary-btn" data-cart-action="decrease" data-cart-item-id="${escapeHtml(item.id)}" type="button">-</button>
+              <button class="secondary-btn" data-cart-action="increase" data-cart-item-id="${escapeHtml(item.id)}" type="button">+</button>
+              <button class="danger-btn" data-cart-action="remove" data-cart-item-id="${escapeHtml(item.id)}" type="button">Remover</button>
+            </div>
+          </td>
+        </tr>
+      `,
+    )
+    .join('')
+}
+
+getElement('[data-form="cart"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  clearFormErrors(event.currentTarget)
+  const clientId = Number(getElement('[data-field="cartClientId"]').value)
+  const productId = Number(getElement('[data-field="cartProductId"]').value)
+  const quantity = Number(getElement('[data-field="cartQuantity"]').value)
+  if (!clientId) setError('cartClientId', 'Cliente e obrigatorio')
+  if (!productId) setError('cartProductId', 'Produto e obrigatorio')
+  if (!Number.isInteger(quantity) || quantity <= 0) setError('cartQuantity', 'Quantidade deve ser positiva')
+  if (!clientId || !productId || !Number.isInteger(quantity) || quantity <= 0) return
+
+  const { response, body } = await request('/api/cart/items', {
+    method: 'POST',
+    body: JSON.stringify({ clientId, productId, quantity }),
+  })
+  if (!response.ok) {
+    reportCommerceError('cart', response, body, 'Nao foi possivel adicionar item.', '[data-cy="cart-result"]')
+    return
+  }
+  cartData = body.data
+  renderCart(cartData)
+  getElement('[data-cy="cart-result"]').textContent = 'Produto adicionado ao carrinho.'
+  setCommerceFeedback('cart', 'success', 'Carrinho atualizado', `Subtotal ${formatCents(cartData.subtotalCents)}.`)
+})
+
+getElement('[data-field="cartClientId"]').addEventListener('change', loadCart)
+getElement('[data-cy="cart-retry"]').addEventListener('click', setupCartView)
+getElement('[data-cy="cart-clear"]').addEventListener('click', async () => {
+  const clientId = getElement('[data-field="cartClientId"]').value
+  if (!clientId) return
+  const { response, body } = await request(`/api/cart/${clientId}`, { method: 'DELETE' })
+  if (!response.ok) {
+    reportCommerceError('cart', response, body, 'Nao foi possivel limpar carrinho.', '[data-cy="cart-result"]')
+    return
+  }
+  cartData = body.data
+  renderCart(cartData)
+  showToast('Carrinho limpo com sucesso')
+})
+
+getElement('[data-cy="cart-table-body"]').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-cart-action]')
+  if (!button || !cartData) return
+  const item = cartData.items.find((cartItem) => Number(cartItem.id) === Number(button.dataset.cartItemId))
+  if (!item) return
+  if (button.dataset.cartAction === 'remove') {
+    const { response, body } = await request(`/api/cart/items/${item.id}`, { method: 'DELETE' })
+    if (!response.ok) return reportCommerceError('cart', response, body, 'Nao foi possivel remover item.', '[data-cy="cart-result"]')
+    cartData = body.data
+    renderCart(cartData)
+    return
+  }
+  const quantity = button.dataset.cartAction === 'increase' ? item.quantity + 1 : item.quantity - 1
+  if (quantity <= 0) return
+  const { response, body } = await request(`/api/cart/items/${item.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ quantity }),
+  })
+  if (!response.ok) return reportCommerceError('cart', response, body, 'Nao foi possivel atualizar quantidade.', '[data-cy="cart-result"]')
+  cartData = body.data
+  renderCart(cartData)
+})
+
+function getOrderFilters() {
+  const search = getElement('[data-cy="orders-search"]').value.trim()
+  const status = getElement('[data-cy="orders-status-filter"]').value
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  if (status) params.set('status', status)
+  return params.toString()
+}
+
+async function setupOrdersView() {
+  setCommerceApiStatus('orders', 'checking', 'Verificando')
+  setCommerceFeedback('orders', 'loading', 'Sincronizando pedidos', 'Consultando clientes, produtos e pedidos.')
+  try {
+    await Promise.all([loadCommerceClients(), loadProducts({ silent: true })])
+    renderClientOptions('[data-field="orderClientId"]')
+    renderProductOptions('[data-field="orderProductId"]')
+    renderOrderDraft()
+    await loadOrders()
+    setCommerceApiStatus('orders', 'online', 'API online')
+  } catch (error) {
+    setCommerceApiStatus('orders', 'offline', 'Indisponivel')
+    setCommerceFeedback('orders', 'error', 'Falha de conexao', error.message, { retry: true })
+  }
+}
+
+async function loadOrders(options = {}) {
+  const query = getOrderFilters()
+  renderCommerceState('[data-cy="orders-table-body"]', 6, 'Carregando pedidos...', 'loading')
+  const { response, body } = await request(`/api/orders${query ? `?${query}` : ''}`)
+  if (!response.ok) {
+    const message = reportCommerceError('orders', response, body, 'Nao foi possivel carregar pedidos.', '[data-cy="order-result"]')
+    renderCommerceState('[data-cy="orders-table-body"]', 6, message, 'error')
+    return
+  }
+  ordersCache = Array.isArray(body) ? body : body.data || []
+  renderOrders(ordersCache)
+  if (!options.silent) setCommerceFeedback('orders', 'success', 'Pedidos sincronizados', `${ordersCache.length} pedido(s) carregado(s).`)
+}
+
+function renderOrderDraft() {
+  const list = getElement('[data-cy="order-draft-items"]')
+  if (!orderDraftItems.length) {
+    list.innerHTML = '<li><span>Nenhum item adicionado</span></li>'
+    return
+  }
+  list.innerHTML = orderDraftItems
+    .map((item, index) => `<li><span>${escapeHtml(item.name)} x ${escapeHtml(item.quantity)}</span><button class="danger-btn" data-order-draft-remove="${index}" type="button">Remover</button></li>`)
+    .join('')
+}
+
+function renderOrders(orders) {
+  getElement('[data-cy="orders-count"]').textContent = String(orders.length)
+  if (!orders.length) {
+    renderCommerceState('[data-cy="orders-table-body"]', 6, 'Nenhum pedido encontrado.')
+    return
+  }
+  getElement('[data-cy="orders-table-body"]').innerHTML = orders
+    .map((order) => {
+      const itemText = order.items.map((item) => `${item.productName} x ${item.quantity}`).join(', ')
+      return `
+        <tr>
+          <td>${escapeHtml(order.id)}</td>
+          <td><strong>${escapeHtml(order.client?.name || `Cliente #${order.clientId}`)}</strong><small>${escapeHtml(order.client?.email || '')}</small></td>
+          <td>${escapeHtml(itemText)}</td>
+          <td>${escapeHtml(formatCents(order.totalCents))}</td>
+          <td><span class="status-badge ${escapeHtml(order.status)}">${escapeHtml(order.status)}</span></td>
+          <td>
+            <div class="client-row-actions">
+              <button class="secondary-btn" data-order-action="processing" data-order-id="${escapeHtml(order.id)}" type="button">Processar</button>
+              <button class="secondary-btn" data-order-action="paid" data-order-id="${escapeHtml(order.id)}" type="button">Pagar</button>
+              <button class="danger-btn" data-order-action="cancel" data-order-id="${escapeHtml(order.id)}" type="button">Cancelar</button>
+            </div>
+          </td>
+        </tr>
+      `
+    })
+    .join('')
+}
+
+getElement('[data-cy="order-add-item"]').addEventListener('click', () => {
+  const productId = Number(getElement('[data-field="orderProductId"]').value)
+  const quantity = Number(getElement('[data-field="orderQuantity"]').value)
+  const product = productsCache.find((item) => Number(item.id) === productId)
+  clearFormErrors(getElement('[data-form="order"]'))
+  if (!productId || !product) return setError('orderProductId', 'Produto e obrigatorio')
+  if (!Number.isInteger(quantity) || quantity <= 0) return setError('orderQuantity', 'Quantidade deve ser positiva')
+  const existingItem = orderDraftItems.find((item) => item.productId === productId)
+  if (existingItem) existingItem.quantity += quantity
+  else orderDraftItems.push({ productId, quantity, name: product.name })
+  renderOrderDraft()
+})
+
+getElement('[data-cy="order-draft-items"]').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-order-draft-remove]')
+  if (!button) return
+  orderDraftItems.splice(Number(button.dataset.orderDraftRemove), 1)
+  renderOrderDraft()
+})
+
+getElement('[data-form="order"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const clientId = Number(getElement('[data-field="orderClientId"]').value)
+  if (!clientId) return setError('orderClientId', 'Cliente e obrigatorio')
+  if (!orderDraftItems.length) {
+    getElement('[data-cy="order-result"]').textContent = 'Adicione ao menos um item.'
+    return
+  }
+  const payload = {
+    clientId,
+    items: orderDraftItems.map(({ productId, quantity }) => ({ productId, quantity })),
+    notes: getElement('[data-field="orderNotes"]').value.trim(),
+  }
+  const { response, body } = await request('/api/orders', { method: 'POST', body: JSON.stringify(payload) })
+  if (!response.ok) return reportCommerceError('orders', response, body, 'Nao foi possivel criar pedido.', '[data-cy="order-result"]')
+  orderDraftItems = []
+  renderOrderDraft()
+  await Promise.all([loadOrders({ silent: true }), loadProducts({ silent: true })])
+  getElement('[data-cy="order-result"]').textContent = `Pedido criado: #${body.data.id}, total ${formatCents(body.data.totalCents)}`
+  showToast('Pedido criado com sucesso')
+})
+
+getElement('[data-cy="orders-table-body"]').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-order-action]')
+  if (!button) return
+  const orderId = Number(button.dataset.orderId)
+  const action = button.dataset.orderAction
+  const path = action === 'cancel' ? `/api/orders/${orderId}/cancel` : `/api/orders/${orderId}/status`
+  const body = action === 'cancel' ? undefined : JSON.stringify({ status: action })
+  const { response, body: responseBody } = await request(path, { method: 'PATCH', ...(body ? { body } : {}) })
+  if (!response.ok) return reportCommerceError('orders', response, responseBody, 'Nao foi possivel atualizar pedido.', '[data-cy="order-result"]')
+  await loadOrders({ silent: true })
+  showToast('Pedido atualizado com sucesso')
+})
+
+getElement('[data-cy="orders-refresh"]').addEventListener('click', loadOrders)
+getElement('[data-cy="orders-retry"]').addEventListener('click', setupOrdersView)
+getElement('[data-cy="orders-clear-filters"]').addEventListener('click', () => {
+  getElement('[data-cy="orders-search"]').value = ''
+  getElement('[data-cy="orders-status-filter"]').value = ''
+  loadOrders()
+})
+getElement('[data-cy="orders-status-filter"]').addEventListener('change', loadOrders)
+getElement('[data-cy="orders-search"]').addEventListener('input', () => {
+  clearTimeout(orderSearchTimer)
+  orderSearchTimer = setTimeout(loadOrders, 280)
+})
+
+function getPaymentFilters() {
+  const method = getElement('[data-cy="payments-method-filter"]').value
+  const status = getElement('[data-cy="payments-status-filter"]').value
+  const params = new URLSearchParams()
+  if (method) params.set('method', method)
+  if (status) params.set('status', status)
+  return params.toString()
+}
+
+async function setupPaymentsView() {
+  setCommerceApiStatus('payments', 'checking', 'Verificando')
+  setCommerceFeedback('payments', 'loading', 'Carregando pagamentos', 'Consultando pedidos e pagamentos.')
+  try {
+    await loadOrders({ silent: true })
+    renderPaymentOrderOptions()
+    await loadPayments()
+    setCommerceApiStatus('payments', 'online', 'API online')
+  } catch (error) {
+    setCommerceApiStatus('payments', 'offline', 'Indisponivel')
+    setCommerceFeedback('payments', 'error', 'Falha de conexao', error.message, { retry: true })
+  }
+}
+
+function renderPaymentOrderOptions() {
+  const select = getElement('[data-field="paymentOrderId"]')
+  const payableOrders = ordersCache.filter((order) => order.status !== 'canceled')
+  if (!payableOrders.length) {
+    select.innerHTML = '<option value="">Crie um pedido antes</option>'
+    return
+  }
+  select.innerHTML = [
+    '<option value="">Selecione um pedido</option>',
+    ...payableOrders.map((order) => `<option value="${escapeHtml(order.id)}">#${escapeHtml(order.id)} - ${escapeHtml(order.client?.name || 'Cliente')} - ${escapeHtml(formatCents(order.totalCents))}</option>`),
+  ].join('')
+}
+
+async function loadPayments(options = {}) {
+  const query = getPaymentFilters()
+  renderCommerceState('[data-cy="payments-table-body"]', 6, 'Carregando pagamentos...', 'loading')
+  const { response, body } = await request(`/api/payments${query ? `?${query}` : ''}`)
+  if (!response.ok) {
+    const message = reportCommerceError('payments', response, body, 'Nao foi possivel carregar pagamentos.', '[data-cy="payment-result"]')
+    renderCommerceState('[data-cy="payments-table-body"]', 6, message, 'error')
+    return
+  }
+  paymentsCache = Array.isArray(body) ? body : body.data || []
+  renderPayments(paymentsCache)
+  if (!options.silent) setCommerceFeedback('payments', 'success', 'Pagamentos sincronizados', `${paymentsCache.length} pagamento(s) carregado(s).`)
+}
+
+function renderPayments(payments) {
+  getElement('[data-cy="payments-count"]').textContent = String(payments.length)
+  if (!payments.length) {
+    renderCommerceState('[data-cy="payments-table-body"]', 6, 'Nenhum pagamento encontrado.')
+    return
+  }
+  getElement('[data-cy="payments-table-body"]').innerHTML = payments
+    .map(
+      (payment) => `
+        <tr>
+          <td>${escapeHtml(payment.id)}</td>
+          <td><strong>#${escapeHtml(payment.orderId)}</strong><small>${escapeHtml(payment.order?.client?.name || '')}</small></td>
+          <td>${escapeHtml(payment.method)}${payment.cardLast4 ? `<small>final ${escapeHtml(payment.cardLast4)}</small>` : ''}</td>
+          <td>${escapeHtml(formatCents(payment.amountCents))}</td>
+          <td><span class="status-badge ${escapeHtml(payment.status)}">${escapeHtml(payment.status)}</span></td>
+          <td>
+            <div class="client-row-actions">
+              <button class="secondary-btn" data-payment-action="confirm" data-payment-id="${escapeHtml(payment.id)}" type="button">Confirmar</button>
+              <button class="secondary-btn" data-payment-action="decline" data-payment-id="${escapeHtml(payment.id)}" type="button">Recusar</button>
+              <button class="danger-btn" data-payment-action="refund" data-payment-id="${escapeHtml(payment.id)}" type="button">Estornar</button>
+            </div>
+          </td>
+        </tr>
+      `,
+    )
+    .join('')
+}
+
+getElement('[data-form="payment"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  clearFormErrors(event.currentTarget)
+  const orderId = Number(getElement('[data-field="paymentOrderId"]').value)
+  const method = getElement('[data-field="paymentMethod"]').value
+  const amountValue = getElement('[data-field="paymentAmountCents"]').value
+  const cardNumber = getElement('[data-field="paymentCardNumber"]').value.trim()
+  const expiresAt = getElement('[data-field="paymentExpiresAt"]').value
+  if (!orderId) return setError('paymentOrderId', 'Pedido e obrigatorio')
+  if (method === 'card' && !cardNumber) return setError('paymentCardNumber', 'Cartao e obrigatorio para metodo cartao')
+
+  const payload = { orderId, method }
+  if (amountValue) payload.amountCents = Number(amountValue)
+  if (cardNumber) payload.cardNumber = cardNumber
+  if (expiresAt) payload.expiresAt = expiresAt
+  const { response, body } = await request('/api/payments', { method: 'POST', body: JSON.stringify(payload) })
+  if (!response.ok) return reportCommerceError('payments', response, body, 'Nao foi possivel criar pagamento.', '[data-cy="payment-result"]')
+  await loadPayments({ silent: true })
+  getElement('[data-cy="payment-result"]').textContent = `Pagamento criado: #${body.data.id} (${body.data.method})`
+  showToast('Pagamento criado com sucesso')
+})
+
+getElement('[data-cy="payments-table-body"]').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-payment-action]')
+  if (!button) return
+  const paymentId = Number(button.dataset.paymentId)
+  const action = button.dataset.paymentAction
+  const { response, body } = await request(`/api/payments/${paymentId}/${action}`, { method: 'PATCH' })
+  if (!response.ok) return reportCommerceError('payments', response, body, 'Nao foi possivel atualizar pagamento.', '[data-cy="payment-result"]')
+  await Promise.all([loadPayments({ silent: true }), loadOrders({ silent: true })])
+  renderPaymentOrderOptions()
+  showToast('Pagamento atualizado com sucesso')
+})
+
+getElement('[data-cy="payments-refresh"]').addEventListener('click', loadPayments)
+getElement('[data-cy="payments-retry"]').addEventListener('click', setupPaymentsView)
+getElement('[data-cy="payments-clear-filters"]').addEventListener('click', () => {
+  getElement('[data-cy="payments-method-filter"]').value = ''
+  getElement('[data-cy="payments-status-filter"]').value = ''
+  loadPayments()
+})
+getElement('[data-cy="payments-method-filter"]').addEventListener('change', loadPayments)
+getElement('[data-cy="payments-status-filter"]').addEventListener('change', loadPayments)
 
 document.querySelectorAll('.status-btn').forEach((button) => {
   button.addEventListener('click', () => {

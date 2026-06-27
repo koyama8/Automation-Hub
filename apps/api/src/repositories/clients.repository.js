@@ -43,12 +43,17 @@ export function deleteClient(id) {
 
 export function deleteAllClients() {
   return prisma.$transaction(async (transaction) => {
-    const [deletedClients, deletedContracts] = await Promise.all([
+    const [deletedClients, deletedContracts, deletedCarts, deletedOrders, deletedPayments] = await Promise.all([
       transaction.client.count(),
       transaction.contract.count(),
+      transaction.cart.count(),
+      transaction.order.count(),
+      transaction.payment.count(),
     ])
-    await transaction.$executeRawUnsafe('TRUNCATE TABLE "Contract", "Client" RESTART IDENTITY')
+    await transaction.$executeRawUnsafe(
+      'TRUNCATE TABLE "Payment", "OrderItem", "Order", "CartItem", "Cart", "Contract", "Client" RESTART IDENTITY',
+    )
 
-    return { deletedClients, deletedContracts, nextClientId: 1 }
+    return { deletedClients, deletedContracts, deletedCarts, deletedOrders, deletedPayments, nextClientId: 1 }
   })
 }

@@ -253,6 +253,42 @@
                 <small>Cadastro vinculado ao cliente</small>
               </span>
             </button>
+            <button class="feature-card" data-cy="card-products" data-target="productsView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Produtos</strong>
+                <small>Cadastro, estoque e status</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-cart" data-target="cartView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 2-1.6L22 6H6" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Carrinho</strong>
+                <small>Adicionar, remover e recalcular</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-orders" data-target="ordersView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z" /><path d="M9 7h6" /><path d="M9 11h6" /><path d="M9 15h4" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Pedidos</strong>
+                <small>Cliente, itens e status</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-payments" data-target="paymentsView" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /><path d="M6 15h4" /><path d="M16 15h2" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Pagamentos</strong>
+                <small>Pix, cartao e boleto</small>
+              </span>
+            </button>
             <button class="feature-card" data-cy="card-keyboard" data-target="keyboardView" type="button">
               <span class="feature-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2" /><path d="M6 10h.01" /><path d="M10 10h.01" /><path d="M14 10h.01" /><path d="M18 10h.01" /><path d="M7 14h10" /></svg>
@@ -984,6 +1020,396 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section id="productsView" class="page hidden" data-view="products">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">PRD</span>
+            <div>
+              <h1>Produtos</h1>
+              <p>Cadastre produtos, acompanhe estoque e altere disponibilidade.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container clients-container commerce-container">
+          <section class="clients-feedback" data-cy="products-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="products-feedback-title">Verificando conexao</strong>
+                <p data-cy="products-feedback-message">Consultando produtos na API.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="products-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="form-card clients-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Catalogo</span>
+                <h2 data-cy="product-form-title">Novo produto</h2>
+              </div>
+              <span class="status-badge api-status" data-cy="products-api-status" data-state="checking">Verificando</span>
+            </div>
+
+            <form data-form="product" data-cy="product-form" novalidate>
+              <input data-field="productId" type="hidden" />
+              <label>Nome *</label>
+              <input data-field="productName" data-cy="product-name" placeholder="Plano QA Pro" />
+              <p class="error" data-error-for="productName"></p>
+
+              <label>SKU *</label>
+              <input data-field="productSku" data-cy="product-sku" placeholder="QA-PRO-001" />
+              <p class="error" data-error-for="productSku"></p>
+
+              <div class="client-form-grid">
+                <div>
+                  <label>Preco em centavos *</label>
+                  <input data-field="productPriceCents" data-cy="product-price-cents" type="number" min="1" step="1" placeholder="19990" />
+                  <p class="error" data-error-for="productPriceCents"></p>
+                </div>
+                <div>
+                  <label>Estoque *</label>
+                  <input data-field="productStock" data-cy="product-stock" type="number" min="0" step="1" placeholder="10" />
+                  <p class="error" data-error-for="productStock"></p>
+                </div>
+              </div>
+
+              <label>Status *</label>
+              <select data-field="productStatus" data-cy="product-status">
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+
+              <label>Descricao</label>
+              <textarea data-field="productDescription" data-cy="product-description" placeholder="Detalhes do produto"></textarea>
+
+              <div class="client-form-actions">
+                <button class="secondary-btn hidden" data-cy="product-cancel-edit" type="button">Cancelar edicao</button>
+                <button class="primary-btn" data-cy="product-submit" type="submit">Cadastrar produto</button>
+              </div>
+            </form>
+            <p class="result-text" data-cy="product-result">Preencha os dados para iniciar.</p>
+          </section>
+
+          <section class="tool-surface clients-list-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Produtos cadastrados</span>
+                <h2>Catalogo ativo</h2>
+              </div>
+              <strong class="clients-count" data-cy="products-count">0</strong>
+            </div>
+            <div class="clients-filters">
+              <input data-cy="products-search" type="search" placeholder="Buscar por nome, SKU ou descricao" />
+              <select data-cy="products-status-filter">
+                <option value="">Todos os status</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+              </select>
+              <button class="secondary-btn" data-cy="products-clear-filters" type="button">Limpar filtros</button>
+              <button class="secondary-btn" data-cy="products-refresh" type="button">Atualizar</button>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table clients-table commerce-table" data-cy="products-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Produto</th>
+                    <th>Preco</th>
+                    <th>Estoque</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody data-cy="products-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </section>
+
+      <section id="cartView" class="page hidden" data-view="cart">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">CAR</span>
+            <div>
+              <h1>Carrinho</h1>
+              <p>Adicione produtos para um cliente e valide subtotal por item.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container clients-container commerce-container">
+          <section class="clients-feedback" data-cy="cart-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="cart-feedback-title">Carregando dados</strong>
+                <p data-cy="cart-feedback-message">Consultando clientes, produtos e carrinho.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="cart-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="form-card clients-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Adicionar item</span>
+                <h2>Carrinho do cliente</h2>
+              </div>
+              <span class="status-badge api-status" data-cy="cart-api-status" data-state="checking">Verificando</span>
+            </div>
+            <form data-form="cart" data-cy="cart-form" novalidate>
+              <label>Cliente *</label>
+              <select data-field="cartClientId" data-cy="cart-client"></select>
+              <p class="error" data-error-for="cartClientId"></p>
+
+              <label>Produto *</label>
+              <select data-field="cartProductId" data-cy="cart-product"></select>
+              <p class="error" data-error-for="cartProductId"></p>
+
+              <label>Quantidade *</label>
+              <input data-field="cartQuantity" data-cy="cart-quantity" type="number" min="1" step="1" value="1" />
+              <p class="error" data-error-for="cartQuantity"></p>
+
+              <div class="client-form-actions">
+                <button class="secondary-btn" data-cy="cart-clear" type="button">Limpar carrinho</button>
+                <button class="primary-btn" data-cy="cart-submit" type="submit">Adicionar produto</button>
+              </div>
+            </form>
+            <p class="result-text" data-cy="cart-result">Selecione cliente e produto.</p>
+          </section>
+
+          <section class="tool-surface clients-list-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Itens no carrinho</span>
+                <h2>Subtotal calculado</h2>
+              </div>
+              <strong class="clients-count" data-cy="cart-subtotal">R$ 0,00</strong>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table clients-table commerce-table" data-cy="cart-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Produto</th>
+                    <th>Qtd</th>
+                    <th>Unitario</th>
+                    <th>Subtotal</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody data-cy="cart-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </section>
+
+      <section id="ordersView" class="page hidden" data-view="orders">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">PED</span>
+            <div>
+              <h1>Pedidos</h1>
+              <p>Crie pedidos para clientes com itens e total calculado pela API.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container clients-container commerce-container">
+          <section class="clients-feedback" data-cy="orders-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="orders-feedback-title">Sincronizando pedidos</strong>
+                <p data-cy="orders-feedback-message">Consultando pedidos, clientes e produtos.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="orders-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="form-card clients-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Novo pedido</span>
+                <h2>Cliente e itens</h2>
+              </div>
+              <span class="status-badge api-status" data-cy="orders-api-status" data-state="checking">Verificando</span>
+            </div>
+            <form data-form="order" data-cy="order-form" novalidate>
+              <label>Cliente *</label>
+              <select data-field="orderClientId" data-cy="order-client"></select>
+              <p class="error" data-error-for="orderClientId"></p>
+
+              <label>Produto *</label>
+              <select data-field="orderProductId" data-cy="order-product"></select>
+              <p class="error" data-error-for="orderProductId"></p>
+
+              <label>Quantidade *</label>
+              <input data-field="orderQuantity" data-cy="order-quantity" type="number" min="1" step="1" value="1" />
+              <p class="error" data-error-for="orderQuantity"></p>
+
+              <button class="secondary-btn" data-cy="order-add-item" type="button">Adicionar item</button>
+              <ul class="commerce-draft-list" data-cy="order-draft-items"></ul>
+
+              <label>Observacoes</label>
+              <textarea data-field="orderNotes" data-cy="order-notes" placeholder="Observacoes do pedido"></textarea>
+
+              <button class="primary-btn" data-cy="order-submit" type="submit">Criar pedido</button>
+            </form>
+            <p class="result-text" data-cy="order-result">Adicione ao menos um item.</p>
+          </section>
+
+          <section class="tool-surface clients-list-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Pedidos cadastrados</span>
+                <h2>Historico de pedidos</h2>
+              </div>
+              <strong class="clients-count" data-cy="orders-count">0</strong>
+            </div>
+            <div class="clients-filters">
+              <input data-cy="orders-search" type="search" placeholder="Buscar por cliente ou observacao" />
+              <select data-cy="orders-status-filter">
+                <option value="">Todos os status</option>
+                <option value="pending">Pendentes</option>
+                <option value="processing">Processando</option>
+                <option value="paid">Pagos</option>
+                <option value="canceled">Cancelados</option>
+              </select>
+              <button class="secondary-btn" data-cy="orders-clear-filters" type="button">Limpar filtros</button>
+              <button class="secondary-btn" data-cy="orders-refresh" type="button">Atualizar</button>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table clients-table commerce-table" data-cy="orders-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Itens</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody data-cy="orders-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </section>
+
+      <section id="paymentsView" class="page hidden" data-view="payments">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">PAY</span>
+            <div>
+              <h1>Pagamentos</h1>
+              <p>Crie pagamentos Pix, cartao ou boleto e altere o status.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container clients-container commerce-container">
+          <section class="clients-feedback" data-cy="payments-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="payments-feedback-title">Carregando pagamentos</strong>
+                <p data-cy="payments-feedback-message">Consultando pedidos e transacoes.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="payments-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="form-card clients-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Novo pagamento</span>
+                <h2>Metodo e pedido</h2>
+              </div>
+              <span class="status-badge api-status" data-cy="payments-api-status" data-state="checking">Verificando</span>
+            </div>
+            <form data-form="payment" data-cy="payment-form" novalidate>
+              <label>Pedido *</label>
+              <select data-field="paymentOrderId" data-cy="payment-order"></select>
+              <p class="error" data-error-for="paymentOrderId"></p>
+
+              <label>Metodo *</label>
+              <select data-field="paymentMethod" data-cy="payment-method">
+                <option value="pix">Pix</option>
+                <option value="card">Cartao</option>
+                <option value="boleto">Boleto</option>
+              </select>
+
+              <label>Valor em centavos</label>
+              <input data-field="paymentAmountCents" data-cy="payment-amount-cents" type="number" min="1" step="1" placeholder="Vazio usa total do pedido" />
+              <p class="error" data-error-for="paymentAmountCents"></p>
+
+              <label>Numero do cartao</label>
+              <input data-field="paymentCardNumber" data-cy="payment-card-number" inputmode="numeric" placeholder="4111111111111111" />
+              <p class="error" data-error-for="paymentCardNumber"></p>
+
+              <label>Expira em</label>
+              <input data-field="paymentExpiresAt" data-cy="payment-expires-at" type="datetime-local" />
+
+              <button class="primary-btn" data-cy="payment-submit" type="submit">Criar pagamento</button>
+            </form>
+            <p class="result-text" data-cy="payment-result">Selecione um pedido para iniciar.</p>
+          </section>
+
+          <section class="tool-surface clients-list-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Transacoes</span>
+                <h2>Pagamentos cadastrados</h2>
+              </div>
+              <strong class="clients-count" data-cy="payments-count">0</strong>
+            </div>
+            <div class="clients-filters">
+              <select data-cy="payments-method-filter">
+                <option value="">Todos os metodos</option>
+                <option value="pix">Pix</option>
+                <option value="card">Cartao</option>
+                <option value="boleto">Boleto</option>
+              </select>
+              <select data-cy="payments-status-filter">
+                <option value="">Todos os status</option>
+                <option value="pending">Pendentes</option>
+                <option value="approved">Aprovados</option>
+                <option value="declined">Recusados</option>
+                <option value="refunded">Estornados</option>
+                <option value="expired">Expirados</option>
+              </select>
+              <button class="secondary-btn" data-cy="payments-clear-filters" type="button">Limpar filtros</button>
+              <button class="secondary-btn" data-cy="payments-refresh" type="button">Atualizar</button>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table clients-table commerce-table" data-cy="payments-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Pedido</th>
+                    <th>Metodo</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody data-cy="payments-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
       </section>
 
       <section id="visualView" class="page hidden" data-view="visual">

@@ -1700,6 +1700,74 @@ textarea:focus {
   color: var(--muted);
 }
 
+.commerce-container {
+  width: min(1500px, calc(100% - 32px));
+}
+
+.commerce-table {
+  min-width: 860px;
+}
+
+.commerce-table td:nth-child(2) strong,
+.commerce-table td:nth-child(2) small,
+.commerce-table td:nth-child(3) strong,
+.commerce-table td:nth-child(3) small {
+  display: block;
+}
+
+.commerce-table td small {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.commerce-draft-list {
+  display: grid;
+  gap: 8px;
+  min-height: 42px;
+  margin: 12px 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.commerce-draft-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  padding: 10px 12px;
+  color: #d8f7f2;
+}
+
+.status-badge.pending {
+  border-color: rgba(242, 193, 78, 0.45);
+  background: rgba(242, 193, 78, 0.1);
+  color: #fde68a;
+}
+
+.status-badge.processing {
+  border-color: rgba(56, 163, 255, 0.45);
+  background: rgba(56, 163, 255, 0.1);
+  color: #93c5fd;
+}
+
+.status-badge.paid,
+.status-badge.approved {
+  border-color: rgba(102, 227, 166, 0.45);
+  background: rgba(102, 227, 166, 0.1);
+  color: var(--green);
+}
+
+.status-badge.declined,
+.status-badge.refunded,
+.status-badge.expired {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
