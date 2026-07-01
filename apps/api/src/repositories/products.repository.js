@@ -39,3 +39,16 @@ export function updateProduct(id, data) {
 export function deleteProduct(id) {
   return prisma.product.delete({ where: { id } })
 }
+
+export function deleteAllProducts() {
+  return prisma.$transaction(async (transaction) => {
+    const [deletedProducts, deletedCartItems] = await Promise.all([
+      transaction.product.count(),
+      transaction.cartItem.count(),
+    ])
+
+    await transaction.$executeRawUnsafe('TRUNCATE TABLE "CartItem", "Product" RESTART IDENTITY')
+
+    return { deletedProducts, deletedCartItems, nextProductId: 1 }
+  })
+}

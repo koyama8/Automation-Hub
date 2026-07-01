@@ -29,3 +29,8 @@ export async function destroy(req, res) {
   const product = await productsService.removeProduct(req.params.id)
   return res.status(200).json({ message: 'Product deleted successfully', data: product })
 }
+
+export async function clear(req, res) {
+  const result = await productsService.clearProducts()
+  return res.status(200).json({ message: 'All products deleted successfully', data: result })
+}

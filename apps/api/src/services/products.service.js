@@ -101,3 +101,7 @@ export async function removeProduct(rawId) {
   await getProduct(id)
   return productsRepository.deleteProduct(id)
 }
+
+export function clearProducts() {
+  return productsRepository.deleteAllProducts()
+}
