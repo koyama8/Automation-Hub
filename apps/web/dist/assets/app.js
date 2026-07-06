@@ -2856,13 +2856,15 @@ getElement('[data-cy="clients-table-body"]').addEventListener('click', async (ev
   if (!button) return
 
   const clientId = Number(button.dataset.clientId)
-  const client = clientsCache.find((item) => Number(item.id) === clientId)
-  if (!client) return
+  if (!Number.isFinite(clientId)) return
 
   if (button.dataset.clientAction === 'edit') {
     await startClientEdit(clientId, button)
     return
   }
+
+  const client = clientsCache.find((item) => Number(item.id) === clientId)
+  if (!client) return
 
   if (button.dataset.clientAction === 'delete') {
     pendingDeleteClientId = clientId

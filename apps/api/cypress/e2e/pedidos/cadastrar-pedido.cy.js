@@ -78,5 +78,33 @@ describe("POST /api/orders", () => {
     }).then((response) => {
       expect(response.status).to.eq(201);
     });
-  });
-});
+  })
+
+  it.only('nao deve cadastrar um pedido sem cliente',() => {
+      const pedido =
+      {
+  "clientId": 999999,
+  "items": [
+    {
+      "productId": "{{productId}}",
+      "quantity": 1
+    }
+  ]
+}
+      cy.api({
+      method: "POST",
+      url: "http://localhost:3030/api/orders",
+      failOnStatusCode: false,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: pedido,
+    }).then((response) => {
+      expect(response.status).to.eq(404);
+    });
+
+
+  })
+
+
+})
