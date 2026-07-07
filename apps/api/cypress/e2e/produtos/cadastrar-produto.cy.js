@@ -1,6 +1,6 @@
 import { fakerPT_BR as faker } from '@faker-js/faker'
 
-describe('POST /api/products - Cadastro de produto', () => {
+describe('POST /api/products - Cadastro de produtos', () => {
   let token
 
   beforeEach(() => {
@@ -9,7 +9,7 @@ describe('POST /api/products - Cadastro de produto', () => {
     })
   })
 
-  it('deve cadastrar um produto com sucesso', () => {
+  it('deve cadastrar um produto ativo com sucesso', () => {
     const timestamp = Date.now()
 
     const produto = {
