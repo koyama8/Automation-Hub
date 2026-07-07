@@ -4,6 +4,8 @@ import { authRouter } from './auth.routes.js'
 import { cartsRouter } from './carts.routes.js'
 import { clientsRouter } from './clients.routes.js'
 import { contractsRouter } from './contracts.routes.js'
+import { couponsRouter } from './coupons.routes.js'
+import { evidencesRouter } from './evidences.routes.js'
 import { ordersRouter } from './orders.routes.js'
 import { passwordRouter } from './password.routes.js'
 import { paymentsRouter } from './payments.routes.js'
@@ -41,6 +43,8 @@ routes.use('/api/auth', authRouter)
 routes.use('/api/cart', cartsRouter)
 routes.use('/api/clients', clientsRouter)
 routes.use('/api/contracts', contractsRouter)
+routes.use('/api/coupons', couponsRouter)
+routes.use('/api/evidences', evidencesRouter)
 routes.use('/api/orders', ordersRouter)
 routes.use('/api/password', passwordRouter)
 routes.use('/api/payments', paymentsRouter)

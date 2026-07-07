@@ -7,7 +7,7 @@ import { routes } from './routes/index.js'
 export const app = express()
 
 app.use(cors({ origin: env.webUrl }))
-app.use(express.json())
+app.use(express.json({ limit: '3mb' }))
 app.use(routes)
 app.use(notFoundHandler)
 app.use(errorHandler)

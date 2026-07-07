@@ -15,6 +15,29 @@ const orderInclude = {
   payments: {
     orderBy: { id: 'asc' },
   },
+  coupon: {
+    select: {
+      id: true,
+      code: true,
+      type: true,
+      value: true,
+      status: true,
+    },
+  },
+  evidences: {
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      title: true,
+      fileName: true,
+      mimeType: true,
+      sizeBytes: true,
+      storageKey: true,
+      entityType: true,
+      status: true,
+      uploadedAt: true,
+    },
+  },
 }
 
 export function createOrderWithItems({ clientId, status, totalCents, notes, items }) {
