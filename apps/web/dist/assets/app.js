@@ -161,6 +161,7 @@ let evidencesCache = []
 let evidenceSearchTimer = null
 let currentSessionMode = 'local'
 let apiAvailability = 'unknown'
+let sessionRedirectInProgress = false
 let tableRows = [
   { id: 1, name: 'Login com sucesso', status: 'Automatizado' },
   { id: 2, name: 'Formulário obrigatório', status: 'Planejado' },
@@ -1135,17 +1136,60 @@ function deleteLocalUser(userId) {
 async function request(path, options = {}) {
   const sessionToken = localStorage.getItem('token') || ''
   const authorization = sessionToken.split('.').length === 3 ? `Bearer ${sessionToken}` : ''
-  const response = await fetch(`${API_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(authorization ? { Authorization: authorization } : {}),
-      ...(options.headers || {}),
-    },
-    ...options,
-  })
 
-  const body = await response.json().catch(() => ({}))
-  return { response, body }
+  try {
+    const response = await fetch(`${API_URL}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authorization ? { Authorization: authorization } : {}),
+        ...(options.headers || {}),
+      },
+      ...options,
+    })
+
+    const body = await response.json().catch(() => ({}))
+    handleUnavailableApiSession(path, response)
+    handleExpiredApiSession(path, response)
+    return { response, body }
+  } catch (error) {
+    handleUnavailableApiSession(path)
+    throw error
+  }
+}
+
+function handleExpiredApiSession(path, response) {
+  const isAuthenticationFailure = response.status === 401
+  const isLoginRequest = path === '/api/auth/login'
+  if (!isAuthenticationFailure || isLoginRequest) return
+  endApiSession('Sessao expirada. Faca login novamente.', 'Sessao expirada')
+}
+
+function handleUnavailableApiSession(path, response) {
+  const isLoginRequest = path === '/api/auth/login'
+  const isServiceUnavailable = !response || response.status >= 500
+  if (!isServiceUnavailable || isLoginRequest) return
+  endApiSession('API indisponivel. Faca login novamente.', 'API indisponivel')
+}
+
+function endApiSession(message, sessionLabel) {
+  const sessionToken = localStorage.getItem('token') || ''
+  const hasApiSession = currentSessionMode === 'api' || sessionToken.split('.').length === 3
+
+  if (!hasApiSession || sessionRedirectInProgress) return
+
+  sessionRedirectInProgress = true
+  currentSessionMode = 'local'
+  apiAvailability = 'unknown'
+  localStorage.removeItem('token')
+  const sessionMode = getElement('[data-cy="session-mode"]')
+  if (sessionMode) sessionMode.textContent = sessionLabel
+  showToast(message, 'error')
+
+  if (currentViewId !== 'loginView') showView('loginView', { replaceRoute: true })
+
+  setTimeout(() => {
+    sessionRedirectInProgress = false
+  }, 1000)
 }
 
 function writeJsonResult(selector, payload) {
