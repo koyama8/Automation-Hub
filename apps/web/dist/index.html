@@ -289,6 +289,24 @@
                 <small>Pix, cartao e boleto</small>
               </span>
             </button>
+            <button class="feature-card" data-cy="card-coupons" data-target="couponsView" data-tags="api discount validation order business-rules" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M20 12V7a2 2 0 0 0-2-2h-5" /><path d="M4 12v5a2 2 0 0 0 2 2h5" /><path d="M14 5 5 14a2 2 0 0 0 0 3l2 2a2 2 0 0 0 3 0l9-9" /><path d="M7 7h.01" /><path d="M17 17h.01" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Cupons</strong>
+                <small>Descontos, validade e limite de uso</small>
+              </span>
+            </button>
+            <button class="feature-card" data-cy="card-evidences-api" data-target="evidencesView" data-tags="api upload file metadata client order" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M12 18v-6" /><path d="m9 15 3 3 3-3" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Upload de Evidencias</strong>
+                <small>Upload por cliente ou pedido</small>
+              </span>
+            </button>
             <button class="feature-card" data-cy="card-keyboard" data-target="keyboardView" type="button">
               <span class="feature-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2" /><path d="M6 10h.01" /><path d="M10 10h.01" /><path d="M14 10h.01" /><path d="M18 10h.01" /><path d="M7 14h10" /></svg>
@@ -1412,6 +1430,286 @@
         </main>
       </section>
 
+      <section id="couponsView" class="page hidden" data-view="coupons">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">CUP</span>
+            <div>
+              <h1>Cupons</h1>
+              <p>Cadastre regras de desconto, valide contra pedidos e aplique cupom pela API.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container clients-container commerce-container">
+          <section class="clients-feedback" data-cy="coupons-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="coupons-feedback-title">Carregando cupons</strong>
+                <p data-cy="coupons-feedback-message">Consultando cupons e pedidos disponiveis.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="coupons-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="form-card clients-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Novo cupom</span>
+                <h2 data-cy="coupon-form-title">Regra de desconto</h2>
+              </div>
+              <span class="status-badge api-status" data-cy="coupons-api-status" data-state="checking">Verificando</span>
+            </div>
+            <form data-form="coupon" data-cy="coupon-form" novalidate>
+              <input data-field="couponId" type="hidden" />
+
+              <div class="client-form-grid">
+                <div>
+                  <label>Codigo *</label>
+                  <input id="couponCode" data-field="couponCode" data-cy="coupon-code" placeholder="QA-20" />
+                  <p class="error" data-error-for="couponCode"></p>
+                </div>
+                <div>
+                  <label>Tipo *</label>
+                  <select data-field="couponType" data-cy="coupon-type">
+                    <option value="percentage">Percentual</option>
+                    <option value="fixed">Valor fixo</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Valor *</label>
+                  <input id="couponValue" data-field="couponValue" data-cy="coupon-value" type="number" min="1" step="1" placeholder="20 ou 1500" />
+                  <p class="error" data-error-for="couponValue"></p>
+                </div>
+                <div>
+                  <label>Pedido minimo em centavos</label>
+                  <input id="couponMinOrderCents" data-field="couponMinOrderCents" data-cy="coupon-min-order-cents" type="number" min="0" step="1" value="0" />
+                  <p class="error" data-error-for="couponMinOrderCents"></p>
+                </div>
+                <div>
+                  <label>Desconto maximo em centavos</label>
+                  <input id="couponMaxDiscountCents" data-field="couponMaxDiscountCents" data-cy="coupon-max-discount-cents" type="number" min="1" step="1" placeholder="Opcional" />
+                  <p class="error" data-error-for="couponMaxDiscountCents"></p>
+                </div>
+                <div>
+                  <label>Limite de uso</label>
+                  <input id="couponUsageLimit" data-field="couponUsageLimit" data-cy="coupon-usage-limit" type="number" min="1" step="1" placeholder="Opcional" />
+                  <p class="error" data-error-for="couponUsageLimit"></p>
+                </div>
+                <div>
+                  <label>Inicio</label>
+                  <input data-field="couponStartsAt" data-cy="coupon-starts-at" type="datetime-local" />
+                </div>
+                <div>
+                  <label>Expira em</label>
+                  <input data-field="couponExpiresAt" data-cy="coupon-expires-at" type="datetime-local" />
+                </div>
+                <div>
+                  <label>Status</label>
+                  <select data-field="couponStatus" data-cy="coupon-status">
+                    <option value="active">Ativo</option>
+                    <option value="inactive">Inativo</option>
+                    <option value="expired">Expirado</option>
+                  </select>
+                </div>
+              </div>
+
+              <label>Descricao</label>
+              <textarea data-field="couponDescription" data-cy="coupon-description" placeholder="Ex: Cupom para regressao de pedidos com desconto percentual"></textarea>
+
+              <div class="client-form-actions">
+                <button class="secondary-btn hidden" data-cy="coupon-cancel-edit" type="button">Cancelar edicao</button>
+                <button class="primary-btn" data-cy="coupon-submit" type="submit">Cadastrar cupom</button>
+              </div>
+            </form>
+            <p class="result-text" data-cy="coupon-result">Crie um cupom para testar validacao e aplicacao em pedidos.</p>
+          </section>
+
+          <section class="form-card clients-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Aplicar no pedido</span>
+                <h2>Validacao de desconto</h2>
+              </div>
+            </div>
+            <form data-form="coupon-apply" data-cy="coupon-apply-form" novalidate>
+              <label>Pedido *</label>
+              <select id="couponOrderId" data-field="couponOrderId" data-cy="coupon-order"></select>
+              <p class="error" data-error-for="couponOrderId"></p>
+
+              <label>Codigo do cupom *</label>
+              <input id="couponApplyCode" data-field="couponApplyCode" data-cy="coupon-apply-code" placeholder="QA-20" />
+              <p class="error" data-error-for="couponApplyCode"></p>
+
+              <div class="client-form-actions">
+                <button class="secondary-btn" data-cy="coupon-validate" type="button">Validar</button>
+                <button class="primary-btn" data-cy="coupon-apply" type="submit">Aplicar desconto</button>
+              </div>
+            </form>
+            <p class="result-text" data-cy="coupon-apply-result">Selecione um pedido e informe o codigo.</p>
+          </section>
+
+          <section class="tool-surface clients-list-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Cupons cadastrados</span>
+                <h2>Regras disponiveis</h2>
+              </div>
+              <strong class="clients-count" data-cy="coupons-count">0</strong>
+            </div>
+            <div class="clients-filters">
+              <input data-cy="coupons-search" type="search" placeholder="Buscar por codigo ou descricao" />
+              <select data-cy="coupons-status-filter">
+                <option value="">Todos os status</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+                <option value="expired">Expirados</option>
+              </select>
+              <button class="secondary-btn" data-cy="coupons-clear-filters" type="button">Limpar filtros</button>
+              <button class="secondary-btn" data-cy="coupons-refresh" type="button">Atualizar</button>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table clients-table commerce-table coupon-table" data-cy="coupons-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cupom</th>
+                    <th>Desconto</th>
+                    <th>Regra</th>
+                    <th>Uso</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody data-cy="coupons-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </section>
+
+      <section id="evidencesView" class="page hidden" data-view="evidences">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">EVD</span>
+            <div>
+              <h1>Upload de Evidencias</h1>
+              <p>Envie evidencias em base64 vinculadas a cliente ou pedido e consulte metadata pela API.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container clients-container commerce-container">
+          <section class="clients-feedback" data-cy="evidences-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="evidences-feedback-title">Carregando evidencias</strong>
+                <p data-cy="evidences-feedback-message">Consultando clientes, pedidos e arquivos enviados.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="evidences-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="form-card clients-form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Novo upload</span>
+                <h2>Arquivo e vinculo</h2>
+              </div>
+              <span class="status-badge api-status" data-cy="evidences-api-status" data-state="checking">Verificando</span>
+            </div>
+            <form data-form="evidence" data-cy="evidence-form" novalidate>
+              <div class="client-form-grid">
+                <div>
+                  <label>Tipo de vinculo *</label>
+                  <select data-field="evidenceEntityType" data-cy="evidence-entity-type">
+                    <option value="client">Cliente</option>
+                    <option value="order">Pedido</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Status</label>
+                  <select data-field="evidenceStatus" data-cy="evidence-status">
+                    <option value="active">Ativa</option>
+                    <option value="archived">Arquivada</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Cliente</label>
+                  <select id="evidenceClientId" data-field="evidenceClientId" data-cy="evidence-client"></select>
+                  <p class="error" data-error-for="evidenceClientId"></p>
+                </div>
+                <div>
+                  <label>Pedido</label>
+                  <select id="evidenceOrderId" data-field="evidenceOrderId" data-cy="evidence-order"></select>
+                  <p class="error" data-error-for="evidenceOrderId"></p>
+                </div>
+              </div>
+
+              <label>Titulo *</label>
+              <input id="evidenceTitle" data-field="evidenceTitle" data-cy="evidence-title" placeholder="Print do pedido pago" />
+              <p class="error" data-error-for="evidenceTitle"></p>
+
+              <label>Arquivo *</label>
+              <input id="evidenceFile" data-field="evidenceFile" data-cy="evidence-file" type="file" accept=".png,.jpg,.jpeg,.webp,.pdf,.txt,.csv,.json,.doc,.docx,.xls,.xlsx,image/png,image/jpeg,image/webp,application/pdf,text/plain,text/csv,application/json,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+              <p class="error" data-error-for="evidenceFile"></p>
+              <p class="result-text" data-cy="evidence-file-selected">Nenhum arquivo selecionado.</p>
+
+              <label>Notas</label>
+              <textarea data-field="evidenceNotes" data-cy="evidence-notes" placeholder="Contexto da evidencia, massa usada ou observacao do teste"></textarea>
+
+              <button class="primary-btn" data-cy="evidence-submit" type="submit">Enviar evidencia</button>
+            </form>
+            <p class="result-text" data-cy="evidence-result">Selecione um arquivo de ate 1MB.</p>
+          </section>
+
+          <section class="tool-surface clients-list-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Arquivos enviados</span>
+                <h2>Metadata de evidencias</h2>
+              </div>
+              <strong class="clients-count" data-cy="evidences-count">0</strong>
+            </div>
+            <div class="clients-filters evidences-filters">
+              <input data-cy="evidences-search" type="search" placeholder="Buscar por titulo, arquivo ou storageKey" />
+              <select data-cy="evidences-entity-filter">
+                <option value="">Todos os vinculos</option>
+                <option value="client">Cliente</option>
+                <option value="order">Pedido</option>
+              </select>
+              <select data-cy="evidences-status-filter">
+                <option value="">Todos os status</option>
+                <option value="active">Ativas</option>
+                <option value="archived">Arquivadas</option>
+              </select>
+              <button class="secondary-btn" data-cy="evidences-clear-filters" type="button">Limpar filtros</button>
+              <button class="secondary-btn" data-cy="evidences-refresh" type="button">Atualizar</button>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table clients-table commerce-table evidence-table" data-cy="evidences-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Evidencia</th>
+                    <th>Vinculo</th>
+                    <th>Arquivo</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody data-cy="evidences-table-body"></tbody>
+              </table>
+            </div>
+            <textarea class="metadata-viewer" data-cy="evidence-metadata" readonly placeholder="Clique em Metadata para ver o retorno do download."></textarea>
+          </section>
+        </main>
+      </section>
+
       <section id="visualView" class="page hidden" data-view="visual">
         <header class="hero compact">
           <div class="hero-brand">
@@ -1451,7 +1749,7 @@
         <main class="container narrow">
           <section class="form-card">
           <label>Arquivo de evidência *</label>
-            <input data-field="uploadEvidence" name="upload-evidence" type="file" />
+            <input id="uploadEvidence" data-field="uploadEvidence" name="upload-evidence" type="file" />
             <p class="error" data-error-for="uploadEvidence"></p>
           <button class="primary-btn upload-action" type="button">Enviar evidência</button>
             <p class="result-text" data-role="uploadResult">Nenhum arquivo enviado.</p>

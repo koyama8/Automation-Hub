@@ -1,5 +1,33 @@
 const API_URL = 'http://localhost:3030'
 const API_HEALTH_TIMEOUT = 3000
+const EVIDENCE_MAX_FILE_SIZE = 1024 * 1024
+const EVIDENCE_ALLOWED_MIME_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'application/pdf',
+  'text/plain',
+  'text/csv',
+  'application/json',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]
+const EVIDENCE_EXTENSION_MIME_MAP = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  pdf: 'application/pdf',
+  txt: 'text/plain',
+  csv: 'text/csv',
+  json: 'application/json',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+}
 const ADMIN_EMAILS = ['qa@adminlab.com']
 const LEGACY_ADMIN_EMAILS = ['alab@hotmail.com', 'qa@cypressqalab.com']
 const ADMIN_PASSWORD = 'pwd123'
@@ -52,6 +80,8 @@ const VIEW_ROUTES = {
   cartView: '/admin/carrinho',
   ordersView: '/admin/pedidos',
   paymentsView: '/admin/pagamentos',
+  couponsView: '/admin/cupons',
+  evidencesView: '/admin/evidencias-api',
   forgotView: '/admin/recuperar-senha',
   testDataView: '/admin/massa-de-testes',
   checkoutView: '/admin/checkout',
@@ -124,6 +154,11 @@ let orderDraftItems = []
 let ordersCache = []
 let orderSearchTimer = null
 let paymentsCache = []
+let couponsCache = []
+let editingCouponId = null
+let couponSearchTimer = null
+let evidencesCache = []
+let evidenceSearchTimer = null
 let currentSessionMode = 'local'
 let apiAvailability = 'unknown'
 let tableRows = [
@@ -612,6 +647,14 @@ function showView(viewId, options = {}) {
 
   if (viewId === 'paymentsView') {
     setupPaymentsView()
+  }
+
+  if (viewId === 'couponsView') {
+    setupCouponsView()
+  }
+
+  if (viewId === 'evidencesView') {
+    setupEvidencesView()
   }
 
   if (viewId === 'tableView') {
@@ -3465,6 +3508,7 @@ function formatCommerceStatus(status) {
     declined: 'Recusado',
     refunded: 'Estornado',
     expired: 'Expirado',
+    archived: 'Arquivado',
   }
   return labels[status] || status
 }
@@ -4103,6 +4147,448 @@ getElement('[data-cy="payments-clear-filters"]').addEventListener('click', () =>
 })
 getElement('[data-cy="payments-method-filter"]').addEventListener('change', loadPayments)
 getElement('[data-cy="payments-status-filter"]').addEventListener('change', loadPayments)
+
+function formatCouponDiscount(coupon) {
+  if (coupon.type === 'percentage') return `${coupon.value}%`
+  return formatCents(coupon.value)
+}
+
+function toInputDateTime(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toISOString().slice(0, 16)
+}
+
+function getCouponFilters() {
+  const search = getElement('[data-cy="coupons-search"]').value.trim()
+  const status = getElement('[data-cy="coupons-status-filter"]').value
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  if (status) params.set('status', status)
+  return params.toString()
+}
+
+async function setupCouponsView() {
+  setCommerceApiStatus('coupons', 'checking', 'Verificando')
+  setCommerceFeedback('coupons', 'loading', 'Carregando cupons', 'Consultando cupons e pedidos disponiveis.')
+  try {
+    await Promise.all([loadOrders({ silent: true }), loadCoupons({ silent: true })])
+    renderCouponOrderOptions()
+    setCommerceApiStatus('coupons', 'online', 'API online')
+    setCommerceFeedback('coupons', 'success', 'Cupons sincronizados', `${couponsCache.length} cupom(ns) carregado(s).`)
+  } catch (error) {
+    setCommerceApiStatus('coupons', 'offline', 'Indisponivel')
+    setCommerceFeedback('coupons', 'error', 'Falha de conexao', error.message, { retry: true })
+  }
+}
+
+async function loadCoupons(options = {}) {
+  const query = getCouponFilters()
+  renderCommerceState('[data-cy="coupons-table-body"]', 7, 'Carregando cupons...', 'loading')
+  const { response, body } = await request(`/api/coupons${query ? `?${query}` : ''}`)
+  if (!response.ok) {
+    const message = reportCommerceError('coupons', response, body, 'Nao foi possivel carregar cupons.', '[data-cy="coupon-result"]')
+    renderCommerceState('[data-cy="coupons-table-body"]', 7, message, 'error')
+    return
+  }
+  couponsCache = Array.isArray(body) ? body : body.data || []
+  renderCoupons(couponsCache)
+  if (!options.silent) setCommerceFeedback('coupons', 'success', 'Cupons sincronizados', `${couponsCache.length} cupom(ns) carregado(s).`)
+}
+
+function renderCouponOrderOptions() {
+  const select = getElement('[data-field="couponOrderId"]')
+  const orders = ordersCache.filter((order) => !['canceled', 'paid'].includes(order.status))
+  if (!orders.length) {
+    select.innerHTML = '<option value="">Crie um pedido pendente antes</option>'
+    return
+  }
+  select.innerHTML = [
+    '<option value="">Selecione um pedido</option>',
+    ...orders.map((order) => `<option value="${escapeHtml(order.id)}">#${escapeHtml(order.id)} - ${escapeHtml(order.client?.name || 'Cliente')} - ${escapeHtml(formatCents(order.totalCents))}</option>`),
+  ].join('')
+}
+
+function renderCoupons(coupons) {
+  getElement('[data-cy="coupons-count"]').textContent = String(coupons.length)
+  if (!coupons.length) {
+    renderCommerceState('[data-cy="coupons-table-body"]', 7, 'Nenhum cupom encontrado.')
+    return
+  }
+  getElement('[data-cy="coupons-table-body"]').innerHTML = coupons
+    .map((coupon) => {
+      const usageText = `${coupon.usedCount}${coupon.usageLimit ? `/${coupon.usageLimit}` : '/livre'}`
+      const ruleText = `Min ${formatCents(coupon.minOrderCents || 0)}${coupon.maxDiscountCents ? ` | Max ${formatCents(coupon.maxDiscountCents)}` : ''}`
+      return `
+        <tr data-coupon-row="${escapeHtml(coupon.id)}">
+          <td>${escapeHtml(coupon.id)}</td>
+          <td><strong>${escapeHtml(coupon.code)}</strong><small>${escapeHtml(coupon.description || 'Sem descricao')}</small></td>
+          <td>${escapeHtml(formatCouponDiscount(coupon))}</td>
+          <td><small>${escapeHtml(ruleText)}</small></td>
+          <td>${escapeHtml(usageText)}</td>
+          <td><span class="status-badge ${escapeHtml(coupon.status)}">${escapeHtml(formatCommerceStatus(coupon.status))}</span></td>
+          <td>
+            <div class="client-row-actions">
+              <button class="secondary-btn" data-coupon-action="edit" data-coupon-id="${escapeHtml(coupon.id)}" type="button">Editar</button>
+              <button class="secondary-btn" data-coupon-action="expire" data-coupon-id="${escapeHtml(coupon.id)}" type="button">Expirar</button>
+              <button class="danger-btn" data-coupon-action="delete" data-coupon-id="${escapeHtml(coupon.id)}" type="button">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      `
+    })
+    .join('')
+}
+
+function resetCouponForm(options = {}) {
+  const form = getElement('[data-form="coupon"]')
+  form.reset()
+  clearFormErrors(form)
+  editingCouponId = null
+  getElement('[data-field="couponId"]').value = ''
+  getElement('[data-cy="coupon-form-title"]').textContent = 'Regra de desconto'
+  getElement('[data-cy="coupon-submit"]').textContent = 'Cadastrar cupom'
+  getElement('[data-cy="coupon-cancel-edit"]').classList.add('hidden')
+  if (!options.preserveResult) getElement('[data-cy="coupon-result"]').textContent = options.message || 'Crie um cupom para testar validacao e aplicacao em pedidos.'
+}
+
+function getCouponPayload() {
+  const payload = {
+    code: getElement('[data-field="couponCode"]').value.trim(),
+    type: getElement('[data-field="couponType"]').value,
+    value: Number(getElement('[data-field="couponValue"]').value),
+    minOrderCents: Number(getElement('[data-field="couponMinOrderCents"]').value || 0),
+    status: getElement('[data-field="couponStatus"]').value,
+    description: getElement('[data-field="couponDescription"]').value.trim(),
+  }
+  const maxDiscountCents = getElement('[data-field="couponMaxDiscountCents"]').value
+  const usageLimit = getElement('[data-field="couponUsageLimit"]').value
+  const startsAt = getElement('[data-field="couponStartsAt"]').value
+  const expiresAt = getElement('[data-field="couponExpiresAt"]').value
+  if (maxDiscountCents) payload.maxDiscountCents = Number(maxDiscountCents)
+  if (usageLimit) payload.usageLimit = Number(usageLimit)
+  if (startsAt) payload.startsAt = startsAt
+  if (expiresAt) payload.expiresAt = expiresAt
+  return payload
+}
+
+getElement('[data-form="coupon"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const form = event.currentTarget
+  clearFormErrors(form)
+  const codeValid = requireField('couponCode', 'Codigo e obrigatorio')
+  const valueValid = requireField('couponValue', 'Valor e obrigatorio')
+  const value = Number(getElement('[data-field="couponValue"]').value)
+  const minOrderCents = Number(getElement('[data-field="couponMinOrderCents"]').value || 0)
+  if (!Number.isInteger(value) || value <= 0) setError('couponValue', 'Valor deve ser positivo')
+  if (!Number.isInteger(minOrderCents) || minOrderCents < 0) setError('couponMinOrderCents', 'Pedido minimo nao pode ser negativo')
+  if (!codeValid || !valueValid || !Number.isInteger(value) || value <= 0 || !Number.isInteger(minOrderCents) || minOrderCents < 0) return
+
+  const path = editingCouponId ? `/api/coupons/${editingCouponId}` : '/api/coupons'
+  const method = editingCouponId ? 'PUT' : 'POST'
+  const wasEditing = Boolean(editingCouponId)
+  const { response, body } = await request(path, { method, body: JSON.stringify(getCouponPayload()) })
+  if (!response.ok) return reportCommerceError('coupons', response, body, 'Nao foi possivel salvar cupom.', '[data-cy="coupon-result"]')
+  resetCouponForm({ preserveResult: true })
+  await loadCoupons({ silent: true })
+  const message = wasEditing ? `Cupom atualizado: ${body.data.code}` : `Cupom cadastrado: ${body.data.code}`
+  getElement('[data-cy="coupon-result"]').textContent = message
+  showToast(message)
+})
+
+getElement('[data-cy="coupons-table-body"]').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-coupon-action]')
+  if (!button) return
+  const couponId = Number(button.dataset.couponId)
+  const coupon = couponsCache.find((item) => Number(item.id) === couponId)
+  if (!coupon) return
+
+  if (button.dataset.couponAction === 'edit') {
+    editingCouponId = coupon.id
+    getElement('[data-field="couponId"]').value = coupon.id
+    getElement('[data-field="couponCode"]').value = coupon.code
+    getElement('[data-field="couponType"]').value = coupon.type
+    getElement('[data-field="couponValue"]').value = coupon.value
+    getElement('[data-field="couponMinOrderCents"]').value = coupon.minOrderCents
+    getElement('[data-field="couponMaxDiscountCents"]').value = coupon.maxDiscountCents || ''
+    getElement('[data-field="couponUsageLimit"]').value = coupon.usageLimit || ''
+    getElement('[data-field="couponStartsAt"]').value = toInputDateTime(coupon.startsAt)
+    getElement('[data-field="couponExpiresAt"]').value = toInputDateTime(coupon.expiresAt)
+    getElement('[data-field="couponStatus"]').value = coupon.status
+    getElement('[data-field="couponDescription"]').value = coupon.description || ''
+    getElement('[data-cy="coupon-form-title"]').textContent = `Editar cupom #${coupon.id}`
+    getElement('[data-cy="coupon-submit"]').textContent = 'Salvar alteracoes'
+    getElement('[data-cy="coupon-cancel-edit"]').classList.remove('hidden')
+    getElement('[data-cy="coupon-result"]').textContent = `Editando cupom: ${coupon.code}`
+    getElement('[data-form="coupon"]').scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return
+  }
+
+  if (button.dataset.couponAction === 'expire') {
+    const { response, body } = await request(`/api/coupons/${couponId}/expire`, { method: 'PATCH' })
+    if (!response.ok) return reportCommerceError('coupons', response, body, 'Nao foi possivel expirar cupom.', '[data-cy="coupon-result"]')
+    await loadCoupons({ silent: true })
+    showToast('Cupom expirado com sucesso')
+    return
+  }
+
+  if (button.dataset.couponAction === 'delete' && window.confirm(`Excluir cupom ${coupon.code}?`)) {
+    const { response, body } = await request(`/api/coupons/${couponId}`, { method: 'DELETE' })
+    if (!response.ok) return reportCommerceError('coupons', response, body, 'Nao foi possivel excluir cupom.', '[data-cy="coupon-result"]')
+    await loadCoupons({ silent: true })
+    showToast('Cupom excluido com sucesso')
+  }
+})
+
+async function submitCouponValidation(apply = false) {
+  clearFormErrors(getElement('[data-form="coupon-apply"]'))
+  const orderId = Number(getElement('[data-field="couponOrderId"]').value)
+  const code = getElement('[data-field="couponApplyCode"]').value.trim()
+  if (!orderId) setError('couponOrderId', 'Pedido e obrigatorio')
+  if (!code) setError('couponApplyCode', 'Codigo e obrigatorio')
+  if (!orderId || !code) return
+
+  const endpoint = apply ? '/api/coupons/apply' : '/api/coupons/validate'
+  const { response, body } = await request(endpoint, { method: 'POST', body: JSON.stringify({ orderId, code }) })
+  if (!response.ok) return reportCommerceError('coupons', response, body, 'Cupom nao aceito para este pedido.', '[data-cy="coupon-apply-result"]')
+  const data = body.data
+  getElement('[data-cy="coupon-apply-result"]').textContent = `${apply ? 'Aplicado' : 'Valido'}: ${data.coupon.code}, desconto ${formatCents(data.discountCents)}, total final ${formatCents(data.finalTotalCents)}.`
+  await Promise.all([loadCoupons({ silent: true }), loadOrders({ silent: true })])
+  renderCouponOrderOptions()
+  showToast(apply ? 'Cupom aplicado com sucesso' : 'Cupom validado com sucesso')
+}
+
+getElement('[data-form="coupon-apply"]').addEventListener('submit', (event) => {
+  event.preventDefault()
+  submitCouponValidation(true)
+})
+getElement('[data-cy="coupon-validate"]').addEventListener('click', () => submitCouponValidation(false))
+getElement('[data-cy="coupon-cancel-edit"]').addEventListener('click', () => resetCouponForm({ message: 'Edicao cancelada.' }))
+getElement('[data-cy="coupons-refresh"]').addEventListener('click', loadCoupons)
+getElement('[data-cy="coupons-retry"]').addEventListener('click', setupCouponsView)
+getElement('[data-cy="coupons-clear-filters"]').addEventListener('click', () => {
+  getElement('[data-cy="coupons-search"]').value = ''
+  getElement('[data-cy="coupons-status-filter"]').value = ''
+  loadCoupons()
+})
+getElement('[data-cy="coupons-status-filter"]').addEventListener('change', loadCoupons)
+getElement('[data-cy="coupons-search"]').addEventListener('input', () => {
+  clearTimeout(couponSearchTimer)
+  couponSearchTimer = setTimeout(loadCoupons, 280)
+})
+
+function getEvidenceFilters() {
+  const search = getElement('[data-cy="evidences-search"]').value.trim()
+  const entityType = getElement('[data-cy="evidences-entity-filter"]').value
+  const status = getElement('[data-cy="evidences-status-filter"]').value
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  if (entityType) params.set('entityType', entityType)
+  if (status) params.set('status', status)
+  return params.toString()
+}
+
+async function setupEvidencesView() {
+  setCommerceApiStatus('evidences', 'checking', 'Verificando')
+  setCommerceFeedback('evidences', 'loading', 'Carregando evidencias', 'Consultando clientes, pedidos e arquivos.')
+  try {
+    await Promise.all([loadCommerceClients(), loadOrders({ silent: true })])
+    renderClientOptions('[data-field="evidenceClientId"]')
+    renderEvidenceOrderOptions()
+    await loadEvidences()
+    setCommerceApiStatus('evidences', 'online', 'API online')
+  } catch (error) {
+    setCommerceApiStatus('evidences', 'offline', 'Indisponivel')
+    setCommerceFeedback('evidences', 'error', 'Falha de conexao', error.message, { retry: true })
+  }
+}
+
+function renderEvidenceOrderOptions() {
+  const select = getElement('[data-field="evidenceOrderId"]')
+  if (!ordersCache.length) {
+    select.innerHTML = '<option value="">Crie um pedido antes</option>'
+    return
+  }
+  select.innerHTML = [
+    '<option value="">Selecione um pedido</option>',
+    ...ordersCache.map((order) => `<option value="${escapeHtml(order.id)}">#${escapeHtml(order.id)} - ${escapeHtml(order.client?.name || 'Cliente')} - ${escapeHtml(formatCents(order.totalCents))}</option>`),
+  ].join('')
+}
+
+async function loadEvidences(options = {}) {
+  const query = getEvidenceFilters()
+  renderCommerceState('[data-cy="evidences-table-body"]', 6, 'Carregando evidencias...', 'loading')
+  const { response, body } = await request(`/api/evidences${query ? `?${query}` : ''}`)
+  if (!response.ok) {
+    const message = reportCommerceError('evidences', response, body, 'Nao foi possivel carregar evidencias.', '[data-cy="evidence-result"]')
+    renderCommerceState('[data-cy="evidences-table-body"]', 6, message, 'error')
+    return
+  }
+  evidencesCache = Array.isArray(body) ? body : body.data || []
+  renderEvidences(evidencesCache)
+  if (!options.silent) setCommerceFeedback('evidences', 'success', 'Evidencias sincronizadas', `${evidencesCache.length} evidencia(s) carregada(s).`)
+}
+
+function renderEvidences(evidences) {
+  getElement('[data-cy="evidences-count"]').textContent = String(evidences.length)
+  if (!evidences.length) {
+    renderCommerceState('[data-cy="evidences-table-body"]', 6, 'Nenhuma evidencia encontrada.')
+    return
+  }
+  getElement('[data-cy="evidences-table-body"]').innerHTML = evidences
+    .map((evidence) => {
+      const linkText = evidence.entityType === 'order' ? `Pedido #${evidence.orderId}` : `Cliente #${evidence.clientId}`
+      return `
+        <tr data-evidence-row="${escapeHtml(evidence.id)}">
+          <td>${escapeHtml(evidence.id)}</td>
+          <td><strong>${escapeHtml(evidence.title)}</strong><small>${escapeHtml(evidence.storageKey)}</small></td>
+          <td>${escapeHtml(linkText)}</td>
+          <td><strong>${escapeHtml(evidence.fileName)}</strong><small>${escapeHtml(evidence.mimeType)} | ${escapeHtml(formatEvidenceFileSize(evidence.sizeBytes))}</small></td>
+          <td><span class="status-badge ${escapeHtml(evidence.status)}">${escapeHtml(formatCommerceStatus(evidence.status))}</span></td>
+          <td>
+            <div class="client-row-actions">
+              <button class="secondary-btn" data-evidence-action="metadata" data-evidence-id="${escapeHtml(evidence.id)}" type="button">Metadata</button>
+              <button class="danger-btn" data-evidence-action="delete" data-evidence-id="${escapeHtml(evidence.id)}" type="button">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      `
+    })
+    .join('')
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener('load', () => resolve(String(reader.result || '').split(',')[1] || ''))
+    reader.addEventListener('error', () => reject(new Error('Nao foi possivel ler o arquivo.')))
+    reader.readAsDataURL(file)
+  })
+}
+
+function getEvidenceFileExtension(fileName = '') {
+  const parts = fileName.toLowerCase().split('.')
+  return parts.length > 1 ? parts.pop() : ''
+}
+
+function getEvidenceMimeType(file) {
+  if (file.type) return file.type.toLowerCase()
+  return EVIDENCE_EXTENSION_MIME_MAP[getEvidenceFileExtension(file.name)] || 'application/octet-stream'
+}
+
+function isEvidenceFileTypeAllowed(file) {
+  return EVIDENCE_ALLOWED_MIME_TYPES.includes(getEvidenceMimeType(file))
+}
+
+function formatEvidenceFileSize(bytes = 0) {
+  if (bytes < 1024) return `${bytes} bytes`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+}
+
+function updateEvidenceFileSelection() {
+  const input = getElement('[data-field="evidenceFile"]')
+  const selected = getElement('[data-cy="evidence-file-selected"]')
+  const file = input.files[0]
+
+  if (!file) {
+    selected.textContent = 'Nenhum arquivo selecionado.'
+    return
+  }
+
+  const mimeType = getEvidenceMimeType(file)
+  selected.textContent = `${file.name} | ${mimeType} | ${formatEvidenceFileSize(file.size)}`
+  setError('evidenceFile', '')
+  if (!isEvidenceFileTypeAllowed(file)) setError('evidenceFile', 'Tipo de arquivo nao permitido')
+  if (file.size > EVIDENCE_MAX_FILE_SIZE) setError('evidenceFile', 'Arquivo deve ter ate 1MB')
+}
+
+getElement('[data-form="evidence"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const form = event.currentTarget
+  clearFormErrors(form)
+  const titleValid = requireField('evidenceTitle', 'Titulo e obrigatorio')
+  const entityType = getElement('[data-field="evidenceEntityType"]').value
+  const clientId = Number(getElement('[data-field="evidenceClientId"]').value)
+  const orderId = Number(getElement('[data-field="evidenceOrderId"]').value)
+  const file = getElement('[data-field="evidenceFile"]').files[0]
+  const fileTypeAllowed = file ? isEvidenceFileTypeAllowed(file) : false
+  if (entityType === 'client' && !clientId) setError('evidenceClientId', 'Cliente e obrigatorio')
+  if (entityType === 'order' && !orderId) setError('evidenceOrderId', 'Pedido e obrigatorio')
+  if (!file) setError('evidenceFile', 'Arquivo e obrigatorio')
+  if (file && !fileTypeAllowed) setError('evidenceFile', 'Tipo de arquivo nao permitido')
+  if (file && file.size > EVIDENCE_MAX_FILE_SIZE) setError('evidenceFile', 'Arquivo deve ter ate 1MB')
+  if (!titleValid || !file || !fileTypeAllowed || file.size > EVIDENCE_MAX_FILE_SIZE || (entityType === 'client' && !clientId) || (entityType === 'order' && !orderId)) return
+
+  try {
+    const fileBase64 = await readFileAsBase64(file)
+    const payload = {
+      title: getElement('[data-field="evidenceTitle"]').value.trim(),
+      entityType,
+      clientId: clientId || undefined,
+      orderId: orderId || undefined,
+      status: getElement('[data-field="evidenceStatus"]').value,
+      fileName: file.name,
+      mimeType: getEvidenceMimeType(file),
+      fileBase64,
+      notes: getElement('[data-field="evidenceNotes"]').value.trim(),
+    }
+    const { response, body } = await request('/api/evidences', { method: 'POST', body: JSON.stringify(payload) })
+    if (!response.ok) return reportCommerceError('evidences', response, body, 'Nao foi possivel enviar evidencia.', '[data-cy="evidence-result"]')
+    form.reset()
+    updateEvidenceFileSelection()
+    renderClientOptions('[data-field="evidenceClientId"]')
+    renderEvidenceOrderOptions()
+    await loadEvidences({ silent: true })
+    getElement('[data-cy="evidence-result"]').textContent = `Evidencia enviada: ${body.data.fileName} (${formatEvidenceFileSize(body.data.sizeBytes)}).`
+    showToast('Evidencia enviada com sucesso')
+  } catch (error) {
+    const message = error.message || 'Falha ao processar arquivo.'
+    getElement('[data-cy="evidence-result"]').textContent = message
+    showToast(message, 'error')
+  }
+})
+
+getElement('[data-cy="evidences-table-body"]').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-evidence-action]')
+  if (!button) return
+  const evidenceId = Number(button.dataset.evidenceId)
+  const evidence = evidencesCache.find((item) => Number(item.id) === evidenceId)
+  if (!evidence) return
+
+  if (button.dataset.evidenceAction === 'metadata') {
+    const { response, body } = await request(`/api/evidences/${evidenceId}/download`)
+    if (!response.ok) return reportCommerceError('evidences', response, body, 'Nao foi possivel baixar metadata.', '[data-cy="evidence-result"]')
+    getElement('[data-cy="evidence-metadata"]').value = JSON.stringify(body.data, null, 2)
+    getElement('[data-cy="evidence-result"]').textContent = `Metadata carregada: ${body.data.fileName}`
+    return
+  }
+
+  if (button.dataset.evidenceAction === 'delete' && window.confirm(`Excluir evidencia ${evidence.title}?`)) {
+    const { response, body } = await request(`/api/evidences/${evidenceId}`, { method: 'DELETE' })
+    if (!response.ok) return reportCommerceError('evidences', response, body, 'Nao foi possivel excluir evidencia.', '[data-cy="evidence-result"]')
+    await loadEvidences({ silent: true })
+    getElement('[data-cy="evidence-metadata"]').value = ''
+    showToast('Evidencia excluida com sucesso')
+  }
+})
+
+getElement('[data-cy="evidences-refresh"]').addEventListener('click', loadEvidences)
+getElement('[data-cy="evidences-retry"]').addEventListener('click', setupEvidencesView)
+getElement('[data-field="evidenceFile"]').addEventListener('change', updateEvidenceFileSelection)
+getElement('[data-cy="evidences-clear-filters"]').addEventListener('click', () => {
+  getElement('[data-cy="evidences-search"]').value = ''
+  getElement('[data-cy="evidences-entity-filter"]').value = ''
+  getElement('[data-cy="evidences-status-filter"]').value = ''
+  loadEvidences()
+})
+getElement('[data-cy="evidences-search"]').addEventListener('input', () => {
+  clearTimeout(evidenceSearchTimer)
+  evidenceSearchTimer = setTimeout(loadEvidences, 280)
+})
+getElement('[data-cy="evidences-entity-filter"]').addEventListener('change', loadEvidences)
+getElement('[data-cy="evidences-status-filter"]').addEventListener('change', loadEvidences)
 
 document.querySelectorAll('.status-btn').forEach((button) => {
   button.addEventListener('click', () => {

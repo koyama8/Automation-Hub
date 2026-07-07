@@ -1772,6 +1772,43 @@ textarea:focus {
   padding-inline: 0;
 }
 
+.coupon-table {
+  min-width: 1180px;
+}
+
+.coupon-table th:nth-child(2) {
+  width: 240px;
+}
+
+.coupon-table th:nth-child(4) {
+  width: 210px;
+}
+
+.evidence-table {
+  min-width: 1120px;
+}
+
+.evidence-table th:nth-child(2) {
+  width: 260px;
+}
+
+.evidence-table th:nth-child(4) {
+  width: 260px;
+}
+
+.metadata-viewer {
+  width: 100%;
+  min-height: 180px;
+  margin-top: 18px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.evidences-filters {
+  grid-template-columns: minmax(220px, 1fr) 160px 160px auto auto;
+}
+
 .commerce-draft-list {
   display: grid;
   gap: 8px;
