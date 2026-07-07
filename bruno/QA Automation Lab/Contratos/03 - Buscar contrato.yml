@@ -1,0 +1,29 @@
+﻿info:
+  name: Buscar contrato
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://localhost:3030/api/contracts/{{contractId}}
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve buscar contrato por ID", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.id).to.exist;
+          expect(res.getBody().data.client).to.exist;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Busca o contrato definido em contractId. Esperado 200 OK.

@@ -1,0 +1,32 @@
+info:
+  name: Resetar laboratorio
+  type: http
+  seq: 2
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/system/reset
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve limpar a massa e restaurar o administrador", () => {
+          const body = res.getBody();
+
+          expect(res.getStatus()).to.equal(200);
+          expect(body.data.nextClientId).to.equal(1);
+          expect(body.data.admin.id).to.equal(1);
+          expect(body.data.nextUserId).to.equal(2);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Limpa Client, User e PasswordResetToken, reinicia IDs e recria QA Admin no ID 1.

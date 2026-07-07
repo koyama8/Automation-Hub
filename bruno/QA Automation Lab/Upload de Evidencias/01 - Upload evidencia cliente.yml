@@ -1,0 +1,46 @@
+﻿info:
+  name: Upload evidencia cliente
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/evidences
+  body:
+    type: json
+    data: |-
+      {
+        "entityType": "client",
+        "clientId": "{{clientId}}",
+        "title": "Documento do cliente Bruno",
+        "fileName": "cliente-evidencia.txt",
+        "mimeType": "text/plain",
+        "fileBase64": "RXZpZGVuY2lhIGRlIGNsaWVudGUgY3JpYWRhIHBlbG8gQnJ1bm8=",
+        "notes": "Upload de evidencia vinculado ao cliente",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("evidenceId", body.data.id);
+    - type: tests
+      code: |-
+        test("deve enviar evidencia de cliente", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.entityType).to.equal("client");
+          expect(res.getBody().data.clientId).to.equal(Number(bru.getVar("clientId")));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Envia arquivo base64 text/plain para o cliente salvo em clientId e salva evidenceId.

@@ -1,0 +1,40 @@
+﻿info:
+  name: Criar pagamento cartao
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3030/api/payments
+  body:
+    type: json
+    data: |-
+      {
+        "orderId": "{{orderId}}",
+        "method": "card",
+        "cardNumber": "4111111111111111"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("paymentId", body.data.id);
+    - type: tests
+      code: |-
+        test("deve criar pagamento cartao", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.cardLast4).to.equal("1111");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cria pagamento por cartao e salva paymentId.

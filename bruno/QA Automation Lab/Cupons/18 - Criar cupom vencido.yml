@@ -1,0 +1,47 @@
+﻿info:
+  name: Criar cupom vencido
+  type: http
+  seq: 18
+
+http:
+  method: POST
+  url: http://localhost:3030/api/coupons
+  body:
+    type: json
+    data: |-
+      {
+        "code": "VENCIDO-{{$timestamp}}",
+        "description": "Cupom ativo com data de expiracao no passado",
+        "type": "percentage",
+        "value": 5,
+        "minOrderCents": 0,
+        "expiresAt": "2020-01-01T00:00:00.000Z",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) {
+          bru.setVar("expiredCouponId", body.data.id);
+          bru.setVar("expiredCouponCode", body.data.code);
+        }
+    - type: tests
+      code: |-
+        test("deve criar cupom vencido para teste negativo", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.expiresAt).to.exist;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cria cupom com expiresAt no passado para validar regra de vencimento.

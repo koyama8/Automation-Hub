@@ -1,0 +1,42 @@
+﻿info:
+  name: Pedido abaixo do minimo 400
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: http://localhost:3030/api/coupons
+  body:
+    type: json
+    data: |-
+      {
+        "code": "MINIMO-{{$timestamp}}",
+        "description": "Cupom com minimo alto para teste negativo",
+        "type": "fixed",
+        "value": 1000,
+        "minOrderCents": 99999999,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.code) bru.setVar("couponMinimumCode", body.data.code);
+    - type: tests
+      code: |-
+        test("deve criar cupom com minimo alto", () => {
+          expect(res.getStatus()).to.equal(201);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Prepara cupom para o cenario de pedido abaixo do minimo.

@@ -1,0 +1,23 @@
+info:
+  name: Solicitar recuperacao
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/password/forgot
+  body:
+    type: json
+    data: |-
+      {
+        "email": "usuario.bruno@gmail.com"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Gera token local. Copie data.token para resetToken.

@@ -1,0 +1,24 @@
+info:
+  name: Redefinir senha
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3030/api/password/reset
+  body:
+    type: json
+    data: |-
+      {
+        "token": "{{resetToken}}",
+        "newPassword": "Bruno@789"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Redefine a senha usando resetToken. Esperado 200 OK.

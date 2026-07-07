@@ -1,0 +1,38 @@
+﻿info:
+  name: Nome duplicado
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3030/api/products
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Produto duplicado Bruno",
+        "sku": "DUP-BRU-001",
+        "description": "Primeira execucao deve criar; rode novamente para validar duplicidade",
+        "priceCents": 1000,
+        "stock": 5,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("primeira execucao cria ou segunda acusa duplicidade", () => {
+          expect([201, 409]).to.include(res.getStatus());
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Rode duas vezes para validar nome/SKU duplicado. Esperado 409 na segunda execucao.

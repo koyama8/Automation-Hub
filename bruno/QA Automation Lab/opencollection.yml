@@ -1,0 +1,71 @@
+﻿opencollection: 1.0.0
+
+info:
+  name: QA Automation Lab
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+  variables:
+    - name: authToken
+      value: ""
+    - name: clientId
+      value: "1"
+    - name: contractId
+      value: "1"
+    - name: paymentId
+      value: "1"
+    - name: orderId
+      value: "1"
+    - name: cartItemId
+      value: "1"
+    - name: productId
+      value: "8"
+    - name: userId
+      value: "2"
+    - name: resetToken
+      value: f2c783a0c2f5753da9ff05a4fd36f3ea2a6814864b91db32
+    - name: couponId
+      value: "1"
+    - name: couponCode
+      value: "QA10"
+    - name: couponMinimumCode
+      value: "MINIMO"
+    - name: limitedCouponId
+      value: "1"
+    - name: limitedCouponCode
+      value: "FIXO"
+    - name: limitedOrderId
+      value: "1"
+    - name: secondLimitedOrderId
+      value: "1"
+    - name: expiredCouponId
+      value: "1"
+    - name: expiredCouponCode
+      value: "VENCIDO"
+    - name: evidenceId
+      value: "1"
+    - name: orderEvidenceId
+      value: "1"
+    - name: documentEvidenceId
+      value: "1"
+    - name: mismatchedClientId
+      value: "1"
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

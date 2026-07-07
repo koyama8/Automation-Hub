@@ -1,0 +1,39 @@
+﻿info:
+  name: Cadastrar payload invalido
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://localhost:3030/api/contracts
+  body:
+    type: json
+    data: |-
+      {
+        "clientId": "abc",
+        "title": "",
+        "plan": "",
+        "amountCents": -1,
+        "startDate": "data-invalida",
+        "status": "paused"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar payload invalido", () => {
+          expect(res.getStatus()).to.equal(400);
+          expect(res.getBody().error).to.exist;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida payload invalido no cadastro de contrato. Esperado 400 Bad Request.

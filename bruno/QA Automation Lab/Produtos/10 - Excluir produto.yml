@@ -1,0 +1,28 @@
+﻿info:
+  name: Excluir produto
+  type: http
+  seq: 10
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/products/{{productId}}
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve excluir produto", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().message).to.equal("Product deleted successfully");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Exclui produto definido em productId.

@@ -1,0 +1,49 @@
+﻿info:
+  name: Criar cupom percentual
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/coupons
+  body:
+    type: json
+    data: |-
+      {
+        "code": "QA10-{{$timestamp}}",
+        "description": "Cupom percentual criado pelo Bruno",
+        "type": "percentage",
+        "value": 10,
+        "minOrderCents": 1000,
+        "maxDiscountCents": 5000,
+        "usageLimit": 3,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) {
+          bru.setVar("couponId", body.data.id);
+          bru.setVar("couponCode", body.data.code);
+        }
+    - type: tests
+      code: |-
+        test("deve criar cupom percentual ativo", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.type).to.equal("percentage");
+          expect(res.getBody().data.status).to.equal("active");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cria cupom percentual, salva couponId e couponCode para os proximos cenarios.

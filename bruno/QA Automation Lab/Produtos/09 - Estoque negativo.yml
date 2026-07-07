@@ -1,0 +1,37 @@
+﻿info:
+  name: Estoque negativo
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://localhost:3030/api/products
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Produto estoque negativo {{$timestamp}}",
+        "sku": "BAD-STOCK-{{$timestamp}}",
+        "priceCents": 1000,
+        "stock": -1,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar estoque negativo", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida estoque negativo. Esperado 400.

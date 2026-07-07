@@ -1,0 +1,35 @@
+﻿info:
+  name: Produto inexistente
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: http://localhost:3030/api/cart/items
+  body:
+    type: json
+    data: |-
+      {
+        "clientId": "{{clientId}}",
+        "productId": 999999,
+        "quantity": 1
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar produto inexistente", () => {
+          expect(res.getStatus()).to.equal(404);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida produto inexistente no carrinho. Esperado 404.

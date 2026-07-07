@@ -1,0 +1,35 @@
+﻿info:
+  name: Aplicar cupom de uso unico
+  type: http
+  seq: 15
+
+http:
+  method: POST
+  url: http://localhost:3030/api/coupons/apply
+  body:
+    type: json
+    data: |-
+      {
+        "code": "{{limitedCouponCode}}",
+        "orderId": "{{limitedOrderId}}"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve aplicar cupom de uso unico", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.coupon.code).to.equal(bru.getVar("limitedCouponCode"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Usa o cupom fixo criado com usageLimit 1.

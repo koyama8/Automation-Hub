@@ -1,0 +1,27 @@
+﻿info:
+  name: Estornar pagamento
+  type: http
+  seq: 6
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/payments/{{paymentId}}/refund
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve estornar pagamento aprovado", () => {
+          expect([200, 400]).to.include(res.getStatus());
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Estorna pagamento aprovado. Se nao aprovado, esperado 400.

@@ -1,0 +1,28 @@
+info:
+  name: Limpar todos os produtos
+  type: http
+  seq: 11
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/products
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve excluir todos os produtos e reiniciar o ID", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.nextProductId).to.equal(1);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Exclui todos os registros de Product e reinicia o proximo ID em 1.

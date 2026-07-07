@@ -1,0 +1,19 @@
+info:
+  name: Excluir usuario por ID
+  type: http
+  seq: 8
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/users/{{userId}}
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Exclui o usuario definido em userId. Esperado 200 OK.

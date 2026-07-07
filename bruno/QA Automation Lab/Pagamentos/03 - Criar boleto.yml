@@ -1,0 +1,39 @@
+﻿info:
+  name: Criar boleto
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:3030/api/payments
+  body:
+    type: json
+    data: |-
+      {
+        "orderId": "{{orderId}}",
+        "method": "boleto"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("paymentId", body.data.id);
+    - type: tests
+      code: |-
+        test("deve gerar boleto", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.boletoCode).to.exist;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cria boleto e salva paymentId.

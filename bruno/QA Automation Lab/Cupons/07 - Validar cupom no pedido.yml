@@ -1,0 +1,36 @@
+﻿info:
+  name: Validar cupom no pedido
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: http://localhost:3030/api/coupons/validate
+  body:
+    type: json
+    data: |-
+      {
+        "code": "{{couponCode}}",
+        "orderId": "{{orderId}}"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve validar cupom e calcular desconto", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.valid).to.equal(true);
+          expect(res.getBody().data.discountCents).to.be.greaterThan(0);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida cupom para orderId e confere calculo de desconto sem aplicar ainda.

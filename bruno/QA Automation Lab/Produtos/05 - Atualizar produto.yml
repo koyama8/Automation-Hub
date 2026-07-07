@@ -1,0 +1,39 @@
+﻿info:
+  name: Atualizar produto
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: http://localhost:3030/api/products/{{productId}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Produto Bruno Atualizado {{$timestamp}}",
+        "sku": "BRU-UPD-{{$timestamp}}",
+        "description": "Produto atualizado pelo Bruno",
+        "priceCents": 29990,
+        "stock": 30,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve atualizar produto", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().message).to.equal("Product updated successfully");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Atualiza produto definido em productId.

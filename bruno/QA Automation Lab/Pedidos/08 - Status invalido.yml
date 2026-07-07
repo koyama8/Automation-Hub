@@ -1,0 +1,33 @@
+﻿info:
+  name: Status invalido
+  type: http
+  seq: 8
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/orders/{{orderId}}/status
+  body:
+    type: json
+    data: |-
+      {
+        "status": "invalid"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar status invalido", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida status invalido. Esperado 400.

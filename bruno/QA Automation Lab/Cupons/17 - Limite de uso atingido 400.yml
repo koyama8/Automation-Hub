@@ -1,0 +1,34 @@
+﻿info:
+  name: Limite de uso atingido 400
+  type: http
+  seq: 17
+
+http:
+  method: POST
+  url: http://localhost:3030/api/coupons/apply
+  body:
+    type: json
+    data: |-
+      {
+        "code": "{{limitedCouponCode}}",
+        "orderId": "{{secondLimitedOrderId}}"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve bloquear cupom com limite de uso atingido", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Tenta aplicar novamente um cupom com usageLimit 1 em outro pedido.

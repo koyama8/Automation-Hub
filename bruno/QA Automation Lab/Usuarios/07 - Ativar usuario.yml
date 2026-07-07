@@ -1,0 +1,25 @@
+info:
+  name: Ativar usuario
+  type: http
+  seq: 7
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/users/{{userId}}/status
+  body:
+    type: json
+    data: |-
+      {
+        "active": true
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Reativa o usuario. Esperado 200 OK.

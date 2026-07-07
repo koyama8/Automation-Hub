@@ -1,0 +1,28 @@
+﻿info:
+  name: Confirmar pagamento
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/payments/{{paymentId}}/confirm
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve aprovar pagamento", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.status).to.equal("approved");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Confirma pagamento pendente.

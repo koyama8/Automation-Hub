@@ -1,0 +1,48 @@
+﻿info:
+  name: Criar cupom fixo com limite
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3030/api/coupons
+  body:
+    type: json
+    data: |-
+      {
+        "code": "FIXO-{{$timestamp}}",
+        "description": "Cupom fixo com limite de uso",
+        "type": "fixed",
+        "value": 1500,
+        "minOrderCents": 3000,
+        "usageLimit": 1,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) {
+          bru.setVar("limitedCouponId", body.data.id);
+          bru.setVar("limitedCouponCode", body.data.code);
+        }
+    - type: tests
+      code: |-
+        test("deve criar cupom fixo", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.type).to.equal("fixed");
+          expect(res.getBody().data.usageLimit).to.equal(1);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cenario feliz de cupom de desconto fixo com limite de uso. Salva limitedCouponId e limitedCouponCode.

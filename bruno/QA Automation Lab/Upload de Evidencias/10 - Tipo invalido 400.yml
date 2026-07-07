@@ -1,0 +1,40 @@
+﻿info:
+  name: Tipo invalido 400
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: http://localhost:3030/api/evidences
+  body:
+    type: json
+    data: |-
+      {
+        "entityType": "client",
+        "clientId": "{{clientId}}",
+        "title": "Arquivo executavel invalido",
+        "fileName": "virus.exe",
+        "mimeType": "application/x-msdownload",
+        "fileBase64": "TVqQAAMAAAAEAAAA",
+        "notes": "Deve falhar por MIME type nao permitido"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar tipo de arquivo invalido", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cenario negativo para tipo de arquivo nao permitido.
+

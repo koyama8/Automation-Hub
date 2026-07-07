@@ -1,0 +1,27 @@
+﻿info:
+  name: Recusar pagamento
+  type: http
+  seq: 5
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/payments/{{paymentId}}/decline
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve recusar pagamento pendente", () => {
+          expect([200, 400]).to.include(res.getStatus());
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Recusa pagamento pendente. Se ja aprovado, esperado 400.

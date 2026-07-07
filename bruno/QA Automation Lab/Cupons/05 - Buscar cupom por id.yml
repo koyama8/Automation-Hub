@@ -1,0 +1,28 @@
+﻿info:
+  name: Buscar cupom por id
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://localhost:3030/api/coupons/{{couponId}}
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve buscar cupom salvo", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.id).to.exist;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Busca o cupom criado no primeiro cenario usando couponId.

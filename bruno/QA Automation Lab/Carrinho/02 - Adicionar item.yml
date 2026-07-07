@@ -1,0 +1,42 @@
+﻿info:
+  name: Adicionar item
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3030/api/cart/items
+  body:
+    type: json
+    data: |-
+      {
+        "clientId": "{{clientId}}",
+        "productId": "{{productId}}",
+        "quantity": 2
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if ([200, 201].includes(res.getStatus()) && body?.data?.items?.length) {
+          bru.setVar("cartItemId", body.data.items[0].id);
+        }
+    - type: tests
+      code: |-
+        test("deve adicionar item e calcular subtotal", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.subtotalCents).to.be.greaterThan(0);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Adiciona productId ao carrinho de clientId e salva cartItemId.

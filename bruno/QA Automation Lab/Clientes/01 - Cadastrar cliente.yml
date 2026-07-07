@@ -1,0 +1,46 @@
+info:
+  name: Cadastrar cliente
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/clients
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Cliente Bruno",
+        "email": "cliente.bruno@gmail.com",
+        "document": "52998224725",
+        "phone": "11999991000",
+        "company": "QA Automation Lab",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        if (res.getStatus() === 201 && body?.data?.id) {
+          bru.setVar("clientId", body.data.id);
+        }
+    - type: tests
+      code: |-
+        test("deve cadastrar o cliente", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.id).to.exist;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cadastra o cliente e salva data.id automaticamente em clientId.

@@ -1,0 +1,45 @@
+﻿info:
+  name: Criar cliente divergente
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: http://localhost:3030/api/clients
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Cliente Divergente Bruno",
+        "email": "cliente.divergente@gmail.com",
+        "document": "64887219001",
+        "phone": "11988887777",
+        "company": "QA Automation Lab",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("mismatchedClientId", body.data.id);
+    - type: tests
+      code: |-
+        test("deve criar cliente divergente para teste de vinculo", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.id).to.exist;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cria um segundo cliente e salva mismatchedClientId para validar erro de vinculo com pedido de outro cliente.
+
+

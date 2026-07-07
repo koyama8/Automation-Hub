@@ -1,0 +1,28 @@
+﻿info:
+  name: Ativar contrato
+  type: http
+  seq: 6
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/contracts/{{contractId}}/activate
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve ativar contrato", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.status).to.equal("active");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Ativa o contrato definido em contractId. Esperado 200 OK e status active.

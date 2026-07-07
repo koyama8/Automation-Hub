@@ -1,0 +1,27 @@
+﻿info:
+  name: Remover item
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/cart/items/{{cartItemId}}
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve remover item", () => {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Remove item do carrinho.

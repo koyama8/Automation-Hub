@@ -1,0 +1,43 @@
+﻿info:
+  name: Cadastrar produto
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/products
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Produto Bruno {{$timestamp}}",
+        "sku": "BRU-{{$timestamp}}",
+        "description": "Produto criado pelo Bruno",
+        "priceCents": 19990,
+        "stock": 25,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("productId", body.data.id);
+    - type: tests
+      code: |-
+        test("deve cadastrar produto", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.status).to.equal("active");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cadastra produto e salva productId.

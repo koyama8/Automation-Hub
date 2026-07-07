@@ -1,0 +1,41 @@
+﻿info:
+  name: Atualizar cupom
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: http://localhost:3030/api/coupons/{{couponId}}
+  body:
+    type: json
+    data: |-
+      {
+        "code": "{{couponCode}}",
+        "description": "Cupom atualizado pelo Bruno",
+        "type": "percentage",
+        "value": 15,
+        "minOrderCents": 1000,
+        "maxDiscountCents": 6000,
+        "usageLimit": 3,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve atualizar cupom", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.value).to.equal(15);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Atualiza dados do cupom mantendo o mesmo codigo.

@@ -1,0 +1,29 @@
+info:
+  name: Limpar usuarios de teste
+  type: http
+  seq: 9
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/users
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve limpar os usuarios e recriar o administrador", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.admin.id).to.equal(1);
+          expect(res.getBody().data.nextUserId).to.equal(2);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Limpa usuarios e tokens, recria QA Admin no ID 1 e deixa o proximo usuario no ID 2.

@@ -1,0 +1,42 @@
+﻿info:
+  name: Atualizar contrato
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: http://localhost:3030/api/contracts/{{contractId}}
+  body:
+    type: json
+    data: |-
+      {
+        "clientId": "{{clientId}}",
+        "title": "Assinatura QA Enterprise",
+        "plan": "Enterprise anual",
+        "amountCents": 99990,
+        "startDate": "2026-07-01",
+        "endDate": "2027-06-30",
+        "status": "active",
+        "notes": "Contrato atualizado pelo Bruno."
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve atualizar contrato", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().message).to.equal("Contract updated successfully");
+          expect(res.getBody().data.title).to.equal("Assinatura QA Enterprise");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Atualiza o contrato definido em contractId mantendo o vinculo com clientId.

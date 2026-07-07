@@ -1,0 +1,37 @@
+﻿info:
+  name: Preco invalido
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: http://localhost:3030/api/products
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Produto preco invalido {{$timestamp}}",
+        "sku": "BAD-PRICE-{{$timestamp}}",
+        "priceCents": 0,
+        "stock": 1,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar preco invalido", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida preco invalido. Esperado 400.

@@ -1,0 +1,45 @@
+﻿info:
+  name: Upload documento DOCX cliente
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:3030/api/evidences
+  body:
+    type: json
+    data: |-
+      {
+        "entityType": "client",
+        "clientId": "{{clientId}}",
+        "title": "Documento DOCX do cliente",
+        "fileName": "contrato-cliente.docx",
+        "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "fileBase64": "RG9jdW1lbnRvIERPQ1ggcGFyYSB2YWxpZGFjYW8=",
+        "notes": "Cenario positivo para documento anexado pelo payload",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("documentEvidenceId", body.data.id);
+    - type: tests
+      code: |-
+        test("deve aceitar upload de documento DOCX", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.mimeType).to.equal("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida upload positivo de documento DOCX por cliente e salva documentEvidenceId.

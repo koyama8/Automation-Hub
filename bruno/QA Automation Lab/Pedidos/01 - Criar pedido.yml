@@ -1,0 +1,45 @@
+﻿info:
+  name: Criar pedido
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/orders
+  body:
+    type: json
+    data: |-
+      {
+        "clientId": "{{clientId}}",
+        "items": [
+          {
+            "productId": "{{productId}}",
+            "quantity": 2
+          }
+        ],
+        "notes": "Pedido criado pelo Bruno"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("orderId", body.data.id);
+    - type: tests
+      code: |-
+        test("deve criar pedido e calcular total", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.totalCents).to.be.greaterThan(0);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cria pedido para clientId com productId e salva orderId.

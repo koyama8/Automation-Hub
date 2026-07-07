@@ -1,0 +1,25 @@
+info:
+  name: Ativar cliente
+  type: http
+  seq: 7
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/clients/{{clientId}}/status
+  body:
+    type: json
+    data: |-
+      {
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Reativa o cliente. Esperado 200 OK.

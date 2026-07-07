@@ -1,0 +1,28 @@
+﻿info:
+  name: Cancelar contrato
+  type: http
+  seq: 5
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/contracts/{{contractId}}/cancel
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve cancelar contrato", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.status).to.equal("canceled");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cancela o contrato definido em contractId. Esperado 200 OK e status canceled.

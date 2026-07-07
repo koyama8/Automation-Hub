@@ -1,0 +1,39 @@
+﻿info:
+  name: Cadastrar contrato cliente inexistente
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: http://localhost:3030/api/contracts
+  body:
+    type: json
+    data: |-
+      {
+        "clientId": 999999,
+        "title": "Assinatura sem cliente",
+        "plan": "Teste negativo",
+        "amountCents": 1000,
+        "startDate": "2026-07-01",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar contrato sem cliente existente", () => {
+          expect(res.getStatus()).to.equal(404);
+          expect(res.getBody().error).to.equal("Client not found!");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida o vinculo obrigatorio com cliente existente. Esperado 404 Not Found.

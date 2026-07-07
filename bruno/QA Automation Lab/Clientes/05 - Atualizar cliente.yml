@@ -1,0 +1,30 @@
+info:
+  name: Atualizar cliente
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: http://localhost:3030/api/clients/{{clientId}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Cliente Bruno Atualizado",
+        "email": "cliente.bruno@gmail.com",
+        "document": "52998224725",
+        "phone": "11977771000",
+        "company": "QA Lab",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Atualiza todos os dados do cliente. Esperado 200 OK.

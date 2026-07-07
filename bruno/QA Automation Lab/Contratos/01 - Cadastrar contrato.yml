@@ -1,0 +1,50 @@
+﻿info:
+  name: Cadastrar contrato
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/contracts
+  body:
+    type: json
+    data: |-
+      {
+        "clientId": "{{clientId}}",
+        "title": "Assinatura QA Pro",
+        "plan": "Pro mensal",
+        "amountCents": 19990,
+        "startDate": "2026-07-01",
+        "endDate": "2026-12-31",
+        "status": "active",
+        "notes": "Contrato criado pelo Bruno."
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        if (res.getStatus() === 201 && body?.data?.id) {
+          bru.setVar("contractId", body.data.id);
+        }
+    - type: tests
+      code: |-
+        test("deve cadastrar o contrato vinculado ao cliente", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.id).to.exist;
+          expect(res.getBody().data.client.id).to.exist;
+          expect(res.getBody().data.status).to.equal("active");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cadastra contrato para o cliente definido em clientId e salva data.id automaticamente em contractId.

@@ -1,0 +1,39 @@
+﻿info:
+  name: Pedido sem cliente
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: http://localhost:3030/api/orders
+  body:
+    type: json
+    data: |-
+      {
+        "clientId": 999999,
+        "items": [
+          {
+            "productId": "{{productId}}",
+            "quantity": 1
+          }
+        ]
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar pedido sem cliente existente", () => {
+          expect(res.getStatus()).to.equal(404);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida cliente inexistente. Esperado 404.

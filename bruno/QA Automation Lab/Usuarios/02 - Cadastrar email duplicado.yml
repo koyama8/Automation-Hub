@@ -1,0 +1,27 @@
+info:
+  name: Cadastrar email duplicado
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3030/api/users/register
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Usuario Duplicado",
+        "email": "usuario.bruno@gmail.com",
+        "password": "Bruno@123"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Repete o email da massa anterior. Esperado 409 Conflict.

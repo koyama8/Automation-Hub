@@ -1,0 +1,36 @@
+﻿info:
+  name: Aplicar cupom no pedido
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: http://localhost:3030/api/coupons/apply
+  body:
+    type: json
+    data: |-
+      {
+        "code": "{{couponCode}}",
+        "orderId": "{{orderId}}"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve aplicar cupom e reduzir total", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.finalTotalCents).to.be.lessThan(res.getBody().data.originalTotalCents);
+          expect(res.getBody().data.order.couponCode).to.equal(bru.getVar("couponCode"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Aplica cupom no pedido salvo em orderId e valida o desconto final.

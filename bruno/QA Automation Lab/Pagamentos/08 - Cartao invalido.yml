@@ -1,0 +1,35 @@
+﻿info:
+  name: Cartao invalido
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: http://localhost:3030/api/payments
+  body:
+    type: json
+    data: |-
+      {
+        "orderId": "{{orderId}}",
+        "method": "card",
+        "cardNumber": "0000"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar cartao invalido", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida cartao invalido. Esperado 400.

@@ -1,0 +1,39 @@
+﻿info:
+  name: Arquivo obrigatorio 400
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://localhost:3030/api/evidences
+  body:
+    type: json
+    data: |-
+      {
+        "entityType": "client",
+        "clientId": "{{clientId}}",
+        "title": "Evidencia sem arquivo",
+        "fileName": "sem-arquivo.txt",
+        "mimeType": "text/plain",
+        "notes": "Deve falhar porque fileBase64 nao foi enviado"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve exigir arquivo", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cenario negativo para arquivo obrigatorio.
+

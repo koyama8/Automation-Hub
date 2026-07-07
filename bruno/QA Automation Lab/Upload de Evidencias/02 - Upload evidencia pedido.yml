@@ -1,0 +1,47 @@
+﻿info:
+  name: Upload evidencia pedido
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3030/api/evidences
+  body:
+    type: json
+    data: |-
+      {
+        "entityType": "order",
+        "clientId": "{{clientId}}",
+        "orderId": "{{orderId}}",
+        "title": "Comprovante do pedido Bruno",
+        "fileName": "pedido-evidencia.pdf",
+        "mimeType": "application/pdf",
+        "fileBase64": "JVBERi0xLjQKJUV2aWRlbmNpYSBCcnVubwo=",
+        "notes": "Upload de evidencia vinculado ao pedido",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("orderEvidenceId", body.data.id);
+    - type: tests
+      code: |-
+        test("deve enviar evidencia de pedido", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.entityType).to.equal("order");
+          expect(res.getBody().data.orderId).to.equal(Number(bru.getVar("orderId")));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Envia evidencia vinculada ao pedido e cliente atuais.

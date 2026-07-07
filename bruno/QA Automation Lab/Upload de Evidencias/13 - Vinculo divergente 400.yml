@@ -1,0 +1,41 @@
+﻿info:
+  name: Vinculo divergente 400
+  type: http
+  seq: 13
+
+http:
+  method: POST
+  url: http://localhost:3030/api/evidences
+  body:
+    type: json
+    data: |-
+      {
+        "entityType": "order",
+        "clientId": "{{mismatchedClientId}}",
+        "orderId": "{{orderId}}",
+        "title": "Cliente nao combina com pedido",
+        "fileName": "vinculo.txt",
+        "mimeType": "text/plain",
+        "fileBase64": "RXZpZGVuY2lhIGNvbSB2aW5jdWxvIGludmFsaWRv"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar vinculo divergente", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Usa mismatchedClientId para forcar erro real quando o pedido pertence a outro cliente.
+
+

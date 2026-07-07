@@ -1,0 +1,28 @@
+﻿info:
+  name: Buscar pagamento
+  type: http
+  seq: 10
+
+http:
+  method: GET
+  url: http://localhost:3030/api/payments/{{paymentId}}
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve buscar pagamento", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.id).to.exist;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Busca pagamento definido em paymentId.

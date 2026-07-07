@@ -1,0 +1,37 @@
+﻿info:
+  name: Payload invalido 400
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: http://localhost:3030/api/coupons
+  body:
+    type: json
+    data: |-
+      {
+        "code": "XX",
+        "type": "percentage",
+        "value": 150,
+        "minOrderCents": -1,
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve bloquear payload invalido", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida codigo curto, percentual acima de 100 e minimo negativo.

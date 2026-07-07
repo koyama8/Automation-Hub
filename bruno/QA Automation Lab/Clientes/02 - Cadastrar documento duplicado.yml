@@ -1,0 +1,30 @@
+info:
+  name: Cadastrar documento duplicado
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3030/api/clients
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Cliente Duplicado",
+        "email": "cliente.duplicado@gmail.com",
+        "document": "52998224725",
+        "phone": "11988881000",
+        "company": "QA Automation Lab",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida documento duplicado. Execute depois do cadastro. Esperado 409 Conflict.

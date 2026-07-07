@@ -1,0 +1,30 @@
+﻿info:
+  name: Limpar todas as evidencias
+  type: http
+  seq: 16
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/evidences
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve limpar evidencias", () => {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Remove todas as evidencias do laboratorio. Use com cuidado nos estudos.
+
+
+

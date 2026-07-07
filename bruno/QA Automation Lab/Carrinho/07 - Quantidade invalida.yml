@@ -1,0 +1,35 @@
+﻿info:
+  name: Quantidade invalida
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: http://localhost:3030/api/cart/items
+  body:
+    type: json
+    data: |-
+      {
+        "clientId": "{{clientId}}",
+        "productId": "{{productId}}",
+        "quantity": 0
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve rejeitar quantidade invalida", () => {
+          expect(res.getStatus()).to.equal(400);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Valida quantidade invalida no carrinho. Esperado 400.

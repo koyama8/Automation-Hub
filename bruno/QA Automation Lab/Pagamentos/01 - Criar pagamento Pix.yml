@@ -1,0 +1,39 @@
+﻿info:
+  name: Criar pagamento Pix
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/payments
+  body:
+    type: json
+    data: |-
+      {
+        "orderId": "{{orderId}}",
+        "method": "pix"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("paymentId", body.data.id);
+    - type: tests
+      code: |-
+        test("deve criar Pix", () => {
+          expect(res.getStatus()).to.equal(201);
+          expect(res.getBody().data.pixCode).to.exist;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cria pagamento Pix e salva paymentId.

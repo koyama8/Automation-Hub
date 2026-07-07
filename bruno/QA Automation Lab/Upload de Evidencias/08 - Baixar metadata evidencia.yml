@@ -1,0 +1,30 @@
+﻿info:
+  name: Baixar metadata evidencia
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: http://localhost:3030/api/evidences/{{evidenceId}}/download
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve baixar metadata com base64", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.fileBase64).to.be.a("string");
+          expect(res.getBody().data.checksum).to.be.a("string");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Retorna metadata completa com fileBase64 e checksum.
+

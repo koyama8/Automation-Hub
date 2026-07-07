@@ -1,0 +1,28 @@
+﻿info:
+  name: Limpar todos os cupons
+  type: http
+  seq: 22
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/coupons
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve limpar cupons", () => {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Remove todos os cupons do laboratorio. Use com cuidado nos estudos.
+

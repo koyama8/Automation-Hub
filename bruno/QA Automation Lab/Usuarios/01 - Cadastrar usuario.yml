@@ -1,0 +1,27 @@
+info:
+  name: Cadastrar usuario
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/users/register
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Usuario Bruno",
+        "email": "usuario.bruno@gmail.com",
+        "password": "Bruno@123"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cadastra usuario. Esperado 201 Created. Copie data.id para userId.

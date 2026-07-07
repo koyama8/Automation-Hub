@@ -1,0 +1,34 @@
+﻿info:
+  name: Inativar produto
+  type: http
+  seq: 6
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/products/{{productId}}/status
+  body:
+    type: json
+    data: |-
+      {
+        "status": "inactive"
+      }
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve inativar produto", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.status).to.equal("inactive");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Inativa produto. Use para validar produto inativo.

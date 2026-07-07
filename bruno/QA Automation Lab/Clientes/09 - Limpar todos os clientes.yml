@@ -1,0 +1,28 @@
+info:
+  name: Limpar todos os clientes
+  type: http
+  seq: 9
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/clients
+  auth:
+    type: bearer
+    token: '{{authToken}}'
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("deve excluir todos os clientes e reiniciar o ID", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.nextClientId).to.equal(1);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Exclui todos os registros de Client e reinicia o proximo ID em 1.

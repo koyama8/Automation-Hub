@@ -1,0 +1,40 @@
+info:
+  name: Login valido
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3030/api/auth/login
+  body:
+    type: json
+    data: |-
+      {
+        "email": "qa@adminlab.com",
+        "password": "pwd123"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        if (res.getStatus() === 200 && body?.data?.token) {
+          bru.setVar("authToken", body.data.token);
+        }
+    - type: tests
+      code: |-
+        test("deve autenticar e retornar o token", () => {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().data.token).to.be.a("string");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Autentica o administrador e salva data.token automaticamente em authToken.
