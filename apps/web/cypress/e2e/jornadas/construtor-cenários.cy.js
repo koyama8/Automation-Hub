@@ -1,4 +1,4 @@
-import consultancyData from '../fixtures/construtor-cenários.json'
+import consultancyData from '../../fixtures/construtor-cenários.json'
 
 describe('Construtor de cenarios', () => {
   beforeEach(() => {

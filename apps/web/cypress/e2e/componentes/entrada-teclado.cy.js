@@ -21,6 +21,8 @@ describe('Entrada de teclado', () => {
   })
 
   it('deve exibir o cenário salvo na lista', () => {
+    const dataAtual = new Date().toLocaleDateString('pt-BR')
+
     cy.get('[data-field="keyboardName"]')
       .type('Validar nome do usuario')
     cy.contains('button', 'Salvar cenário')
@@ -41,21 +43,21 @@ describe('Entrada de teclado', () => {
         cy.get('strong')
           .should('have.text', '01 - Validar nome do usuario')
         cy.get('small')
-          .should('have.text', 'Entrada salva em 16/06/2026')
+          .should('have.text', `Entrada salva em ${dataAtual}`)
       })
 
       cy.get('[data-keyboard-row="2"]').within(() => {
         cy.get('strong')
           .should('have.text', '02 - Validar o email do usuario')
         cy.get('small')
-          .should('have.text', 'Entrada salva em 16/06/2026')
+          .should('have.text', `Entrada salva em ${dataAtual}`)
       })
 
       cy.get('[data-keyboard-row="3"]').within(() => {
         cy.get('strong')
           .should('have.text', '03 - Validar a senha do usuario')
         cy.get('small')
-          .should('have.text', 'Entrada salva em 16/06/2026')
+          .should('have.text', `Entrada salva em ${dataAtual}`)
       })
     })
   })
@@ -100,7 +102,7 @@ describe('Entrada de teclado', () => {
       .should('be.visible')
   })
 
-  it.only('deve atualizar o contador de cenários salvos', () => {
+  it('deve atualizar o contador de cenários salvos', () => {
     cy.get('[data-role="keyboardHistory"]')
       .find('[data-role="keyboardCount"]')
       .should('have.length', 0)

@@ -1,4 +1,4 @@
-import consultancyData from '../fixtures/consultancy.json'
+import consultancyData from '../../fixtures/consultancy.json'
 
 describe('Formularios', () => {
   it('deve preencher o formulario completo de consultoria', () => {

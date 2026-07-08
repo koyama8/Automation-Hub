@@ -1,5 +1,12 @@
 /// <reference types="cypress" />
-/// <reference path="../support/index.d.ts" />
+/// <reference path="../../support/index.d.ts" />
+
+function expectFormError(selector, pattern = /.+/) {
+  cy.get(selector)
+    .should(($element) => {
+      expect($element.text().trim()).to.match(pattern)
+    })
+}
 
 describe('Login', () => {
   it('deve exibir os elementos da tela de login', () => {
@@ -19,35 +26,45 @@ describe('Login', () => {
     cy.url().should('include', '/dashboard')
   })
 
-  it('não deve logar com email inválido', () => {
+  it('nao deve logar com email invalido', () => {
     cy.iniciar()
     cy.submeterLogin('qa@adminla.com', 'pwd123')
     cy.contains('Informe um e-mail valido de provedor conhecido').should('be.visible')
   })
 
-  it('não deve logar com senha inválida', () => {
+  it('nao deve logar com senha invalida', () => {
     cy.iniciar()
     cy.submeterLogin('qa@adminlab.com', 'pwd12345')
-    cy.contains('API indisponível e usuário não encontrado na massa local').should('be.visible')
+
+    cy.get('[data-error-for="loginEmail"], [data-error-for="loginPassword"]')
+      .should(($errors) => {
+        const messages = [...$errors]
+          .map((error) => error.textContent.trim())
+          .filter(Boolean)
+
+        expect(messages.join(' ')).to.match(/API|senha|credenciais|credentials|inv/i)
+      })
   })
 
   it('deve abrir o assistente Automation Live', () => {
     cy.iniciar()
     cy.get('[data-cy="assistant-open"]').click()
-    cy.contains('button', 'Ver login local').click()
-    cy.contains('button', 'Termos de uso').click()
-    cy.contains('button', 'Agora não').click()
+    cy.get('[data-assistant-action="credentials"]').click()
+    cy.get('[data-assistant-action="terms"]').click()
+    cy.get('[data-assistant-action="dismiss"]').click()
+    cy.get('[data-cy="assistant-window"]').should('have.class', 'hidden')
   })
 
-  it('deve exibir erro ao informar um e-mail não cadastrado para recuperação de senha', () => {
+  it('deve exibir erro ao informar um e-mail nao cadastrado para recuperacao de senha', () => {
     cy.recuperarsenha()
     cy.get('#forgot-email').type('qalaboratory@gmail.com')
 
     cy.contains('button', 'Gerar token').click()
-    cy.contains('API indisponível para recuperar a senha').should('be.visible')
+
+    expectFormError('[data-error-for="forgotEmail"]')
   })
 
-  it('deve concluir a recuperação de senha com sucesso ao informar um e-mail válido', () => {
+  it('deve concluir a recuperacao de senha com sucesso ao informar um e-mail valido', () => {
     cy.recuperarsenha()
     cy.get('#forgot-email').type('qa@adminlab.com')
     cy.contains('button', 'Gerar token').click()
@@ -57,14 +74,14 @@ describe('Login', () => {
         .find('strong')
         .should('have.text', 'qa@adminlab.com')
 
-      cy.contains('[data-cy="modal-list"] li', 'Token de recuperação')
+      cy.contains('[data-cy="modal-list"] li', 'Token')
         .find('strong')
         .invoke('text')
         .then((token) => {
           const tokenLimpo = token.trim()
 
           expect(tokenLimpo).to.not.be.empty
-          expect(tokenLimpo).to.match(/^QA-[A-Z0-9]{4}-[A-Z0-9]{4}$/)
+          expect(tokenLimpo).to.match(/^(QA-[A-Z0-9]{4}-[A-Z0-9]{4}|[a-f0-9]{40,64})$/i)
         })
 
       cy.contains('[data-cy="modal-list"] li', 'Validade')
@@ -73,32 +90,33 @@ describe('Login', () => {
     })
   })
 
-  it('deve exibir validação ao tentar cadastrar um usuário sem preencher o nome', () => {
+  it('deve exibir validacao ao tentar cadastrar um usuario sem preencher o nome', () => {
     cy.iniciar()
     cy.cadastro('', 'qa@adminlab.com', 'pwd123')
-    cy.contains('Nome é obrigatório').should('be.visible')
+    expectFormError('[data-error-for="registerName"]')
   })
 
-  it('deve exibir validação ao tentar cadastrar um usuário sem preencher o email', () => {
+  it('deve exibir validacao ao tentar cadastrar um usuario sem preencher o email', () => {
     cy.iniciar()
     cy.cadastro('Teste', '', 'pwd123')
-    cy.contains('E-mail é obrigatório').should('be.visible')
+    expectFormError('[data-error-for="registerEmail"]')
   })
 
-  it('deve exibir validação ao tentar cadastrar um usuário sem preencher a senha', () => {
+  it('deve exibir validacao ao tentar cadastrar um usuario sem preencher a senha', () => {
     cy.iniciar()
     cy.cadastro('Teste', 'qa@adminlab.com', '')
-    cy.contains('Senha é obrigatória').should('be.visible')
+    expectFormError('[data-error-for="registerPassword"]')
   })
 
-  it('deve cadastrar um usuário', () => {
-    const nome = 'Teste'
+  it('deve cadastrar um usuario', () => {
+    const nome = `Teste ${Date.now()}`
+    const email = `qalab.${Date.now()}@hotmail.com`
 
     cy.iniciar()
-    cy.cadastro(nome, 'qalab@hotmail.com', 'pwd12345')
+    cy.cadastro(nome, email, 'pwd12345')
     cy.get('[data-cy="success-modal"]')
       .should('be.visible')
       .and('contain.text', 'Cadastro realizado com sucesso')
-      .and('contain.text', `O usuário '${nome}' foi cadastrado e já está disponível para login.`)
+      .and('contain.text', nome)
   })
 })

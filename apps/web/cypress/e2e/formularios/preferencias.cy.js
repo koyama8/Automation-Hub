@@ -1,4 +1,4 @@
-import consultancyData from '../fixtures/preferencias.json'
+import consultancyData from '../../fixtures/preferencias.json'
 
 describe('Preferencias', () => {
 

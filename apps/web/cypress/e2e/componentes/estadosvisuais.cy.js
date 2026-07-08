@@ -1,4 +1,4 @@
-import cenarios from '../fixtures/cenarios.json'
+import cenarios from '../../fixtures/cenarios.json'
 
 describe('Estados visuais', () => {
   beforeEach(() => {

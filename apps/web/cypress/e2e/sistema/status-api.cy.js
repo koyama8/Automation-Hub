@@ -9,11 +9,20 @@ describe('Status da API', () => {
   })
 
   it('deve informar quando a API estiver indisponivel', () => {
+    cy.intercept('GET', 'http://localhost:3030/api/health', {
+      forceNetworkError: true,
+    }).as('healthIndisponivel')
+
     cy.contains('button', 'Verificar API').click()
 
-    cy.get('.error-toast').should('be.visible')
+    cy.wait('@healthIndisponivel')
 
-    cy.contains('p.result-text', 'API indisponível em http://localhost:3030')
+    cy.get('[data-role="apiResult"]')
       .should('be.visible')
+      .and('contain.text', 'API indispon')
+
+    cy.get('[data-cy="toast"]')
+      .should('be.visible')
+      .and('have.class', 'error-toast')
   })
 })
