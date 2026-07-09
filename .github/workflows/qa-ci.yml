@@ -69,6 +69,20 @@ jobs:
         working-directory: apps/api
         run: npm ci
 
+      - name: Criar .env da API para CI
+        working-directory: apps/api
+        run: |
+          cat > .env << EOF
+          DATABASE_URL="${DATABASE_URL}"
+          PORT="${PORT}"
+          WEB_URL="${WEB_URL}"
+          ADMIN_EMAIL="${ADMIN_EMAIL}"
+          ADMIN_PASSWORD="${ADMIN_PASSWORD}"
+          JWT_SECRET="${JWT_SECRET}"
+          JWT_EXPIRES_IN="${JWT_EXPIRES_IN}"
+          RESET_TOKEN_MINUTES="${RESET_TOKEN_MINUTES}"
+          EOF
+
       - name: Preparar banco da API
         working-directory: apps/api
         run: |
@@ -149,6 +163,20 @@ jobs:
       - name: Instalar dependencias da API
         working-directory: apps/api
         run: npm ci
+
+      - name: Criar .env da API para CI
+        working-directory: apps/api
+        run: |
+          cat > .env << EOF
+          DATABASE_URL="${DATABASE_URL}"
+          PORT="${PORT}"
+          WEB_URL="${WEB_URL}"
+          ADMIN_EMAIL="${ADMIN_EMAIL}"
+          ADMIN_PASSWORD="${ADMIN_PASSWORD}"
+          JWT_SECRET="${JWT_SECRET}"
+          JWT_EXPIRES_IN="${JWT_EXPIRES_IN}"
+          RESET_TOKEN_MINUTES="${RESET_TOKEN_MINUTES}"
+          EOF
 
       - name: Preparar banco para testes web
         working-directory: apps/api
