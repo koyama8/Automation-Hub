@@ -80,7 +80,7 @@ describe("POST /api/orders", () => {
     });
   })
 
-  it.only('nao deve cadastrar um pedido sem cliente',() => {
+  it('nao deve cadastrar um pedido sem cliente',() => {
       const pedido =
       {
   "clientId": 999999,

@@ -1,0 +1,193 @@
+name: QA Automation Lab CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: postgresql://dba:dba@localhost:5434/QALabDB?schema=public
+  PORT: 3030
+  WEB_URL: http://localhost:3000
+  ADMIN_EMAIL: qa@adminlab.com
+  ADMIN_PASSWORD: pwd123
+  JWT_SECRET: qa-automation-lab-ci-secret
+  JWT_EXPIRES_IN: 2h
+  RESET_TOKEN_MINUTES: 15
+  CI: true
+
+jobs:
+  api-tests:
+    name: API Cypress
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: dba
+          POSTGRES_PASSWORD: dba
+          POSTGRES_DB: QALabDB
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U dba -d QALabDB"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+
+      - name: Bloquear testes focados
+        run: |
+          if grep -R -nE '\.(only)\(' apps/api/cypress apps/web/cypress; then
+            echo "Remova .only antes de rodar o CI."
+            exit 1
+          fi
+
+      - name: Instalar dependencias da API
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Preparar banco da API
+        working-directory: apps/api
+        run: |
+          npm run prisma:generate
+          npx prisma migrate deploy
+          npm run prisma:seed
+
+      - name: Subir API
+        working-directory: apps/api
+        run: |
+          nohup npm start > api-ci.log 2>&1 &
+
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3030/api/health; then
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          cat api-ci.log
+          exit 1
+
+      - name: Rodar testes de API
+        working-directory: apps/api
+        run: npx cypress run --browser electron --config video=false
+
+      - name: Upload evidencias API
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-cypress-artifacts
+          path: |
+            apps/api/cypress/screenshots
+            apps/api/cypress/videos
+            apps/api/api-ci.log
+          if-no-files-found: ignore
+
+  web-tests:
+    name: Web Cypress
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: dba
+          POSTGRES_PASSWORD: dba
+          POSTGRES_DB: QALabDB
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U dba -d QALabDB"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            apps/api/package-lock.json
+            apps/web/package-lock.json
+
+      - name: Bloquear testes focados
+        run: |
+          if grep -R -nE '\.(only)\(' apps/api/cypress apps/web/cypress; then
+            echo "Remova .only antes de rodar o CI."
+            exit 1
+          fi
+
+      - name: Instalar dependencias da API
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Preparar banco para testes web
+        working-directory: apps/api
+        run: |
+          npm run prisma:generate
+          npx prisma migrate deploy
+          npm run prisma:seed
+
+      - name: Subir API
+        working-directory: apps/api
+        run: |
+          nohup npm start > api-ci.log 2>&1 &
+
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3030/api/health; then
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          cat api-ci.log
+          exit 1
+
+      - name: Instalar dependencias da Web
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Rodar testes web
+        working-directory: apps/web
+        run: npx cypress run --browser electron --config video=false
+
+      - name: Upload evidencias Web
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-cypress-artifacts
+          path: |
+            apps/web/cypress/screenshots
+            apps/web/cypress/videos
+            apps/api/api-ci.log
+          if-no-files-found: ignore
