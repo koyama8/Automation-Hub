@@ -1,19 +1,22 @@
-describe('GET /api/clients/{{clientId}}', () => {
+import { fakerPT_BR as faker } from '@faker-js/faker'
+
+describe('GET /api/clients/:id - Busca de cliente', () => {
   let token
   let clientId
-
-  const user = {
-    name: 'Test',
-    email: 'teste.TI@hotmail.com',
-    document: '12345678910',
-    phone: '11999991000',
-    company: 'QA Automation Lab',
-    status: 'active',
-  }
+  let cliente
 
   beforeEach(() => {
     cy.loginApi().then((tokenGerado) => {
       token = tokenGerado
+
+      cliente = {
+        name: faker.person.fullName(),
+        email: faker.internet.email().toLowerCase(),
+        document: faker.string.numeric(11),
+        phone: '11999991000',
+        company: 'QA Automation Lab',
+        status: 'active',
+      }
 
       cy.api({
         method: 'POST',
@@ -21,7 +24,7 @@ describe('GET /api/clients/{{clientId}}', () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        body: user,
+        body: cliente,
       }).then((response) => {
         expect(response.status).to.eq(201)
         clientId = response.body.data.id
@@ -39,6 +42,10 @@ describe('GET /api/clients/{{clientId}}', () => {
     }).then((response) => {
       expect(response.status).to.eq(200)
       expect(response.body.data.id).to.eq(clientId)
+      expect(response.body.data.name).to.eq(cliente.name)
+      expect(response.body.data.email).to.eq(cliente.email)
+      expect(response.body.data.document).to.eq(cliente.document)
+      expect(response.body.data.status).to.eq(cliente.status)
     })
   })
 })

@@ -1,13 +1,60 @@
-describe('GET /api/contracts', () => {
+import { fakerPT_BR as faker } from '@faker-js/faker'
+
+describe('GET /api/contracts - Listagem de contratos', () => {
   let token
+  let contractId
+  let contrato
 
   beforeEach(() => {
-    cy.loginApi().then((tokengerado) => {
-      token = tokengerado
+    cy.loginApi().then((tokenGerado) => {
+      token = tokenGerado
+
+      const cliente = {
+        name: faker.person.fullName(),
+        email: faker.internet.email().toLowerCase(),
+        document: faker.string.numeric(11),
+        phone: faker.string.numeric(11),
+        company: faker.company.name(),
+        status: 'active',
+      }
+
+      cy.api({
+        method: 'POST',
+        url: 'http://localhost:3030/api/clients',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: cliente,
+      }).then((response) => {
+        expect(response.status).to.eq(201)
+
+        contrato = {
+          clientId: response.body.data.id,
+          title: faker.commerce.productName(),
+          plan: 'Mensal',
+          amountCents: faker.number.int({ min: 1000, max: 50000 }),
+          startDate: '2026-07-01',
+          endDate: '2026-12-31',
+          status: 'active',
+          notes: faker.lorem.sentence(),
+        }
+
+        cy.api({
+          method: 'POST',
+          url: 'http://localhost:3030/api/contracts',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: contrato,
+        }).then((response) => {
+          expect(response.status).to.eq(201)
+          contractId = response.body.data.id
+        })
+      })
     })
   })
 
-  it('deve listar os contratos', () => {
+  it('deve listar o contrato cadastrado para o cliente', () => {
     cy.api({
       method: 'GET',
       url: 'http://localhost:3030/api/contracts',
@@ -16,22 +63,18 @@ describe('GET /api/contracts', () => {
       },
     }).then((response) => {
       expect(response.status).to.eq(200)
-
       expect(response.body).to.be.an('array')
       expect(response.body).to.not.be.empty
 
-      expect(response.body[0]).to.have.property('id')
-      expect(response.body[0]).to.have.property('clientId')
-      expect(response.body[0].title).to.eq('Salada Refinado de Congelado')
-      expect(response.body[0].amountCents).to.eq(5370)
-      expect(response.body[0].status).to.eq('active')
-      expect(response.body[0].notes).to.eq('Reiciendis enim et perspiciatis voluptatem quo sequi unde.')
-      expect(response.body[0].client).to.have.property('id')
-      expect(response.body[0].client.name).to.eq('Théo Oliveira')
-      expect(response.body[0].client.email).to.eq('margarida_albuquerque46@gmail.com')
-      expect(response.body[0].client.document).to.eq('96276180789')
-      expect(response.body[0].client.company).to.eq('Reis-Macedo')
-      expect(response.body[0].client.status).to.eq('inactive')
+      const contratoListado = response.body.find((item) => item.id === contractId)
+
+      expect(contratoListado).to.exist
+      expect(contratoListado.clientId).to.eq(contrato.clientId)
+      expect(contratoListado.title).to.eq(contrato.title)
+      expect(contratoListado.amountCents).to.eq(contrato.amountCents)
+      expect(contratoListado.status).to.eq(contrato.status)
+      expect(contratoListado.notes).to.eq(contrato.notes)
+      expect(contratoListado.client).to.have.property('id', contrato.clientId)
     })
   })
 })

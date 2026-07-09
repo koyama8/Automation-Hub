@@ -1,3 +1,5 @@
+import { fakerPT_BR as faker } from '@faker-js/faker'
+
 describe('POST /api/clients - Cadastro de cliente', () => {
   let token
 
@@ -7,11 +9,11 @@ describe('POST /api/clients - Cadastro de cliente', () => {
     })
   })
 
-  it('deve cadastrar um cliente com sucesso', () => {
-    const user = {
-      name: 'Cliente Bruno',
-      email: 'cliente.bruno@gmail.com',
-      document: '52998224725',
+  it('deve cadastrar um cliente com dados validos', () => {
+    const cliente = {
+      name: faker.person.fullName(),
+      email: faker.internet.email().toLowerCase(),
+      document: faker.string.numeric(11),
       phone: '11999991000',
       company: 'QA Automation Lab',
       status: 'active',
@@ -23,16 +25,16 @@ describe('POST /api/clients - Cadastro de cliente', () => {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      body: user,
+      body: cliente,
     }).then((response) => {
       expect(response.status).to.eq(201)
 
-      expect(response.body.data.name).to.eq('Cliente Bruno')
-      expect(response.body.data.email).to.eq('cliente.bruno@gmail.com')
-      expect(response.body.data.document).to.eq('52998224725')
-      expect(response.body.data.phone).to.eq('11999991000')
-      expect(response.body.data.company).to.eq('QA Automation Lab')
-      expect(response.body.data.status).to.eq('active')
+      expect(response.body.data.name).to.eq(cliente.name)
+      expect(response.body.data.email).to.eq(cliente.email)
+      expect(response.body.data.document).to.eq(cliente.document)
+      expect(response.body.data.phone).to.eq(cliente.phone)
+      expect(response.body.data.company).to.eq(cliente.company)
+      expect(response.body.data.status).to.eq(cliente.status)
     })
   })
 })
