@@ -62,31 +62,15 @@ export function getOrCreateActiveCart(clientId) {
 
 export function addItemToCart({ cartId, productId, quantity, unitPriceCents }) {
   return prisma.$transaction(async (transaction) => {
-    const existingItem = await transaction.cartItem.findUnique({
-      where: { cartId_productId: { cartId, productId } },
+    await transaction.cartItem.create({
+      data: {
+        cartId,
+        productId,
+        quantity,
+        unitPriceCents,
+        subtotalCents: quantity * unitPriceCents,
+      },
     })
-
-    if (existingItem) {
-      const nextQuantity = existingItem.quantity + quantity
-      await transaction.cartItem.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: nextQuantity,
-          unitPriceCents,
-          subtotalCents: nextQuantity * unitPriceCents,
-        },
-      })
-    } else {
-      await transaction.cartItem.create({
-        data: {
-          cartId,
-          productId,
-          quantity,
-          unitPriceCents,
-          subtotalCents: quantity * unitPriceCents,
-        },
-      })
-    }
 
     return transaction.cart.findUnique({ where: { id: cartId }, include: cartInclude })
   })

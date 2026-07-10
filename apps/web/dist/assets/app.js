@@ -3829,7 +3829,16 @@ async function loadCart() {
   }
   cartData = body.data
   renderCart(cartData)
-  setCommerceFeedback('cart', 'success', 'Carrinho carregado', `${cartData.totalItems} item(ns), subtotal ${formatCents(cartData.subtotalCents)}.`)
+  setCommerceFeedback('cart', 'success', 'Carrinho carregado', getCartSummary(cartData))
+}
+
+function getCartSummary(cart) {
+  const listedItems = cart?.items?.length || 0
+  const totalUnits = cart?.totalItems || 0
+  const itemLabel = listedItems === 1 ? 'item na lista' : 'itens na lista'
+  const unitLabel = totalUnits === 1 ? 'unidade' : 'unidades'
+
+  return `${listedItems} ${itemLabel}, ${totalUnits} ${unitLabel}, subtotal ${formatCents(cart?.subtotalCents || 0)}.`
 }
 
 function renderCart(cart) {
@@ -3882,7 +3891,7 @@ getElement('[data-form="cart"]').addEventListener('submit', async (event) => {
   cartData = body.data
   renderCart(cartData)
   getElement('[data-cy="cart-result"]').textContent = 'Produto adicionado ao carrinho.'
-  setCommerceFeedback('cart', 'success', 'Carrinho atualizado', `Subtotal ${formatCents(cartData.subtotalCents)}.`)
+  setCommerceFeedback('cart', 'success', 'Carrinho atualizado', getCartSummary(cartData))
 })
 
 getElement('[data-field="cartClientId"]').addEventListener('change', loadCart)
