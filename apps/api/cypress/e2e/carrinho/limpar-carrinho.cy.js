@@ -1,10 +1,9 @@
 import { fakerPT_BR as faker } from '@faker-js/faker'
 
-describe('PATCH /api/cart/items/:itemId - Atualizacao de quantidade', () => {
+describe('DELETE /api/cart/:clientId - Limpeza do carrinho', () => {
   let token
   let clientId
   let productId
-  let cartItemId
 
   beforeEach(() => {
     cy.loginApi().then((tokenGerado) => {
@@ -40,50 +39,47 @@ describe('PATCH /api/cart/items/:itemId - Atualizacao de quantidade', () => {
       }).then((response) => {
         expect(response.status).to.eq(201)
         clientId = response.body.data.id
-      })
 
-      cy.api({
-        method: 'POST',
-        url: 'http://localhost:3030/api/products',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: produto,
-      }).then((response) => {
-        expect(response.status).to.eq(201)
-        productId = response.body.data.id
+        cy.api({
+          method: 'POST',
+          url: 'http://localhost:3030/api/products',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: produto,
+        }).then((response) => {
+          expect(response.status).to.eq(201)
+          productId = response.body.data.id
+
+          cy.api({
+            method: 'POST',
+            url: 'http://localhost:3030/api/cart/items',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: {
+              clientId,
+              productId,
+              quantity: 2,
+            },
+          }).then((response) => {
+            expect(response.status).to.eq(201)
+          })
+        })
       })
     })
   })
 
-  it('deve atualizar a quantidade de um item do carrinho', () => {
+  it('deve limpar todos os itens do carrinho de um cliente', () => {
     cy.api({
-      method: 'POST',
-      url: 'http://localhost:3030/api/cart/items',
+      method: 'DELETE',
+      url: `http://localhost:3030/api/cart/${clientId}`,
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      body: {
-        clientId,
-        productId,
-        quantity: 2,
-      },
     }).then((response) => {
-      expect(response.status).to.eq(201)
-      cartItemId = response.body.data.id
-
-      cy.api({
-        method: 'PATCH',
-        url: `http://localhost:3030/api/cart/items/${cartItemId}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: {
-          quantity: 5,
-        },
-      }).then((response) => {
-        expect(response.status).to.eq(200)
-      })
+      expect(response.status).to.eq(200)
+      expect(response.body.message).to.eq('Cart cleared successfully')
     })
   })
 })

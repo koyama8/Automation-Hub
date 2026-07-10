@@ -1,10 +1,9 @@
 import { fakerPT_BR as faker } from '@faker-js/faker'
 
-describe('PATCH /api/cart/items/:itemId - Atualizacao de quantidade', () => {
+describe('POST /api/cart/items - Validacoes de item no carrinho', () => {
   let token
   let clientId
   let productId
-  let cartItemId
 
   beforeEach(() => {
     cy.loginApi().then((tokenGerado) => {
@@ -40,50 +39,56 @@ describe('PATCH /api/cart/items/:itemId - Atualizacao de quantidade', () => {
       }).then((response) => {
         expect(response.status).to.eq(201)
         clientId = response.body.data.id
-      })
 
-      cy.api({
-        method: 'POST',
-        url: 'http://localhost:3030/api/products',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: produto,
-      }).then((response) => {
-        expect(response.status).to.eq(201)
-        productId = response.body.data.id
+        cy.api({
+          method: 'POST',
+          url: 'http://localhost:3030/api/products',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: produto,
+        }).then((response) => {
+          expect(response.status).to.eq(201)
+          productId = response.body.data.id
+        })
       })
     })
   })
 
-  it('deve atualizar a quantidade de um item do carrinho', () => {
+  it('nao deve adicionar item quando o produto nao existir', () => {
     cy.api({
       method: 'POST',
       url: 'http://localhost:3030/api/cart/items',
+      failOnStatusCode: false,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: {
+        clientId,
+        productId: 9999,
+        quantity: 5,
+      },
+    }).then((response) => {
+      expect(response.status).to.eq(404)
+      expect(response.body.error).to.eq('Product not found!')
+    })
+  })
+
+  it('nao deve adicionar item com quantidade invalida', () => {
+    cy.api({
+      method: 'POST',
+      url: 'http://localhost:3030/api/cart/items',
+      failOnStatusCode: false,
       headers: {
         Authorization: `Bearer ${token}`,
       },
       body: {
         clientId,
         productId,
-        quantity: 2,
+        quantity: 0,
       },
     }).then((response) => {
-      expect(response.status).to.eq(201)
-      cartItemId = response.body.data.id
-
-      cy.api({
-        method: 'PATCH',
-        url: `http://localhost:3030/api/cart/items/${cartItemId}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: {
-          quantity: 5,
-        },
-      }).then((response) => {
-        expect(response.status).to.eq(200)
-      })
+      expect(response.body.error).to.eq('Quantity must be a positive integer!')
     })
   })
 })
