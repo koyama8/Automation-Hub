@@ -108,7 +108,10 @@ jobs:
 
       - name: Rodar testes de API
         working-directory: apps/api
-        run: npx cypress run --browser electron --config video=false
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx cypress run --record --key "$CYPRESS_RECORD_KEY" --group "API Cypress" --ci-build-id "${{ github.run_id }}-${{ github.run_attempt }}" --browser electron --config video=false
 
       - name: Upload evidencias API
         if: failure()
@@ -207,7 +210,10 @@ jobs:
 
       - name: Rodar testes web
         working-directory: apps/web
-        run: npx cypress run --browser electron --config video=false
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx cypress run --record --key "$CYPRESS_RECORD_KEY" --group "Web Cypress" --ci-build-id "${{ github.run_id }}-${{ github.run_attempt }}" --browser electron --config video=false
 
       - name: Upload evidencias Web
         if: failure()

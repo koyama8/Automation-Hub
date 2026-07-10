@@ -39,6 +39,7 @@ function startStaticServer(port = 3000) {
 }
 
 module.exports = defineConfig({
+  projectId: '2hmvki',
   e2e: {
     setupNodeEvents(on, config) {
       startStaticServer()
