@@ -1,16 +1,19 @@
 # QA Automation Lab
 
-Ambiente local para estudos e pratica de QA Automation, reunindo API REST, interface web, banco PostgreSQL, colecao Bruno e automacoes com Cypress.
+[![QA Automation Lab CI](https://github.com/koyama8/Automation-Hub/actions/workflows/qa-ci.yml/badge.svg)](https://github.com/koyama8/Automation-Hub/actions)
+[![Cypress Cloud](https://img.shields.io/badge/Cypress%20Cloud-runs-04C38E?logo=cypress&logoColor=white)](https://cloud.cypress.io/projects/2hmvki/branches/master/runs)
+[![Node.js](https://img.shields.io/badge/Node.js-Express%20%2B%20Prisma-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 
-## Objetivo
+Repositorio de estudos praticos em QA Automation, reunindo API REST, interface web, banco PostgreSQL, colecao Bruno, testes Cypress e CI/CD com GitHub Actions + Cypress Cloud.
 
-O projeto simula fluxos administrativos e comerciais usados em testes de API e E2E. A ideia e oferecer uma base completa para praticar:
+## Visao Geral
 
-- cadastro, consulta, atualizacao e exclusao de dados;
-- autenticacao com JWT e rotas protegidas;
-- integracao entre clientes, contratos, produtos, pedidos, carrinho, pagamentos, cupons e evidencias;
-- preparo de massa de dados para automacao;
-- validacao de cenarios positivos e negativos via Cypress e Bruno.
+| Pasta | Objetivo | Stack principal | CI / Evidencias |
+| --- | --- | --- | --- |
+| `apps/api/` | API REST para estudos de API Testing e massa de dados | Node.js, Express, Prisma, PostgreSQL | Cypress API + GitHub Actions |
+| `apps/web/` | Interface local para praticar testes E2E | HTML, CSS, JavaScript, Serve | Cypress E2E + Cypress Cloud |
+| `bruno/QA Automation Lab/` | Colecao de requisicoes para estudo de API | Bruno | Cenarios positivos e negativos |
+| `database/` | Seed e apoio de massa local | Prisma, PostgreSQL | Base usada no CI |
 
 ## Stack
 
@@ -21,6 +24,7 @@ O projeto simula fluxos administrativos e comerciais usados em testes de API e E
 | Web | HTML, CSS, JavaScript, Serve |
 | Automacao | Cypress 14, cypress-plugin-api |
 | Apoio de API | Bruno |
+| CI / Evidencias | GitHub Actions, Cypress Cloud |
 
 ## Modulos da API
 
@@ -30,12 +34,12 @@ O projeto simula fluxos administrativos e comerciais usados em testes de API e E
 | Usuarios | `/api/users` | CRUD, ativacao, inativacao e limpeza de massa |
 | Clientes | `/api/clients` | CRUD, status, busca e reset de IDs |
 | Contratos | `/api/contracts` | criar, listar, buscar, atualizar, cancelar, ativar e excluir |
-| Produtos | `/api/products` | CRUD, status, validacoes de preco/estoque/SKU e limpeza total |
+| Produtos | `/api/products` | CRUD, status, validacoes de preco/estoque e limpeza total |
 | Pedidos | `/api/orders` | criar pedido com itens, listar, buscar, atualizar status e cancelar |
 | Carrinho | `/api/cart` | adicionar, remover, atualizar quantidade e limpar itens |
 | Pagamentos | `/api/payments` | Pix, cartao, boleto, confirmacao, recusa e estorno |
-| Cupons | `/api/coupons` | criar, listar, buscar, atualizar, validar, aplicar, expirar e excluir |
-| Evidencias | `/api/evidences` | upload base64, listar, buscar, baixar metadata e excluir |
+| Cupons | `/api/coupons` | criar, validar, aplicar desconto, expirar e controlar uso |
+| Evidencias | `/api/evidences` | upload, listagem, metadata e exclusao de arquivos |
 | Senha | `/api/password` | solicitacao e redefinicao de senha |
 | Sistema | `/api/system` | reset de laboratorio |
 | Health | `/api/health` | status da API e conexao com banco |
@@ -48,19 +52,14 @@ qa-automation-lab/
 |   |-- api/
 |   |   |-- cypress/              # Automacoes de API
 |   |   |-- prisma/               # Schema e migrations
-|   |   |-- src/
-|   |   |   |-- controllers/       # Entrada HTTP
-|   |   |   |-- middlewares/       # Autenticacao e tratamento de erros
-|   |   |   |-- repositories/      # Acesso ao Prisma
-|   |   |   |-- routes/            # Rotas REST
-|   |   |   |-- services/          # Regras de negocio
-|   |   |   `-- utils/             # Validacoes e helpers
+|   |   |-- src/                  # Controllers, rotas, services e repositories
 |   |   `-- index.js              # Inicializacao da API
 |   `-- web/
 |       |-- cypress/              # Automacoes E2E
-|       `-- dist/                 # Interface local
+|       |-- dist/                 # Interface local
+|       `-- src/                  # Scripts da interface
 |-- bruno/
-|   `-- QA Automation Lab/        # Colecao Bruno
+|   `-- QA Automation Lab/        # Requisicoes da API no Bruno
 |-- database/
 |   `-- seed/                     # Massa inicial
 |-- docker-compose.yml            # PostgreSQL e PgAdmin
@@ -95,42 +94,53 @@ npm install
 npm run dev
 ```
 
+## Execucao dos Testes
+
+API:
+
+```powershell
+cd apps/api
+npx cypress run --browser electron --config video=false
+```
+
+Web:
+
+```powershell
+cd apps/web
+npx cypress run --browser electron --config video=false
+```
+
+CI e evidencias:
+
+| Ferramenta | Link |
+| --- | --- |
+| GitHub Actions | [Runs do QA Automation Lab](https://github.com/koyama8/Automation-Hub/actions) |
+| Cypress Cloud | [Runs no Cypress Cloud](https://cloud.cypress.io/projects/2hmvki/branches/master/runs) |
+
 ## URLs Locais
 
-- Web: `http://localhost:3000`
-- Login: `http://localhost:3000/admin/login`
-- API: `http://localhost:3030`
-- Health check: `http://localhost:3030/api/health`
-- PostgreSQL: `localhost:5434`
-- PgAdmin: `http://localhost:15434`
+| Servico | URL |
+| --- | --- |
+| Web | `http://localhost:3000` |
+| API | `http://localhost:3030` |
+| Health | `http://localhost:3030/api/health` |
+| PostgreSQL | `localhost:5434` |
+| PgAdmin | `http://localhost:15434` |
 
 ## Credenciais Locais
 
-O seed cria um administrador padrao para uso em testes:
-
-```text
-email: qa@adminlab.com
-senha: pwd123
-```
-
-Esses valores podem ser sobrescritos no `.env` com `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
+| Acesso | Usuario | Senha |
+| --- | --- | --- |
+| API/Web | `qa@adminlab.com` | `pwd123` |
+| PgAdmin | `dba@pgadmin.com` | `dba` |
 
 ## Bruno
 
-A colecao fica em `bruno/QA Automation Lab`.
-
-Execute primeiro `Auth/01 - Login valido` para salvar o token JWT em `authToken`. As demais requisicoes reutilizam variaveis como `clientId`, `productId`, `orderId`, `couponId` e `evidenceId`.
-
-Pastas novas:
-
-- **Cupons:** 22 requisicoes com cenarios positivos e negativos.
-- **Upload de Evidencias:** 16 requisicoes com upload, metadata, arquivo obrigatorio, tipo invalido, tamanho maximo, vinculo divergente e evidencia inexistente.
+A colecao fica em `bruno/QA Automation Lab`. Abra essa pasta no Bruno Desktop e execute primeiro `Auth/01 - Login valido` para salvar o token usado nas rotas protegidas.
 
 ## Observacoes
 
-- A API usa JWT em rotas administrativas.
-- O banco roda em PostgreSQL via Docker.
-- O Prisma centraliza modelos, migrations e acesso aos dados.
-- Upload de evidencias usa JSON com arquivo em base64 e tamanho maximo decodificado de `1MB`.
-- Tipos aceitos no upload: PNG, JPG, WEBP, PDF, TXT, CSV, JSON, DOC, DOCX, XLS e XLSX.
-- Cupons e Upload de Evidencias ja possuem API, web e Bruno prontos; os testes Cypress desses modulos ficam para criacao manual durante o estudo.
+- IDs podem mudar depois de limpezas ou seeds; use os retornos da API como referencia.
+- Rotas protegidas usam `Authorization: Bearer <token>`.
+- GitHub Actions executa as suites de API e Web a cada push.
+- Cypress Cloud guarda historico, videos/screenshots quando habilitados e evidencias dos runs.
