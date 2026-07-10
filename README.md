@@ -15,35 +15,6 @@ Repositorio de estudos praticos em QA Automation, reunindo API REST, interface w
 | `bruno/QA Automation Lab/` | Colecao de requisicoes para estudo de API | Bruno | Cenarios positivos e negativos |
 | `database/` | Seed e apoio de massa local | Prisma, PostgreSQL | Base usada no CI |
 
-## Stack
-
-| Camada | Tecnologias |
-| --- | --- |
-| API | Node.js, Express, Prisma |
-| Banco | PostgreSQL, PgAdmin, Docker Compose |
-| Web | HTML, CSS, JavaScript, Serve |
-| Automacao | Cypress 14, cypress-plugin-api |
-| Apoio de API | Bruno |
-| CI / Evidencias | GitHub Actions, Cypress Cloud |
-
-## Modulos da API
-
-| Modulo | Base path | Principais recursos |
-| --- | --- | --- |
-| Auth | `/api/auth` | login e sessao atual |
-| Usuarios | `/api/users` | CRUD, ativacao, inativacao e limpeza de massa |
-| Clientes | `/api/clients` | CRUD, status, busca e reset de IDs |
-| Contratos | `/api/contracts` | criar, listar, buscar, atualizar, cancelar, ativar e excluir |
-| Produtos | `/api/products` | CRUD, status, validacoes de preco/estoque e limpeza total |
-| Pedidos | `/api/orders` | criar pedido com itens, listar, buscar, atualizar status e cancelar |
-| Carrinho | `/api/cart` | adicionar, remover, atualizar quantidade e limpar itens |
-| Pagamentos | `/api/payments` | Pix, cartao, boleto, confirmacao, recusa e estorno |
-| Cupons | `/api/coupons` | criar, validar, aplicar desconto, expirar e controlar uso |
-| Evidencias | `/api/evidences` | upload, listagem, metadata e exclusao de arquivos |
-| Senha | `/api/password` | solicitacao e redefinicao de senha |
-| Sistema | `/api/system` | reset de laboratorio |
-| Health | `/api/health` | status da API e conexao com banco |
-
 ## Estrutura
 
 ```text
@@ -65,6 +36,24 @@ qa-automation-lab/
 |-- docker-compose.yml            # PostgreSQL e PgAdmin
 `-- README.md
 ```
+
+## Modulos da API
+
+| Modulo | Base path | Principais recursos |
+| --- | --- | --- |
+| Auth | `/api/auth` | login e sessao atual |
+| Usuarios | `/api/users` | CRUD, ativacao, inativacao e limpeza de massa |
+| Clientes | `/api/clients` | CRUD, status, busca e reset de IDs |
+| Contratos | `/api/contracts` | criar, listar, buscar, atualizar, cancelar, ativar e excluir |
+| Produtos | `/api/products` | CRUD, status, validacoes de preco/estoque e limpeza total |
+| Pedidos | `/api/orders` | criar pedido com itens, listar, buscar, atualizar status e cancelar |
+| Carrinho | `/api/cart` | adicionar, remover, atualizar quantidade e limpar itens |
+| Pagamentos | `/api/payments` | Pix, cartao, boleto, confirmacao, recusa e estorno |
+| Cupons | `/api/coupons` | criar, validar, aplicar desconto, expirar e controlar uso |
+| Evidencias | `/api/evidences` | upload, listagem, metadata e exclusao de arquivos |
+| Senha | `/api/password` | solicitacao e redefinicao de senha |
+| Sistema | `/api/system` | reset de laboratorio |
+| Health | `/api/health` | status da API e conexao com banco |
 
 ## Como Rodar
 
@@ -96,6 +85,8 @@ npm run dev
 
 ## Execucao dos Testes
 
+Para os testes Web, mantenha a API rodando em `http://localhost:3030`.
+
 API:
 
 ```powershell
@@ -110,13 +101,6 @@ cd apps/web
 npx cypress run --browser electron --config video=false
 ```
 
-CI e evidencias:
-
-| Ferramenta | Link |
-| --- | --- |
-| GitHub Actions | [Runs do QA Automation Lab](https://github.com/koyama8/Automation-Hub/actions) |
-| Cypress Cloud | [Runs no Cypress Cloud](https://cloud.cypress.io/projects/2hmvki/branches/master/runs) |
-
 ## URLs Locais
 
 | Servico | URL |
@@ -129,7 +113,7 @@ CI e evidencias:
 
 ## Credenciais Locais
 
-| Acesso | Usuario | Senha |
+| Acesso | &#9993; E-mail | &#128273; Senha |
 | --- | --- | --- |
 | API/Web | `qa@adminlab.com` | `pwd123` |
 | PgAdmin | `dba@pgadmin.com` | `dba` |
