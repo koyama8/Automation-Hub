@@ -125,7 +125,7 @@ describe('Fluxos de pagamento via Pix - /api/payments', () => {
 
       cy.api({
         method: 'PATCH',
-        url: `http://localhost:3030/api/payments/2/confirm`,
+        url: `http://localhost:3030/api/payments/${paymentId}/confirm`,
         failOnStatusCode: false,
         headers: {
           Authorization: `Bearer ${token}`,
