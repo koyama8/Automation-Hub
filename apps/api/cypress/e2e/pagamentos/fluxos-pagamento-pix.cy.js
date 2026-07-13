@@ -1,11 +1,12 @@
 import { fakerPT_BR as faker } from '@faker-js/faker'
 
-describe('Cadastro de pagamento via Pix - POST /api/payments', () => {
+describe('Fluxos de pagamento via Pix - /api/payments', () => {
   let token
   let clientId
   let productId
   let quantity = 2
   let orderId
+  let paymentId
 
   beforeEach(() => {
     const cliente = {
@@ -79,7 +80,7 @@ describe('Cadastro de pagamento via Pix - POST /api/payments', () => {
     })
   })
 
-  it('deve cadastrar um pagamento via Pix com sucesso', () => {
+  it('deve criar e confirmar um pagamento via Pix com sucesso', () => {
     cy.api({
       method: 'POST',
       url: 'http://localhost:3030/api/payments',
@@ -92,6 +93,47 @@ describe('Cadastro de pagamento via Pix - POST /api/payments', () => {
       },
     }).then((response) => {
       expect(response.status).to.eq(201)
+      paymentId = response.body.data.id
+
+      cy.api({
+        method: 'PATCH',
+        url: `http://localhost:3030/api/payments/${paymentId}/confirm`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).then((response) => {
+        expect(response.status).to.eq(200)
+      })
+    })
+  })
+
+  it('deve impedir a confirmação de um Pix expirado', () => {
+    cy.api({
+      method: 'POST',
+      url: 'http://localhost:3030/api/payments',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: {
+        orderId,
+        method: 'pix',
+        expiresAt: '2020-01-01T00:00:00.000Z',
+      },
+    }).then((response) => {
+      expect(response.status).to.eq(201)
+      paymentId = response.body.data.id
+
+      cy.api({
+        method: 'PATCH',
+        url: `http://localhost:3030/api/payments/2/confirm`,
+        failOnStatusCode: false,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).then((response) => {
+        expect(response.status).to.eq(400)
+        expect(response.body.error).to.eq('Pix expired!')
+      })
     })
   })
 })

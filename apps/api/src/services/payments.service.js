@@ -112,11 +112,17 @@ export async function confirmPayment(rawId) {
   const id = parsePositiveId(rawId, 'Invalid payment id!')
   const payment = await getPayment(id)
 
-  if (payment.status !== 'pending') throw new AppError(400, 'Only pending payments can be confirmed!')
-  if (payment.method === 'pix' && payment.expiresAt && payment.expiresAt < new Date()) {
-    await paymentsRepository.updatePayment(id, { status: 'expired' })
+  const isExpiredPix =
+    payment.method === 'pix' &&
+    payment.expiresAt &&
+    payment.expiresAt < new Date() &&
+    ['pending', 'expired'].includes(payment.status)
+
+  if (isExpiredPix) {
+    if (payment.status === 'pending') await paymentsRepository.updatePayment(id, { status: 'expired' })
     throw new AppError(400, 'Pix expired!')
   }
+  if (payment.status !== 'pending') throw new AppError(400, 'Only pending payments can be confirmed!')
 
   return paymentsRepository.approvePayment(id)
 }

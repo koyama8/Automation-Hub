@@ -1,33 +1,22 @@
 ﻿info:
   name: Pix expirado
   type: http
-  seq: 7
+  seq: 8
 
 http:
-  method: POST
-  url: http://localhost:3030/api/payments
-  body:
-    type: json
-    data: |-
-      {
-        "orderId": "{{orderId}}",
-        "method": "pix",
-        "expiresAt": "2020-01-01T00:00:00.000Z"
-      }
+  method: PATCH
+  url: http://localhost:3030/api/payments/1/confirm
   auth:
     type: bearer
     token: '{{authToken}}'
 
 runtime:
   scripts:
-    - type: after-response
-      code: |-
-        const body = res.getBody();
-        if (res.getStatus() === 201 && body?.data?.id) bru.setVar("paymentId", body.data.id);
     - type: tests
       code: |-
-        test("deve criar Pix ja expirado para teste de confirmacao", () => {
-          expect(res.getStatus()).to.equal(201);
+        test("deve informar que o Pix expirou", () => {
+          expect(res.getStatus()).to.equal(400);
+          expect(res.getBody().error).to.equal("Pix expired!");
         });
 
 settings:
@@ -36,4 +25,4 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: Cria Pix vencido. Depois rode Confirmar pagamento para validar Pix expired com 400.
+docs: Confirma o Pix vencido de ID 1 e valida a resposta 400 Pix expired.
