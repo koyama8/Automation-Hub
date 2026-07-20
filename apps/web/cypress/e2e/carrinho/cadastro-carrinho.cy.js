@@ -1,4 +1,19 @@
 describe('Carrinho - Estado inicial do cadastro', () => {
+  beforeEach(() => {
+    cy.request('POST', 'http://localhost:3030/api/auth/login', {
+      email: 'qa@adminlab.com',
+      password: 'pwd123',
+    }).then(({ body }) => {
+      cy.request({
+        method: 'DELETE',
+        url: 'http://localhost:3030/api/system/reset',
+        headers: {
+          Authorization: `Bearer ${body.data.token}`,
+        },
+      })
+    })
+  })
+
   it('deve exibir formulario e tabela do carrinho sem massa cadastrada', () => {
     cy.iniciar()
     cy.submeterLogin('qa@adminlab.com', 'pwd123')

@@ -7,7 +7,9 @@ let userID
 
   const usuario = {
     name: faker.person.fullName(),
-    email: faker.internet.email().toLowerCase(),
+    email: faker.internet
+      .email({ firstName: 'buscar', lastName: String(Date.now()) })
+      .toLowerCase(),
     password: faker.internet.password(),
   }
 
