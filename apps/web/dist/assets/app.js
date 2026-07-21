@@ -4613,7 +4613,11 @@ getElement('[data-cy="evidences-table-body"]').addEventListener('click', async (
   if (button.dataset.evidenceAction === 'metadata') {
     const { response, body } = await request(`/api/evidences/${evidenceId}/download`)
     if (!response.ok) return reportCommerceError('evidences', response, body, 'Nao foi possivel baixar metadata.', '[data-cy="evidence-result"]')
-    getElement('[data-cy="evidence-metadata"]').value = JSON.stringify(body.data, null, 2)
+    const metadata = {
+      ...evidence,
+      ...body.data,
+    }
+    getElement('[data-cy="evidence-metadata"]').value = JSON.stringify(metadata, null, 2)
     getElement('[data-cy="evidence-result"]').textContent = `Metadata carregada: ${body.data.fileName}`
     return
   }
