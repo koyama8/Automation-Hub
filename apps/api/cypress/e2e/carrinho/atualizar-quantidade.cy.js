@@ -26,7 +26,7 @@ describe('PATCH /api/cart/items/:itemId - Atualizacao de quantidade', () => {
         sku: `BRU-${faker.string.alphanumeric(6).toUpperCase()}-${timestamp}`,
         description: faker.commerce.productDescription(),
         priceCents: faker.number.int({ min: 1000, max: 99900 }),
-        stock: faker.number.int({ min: 1, max: 100 }),
+        stock: faker.number.int({ min: 5, max: 100 }),
         status: 'active',
       }
 
@@ -70,7 +70,7 @@ describe('PATCH /api/cart/items/:itemId - Atualizacao de quantidade', () => {
       },
     }).then((response) => {
       expect(response.status).to.eq(201)
-      cartItemId = response.body.data.id
+      cartItemId = response.body.data.items[0].id
 
       cy.api({
         method: 'PATCH',
