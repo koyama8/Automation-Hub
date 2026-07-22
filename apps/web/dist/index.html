@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="/favicon.png?v=45" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=45" />
     <link rel="apple-touch-icon" href="/favicon.png?v=45" />
-    <link rel="stylesheet" href="/assets/styles.css?v=59" />
+    <link rel="stylesheet" href="/assets/styles.css?v=60" />
   </head>
   <body>
     <div class="app-shell">
@@ -287,6 +287,15 @@
               <span class="feature-copy">
                 <strong>Pagamentos</strong>
                 <small>Pix, cartao e boleto</small>
+              </span>
+            </button>
+            <button class="feature-card highlight" data-cy="card-reports" data-target="reportsView" data-tags="relatorios clientes pedidos pagamentos filtros paginacao csv" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 19V9" /><path d="M10 19V5" /><path d="M16 19v-7" /><path d="M22 19H2" /><path d="m4 6 6-3 6 5 5-4" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Relatórios</strong>
+                <small>Clientes, pedidos, pagamentos e indicadores</small>
               </span>
             </button>
             <button class="feature-card" data-cy="card-coupons" data-target="couponsView" data-tags="api discount validation order business-rules" type="button">
@@ -1426,6 +1435,126 @@
                 <tbody data-cy="payments-table-body"></tbody>
               </table>
             </div>
+          </section>
+        </main>
+      </section>
+
+      <section id="reportsView" class="page hidden reports-page" data-view="reports">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">RPT</span>
+            <div>
+              <h1>Relatórios</h1>
+              <p>Consulte clientes, pedidos e pagamentos com filtros, paginação e exportação CSV.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container reports-container">
+          <section class="clients-feedback" data-cy="reports-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="reports-feedback-title">Carregando relatórios</strong>
+                <p data-cy="reports-feedback-message">Consultando indicadores e registros.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="reports-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="report-summary-grid" data-cy="report-summary">
+            <article>
+              <span>Clientes</span>
+              <strong data-cy="report-summary-clients">0</strong>
+              <small data-cy="report-summary-active-clients">0 ativos</small>
+            </article>
+            <article>
+              <span>Pedidos</span>
+              <strong data-cy="report-summary-orders">0</strong>
+              <small data-cy="report-summary-paid-orders">0 pagos</small>
+            </article>
+            <article>
+              <span>Pagamentos</span>
+              <strong data-cy="report-summary-payments">0</strong>
+              <small data-cy="report-summary-approved-payments">0 aprovados</small>
+            </article>
+            <article>
+              <span>Receita aprovada</span>
+              <strong data-cy="report-summary-revenue">R$ 0,00</strong>
+              <small>valor consolidado</small>
+            </article>
+          </section>
+
+          <section class="tool-surface report-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Consulta consolidada</span>
+                <h2>Filtros do relatório</h2>
+              </div>
+              <span class="status-badge api-status" data-cy="reports-api-status" data-state="checking">Verificando</span>
+            </div>
+
+            <form class="report-filter-grid" data-cy="report-filters">
+              <label>
+                Tipo de relatório
+                <select data-cy="report-type" name="reportType">
+                  <option value="clients">Clientes</option>
+                  <option value="orders">Pedidos</option>
+                  <option value="payments">Pagamentos</option>
+                </select>
+              </label>
+              <label>
+                Data inicial
+                <input data-cy="report-start-date" name="startDate" type="date" />
+              </label>
+              <label>
+                Data final
+                <input data-cy="report-end-date" name="endDate" type="date" />
+              </label>
+              <label>
+                Status
+                <select data-cy="report-status" name="status"></select>
+              </label>
+              <label>
+                Registros por página
+                <select data-cy="report-limit" name="limit">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+              </label>
+              <div class="report-filter-actions">
+                <button class="primary-btn" data-cy="report-search" type="submit">Filtrar</button>
+                <button class="secondary-btn" data-cy="report-clear" type="button">Limpar filtros</button>
+                <button class="secondary-btn" data-cy="report-export" type="button">Exportar CSV</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="tool-surface report-results-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Resultados</span>
+                <h2 data-cy="report-title">Relatório de clientes</h2>
+              </div>
+              <strong class="clients-count" data-cy="report-total">0</strong>
+            </div>
+            <div class="management-table-wrap report-table-wrap">
+              <table class="data-table management-table report-table" data-cy="report-table">
+                <thead data-cy="report-table-head"></thead>
+                <tbody data-cy="report-table-body"></tbody>
+              </table>
+            </div>
+            <div class="empty-state hidden" data-cy="report-empty">Nenhum registro encontrado para os filtros informados.</div>
+            <footer class="management-table-footer report-table-footer">
+              <span data-cy="report-page-info">Página 1 de 1</span>
+              <nav class="table-pagination" data-cy="report-pagination" aria-label="Paginação do relatório">
+                <button class="secondary-btn compact-btn" data-cy="report-previous" type="button">Anterior</button>
+                <button class="secondary-btn compact-btn" data-cy="report-next" type="button">Próxima</button>
+              </nav>
+            </footer>
           </section>
         </main>
       </section>
@@ -2598,6 +2727,6 @@
       <div id="toast" class="toast hidden" data-cy="toast" role="status" aria-live="polite"></div>
     </div>
 
-    <script src="/assets/app.js?v=61"></script>
+    <script src="/assets/app.js?v=62"></script>
   </body>
 </html>

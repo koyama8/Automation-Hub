@@ -80,6 +80,7 @@ const VIEW_ROUTES = {
   cartView: '/admin/carrinho',
   ordersView: '/admin/pedidos',
   paymentsView: '/admin/pagamentos',
+  reportsView: '/admin/relatorios',
   couponsView: '/admin/cupons',
   evidencesView: '/admin/evidencias-api',
   forgotView: '/admin/recuperar-senha',
@@ -154,6 +155,8 @@ let orderDraftItems = []
 let ordersCache = []
 let orderSearchTimer = null
 let paymentsCache = []
+let reportCurrentPage = 1
+let reportTotalPages = 1
 let couponsCache = []
 let editingCouponId = null
 let couponSearchTimer = null
@@ -648,6 +651,10 @@ function showView(viewId, options = {}) {
 
   if (viewId === 'paymentsView') {
     setupPaymentsView()
+  }
+
+  if (viewId === 'reportsView') {
+    setupReportsView()
   }
 
   if (viewId === 'couponsView') {
@@ -4991,6 +4998,217 @@ getElement('[data-cy="modal-close"]').addEventListener('click', async (event) =>
   }
 
   closeModal()
+})
+
+const REPORT_TYPES = {
+  clients: {
+    title: 'Relatório de clientes',
+    statuses: [
+      ['', 'Todos os status'],
+      ['active', 'Ativos'],
+      ['inactive', 'Inativos'],
+    ],
+    columns: ['ID', 'Nome', 'E-mail', 'Empresa', 'Status', 'Cadastro'],
+    row: (item) => [item.id, item.name, item.email, item.company || '-', formatCommerceStatus(item.status), formatDateForDisplay(item.createdAt)],
+  },
+  orders: {
+    title: 'Relatório de pedidos',
+    statuses: [
+      ['', 'Todos os status'],
+      ['pending', 'Pendentes'],
+      ['processing', 'Processando'],
+      ['paid', 'Pagos'],
+      ['canceled', 'Cancelados'],
+    ],
+    columns: ['ID', 'Cliente', 'Itens', 'Pagamentos', 'Total', 'Status', 'Cadastro'],
+    row: (item) => [item.id, item.client?.name || '-', item._count?.items || 0, item._count?.payments || 0, formatCents(item.totalCents), formatCommerceStatus(item.status), formatDateForDisplay(item.createdAt)],
+  },
+  payments: {
+    title: 'Relatório de pagamentos',
+    statuses: [
+      ['', 'Todos os status'],
+      ['pending', 'Pendentes'],
+      ['approved', 'Aprovados'],
+      ['declined', 'Recusados'],
+      ['refunded', 'Estornados'],
+      ['expired', 'Expirados'],
+    ],
+    columns: ['ID', 'Pedido', 'Cliente', 'Método', 'Valor', 'Status', 'Cadastro'],
+    row: (item) => [item.id, `#${item.orderId}`, item.order?.client?.name || '-', item.method, formatCents(item.amountCents), formatCommerceStatus(item.status), formatDateForDisplay(item.createdAt)],
+  },
+}
+
+function setReportFeedback(state, title, message, options = {}) {
+  const feedback = getElement('[data-cy="reports-feedback"]')
+  feedback.dataset.state = state
+  getElement('[data-cy="reports-feedback-title"]').textContent = title
+  getElement('[data-cy="reports-feedback-message"]').textContent = message
+  getElement('[data-cy="reports-retry"]').classList.toggle('hidden', !options.retry)
+}
+
+function setReportsApiStatus(state, label) {
+  const badge = getElement('[data-cy="reports-api-status"]')
+  badge.dataset.state = state
+  badge.textContent = label
+}
+
+function updateReportStatusOptions() {
+  const type = getElement('[data-cy="report-type"]').value
+  const status = getElement('[data-cy="report-status"]')
+  status.innerHTML = REPORT_TYPES[type].statuses.map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join('')
+  getElement('[data-cy="report-title"]').textContent = REPORT_TYPES[type].title
+}
+
+function getReportQuery(includePagination = true) {
+  const params = new URLSearchParams()
+  const startDate = getElement('[data-cy="report-start-date"]').value
+  const endDate = getElement('[data-cy="report-end-date"]').value
+  const status = getElement('[data-cy="report-status"]').value
+  if (startDate) params.set('startDate', startDate)
+  if (endDate) params.set('endDate', endDate)
+  if (status) params.set('status', status)
+  if (includePagination) {
+    params.set('page', String(reportCurrentPage))
+    params.set('limit', getElement('[data-cy="report-limit"]').value)
+  }
+  return params.toString()
+}
+
+function renderReportRows(type, items) {
+  const config = REPORT_TYPES[type]
+  const head = getElement('[data-cy="report-table-head"]')
+  const body = getElement('[data-cy="report-table-body"]')
+  const empty = getElement('[data-cy="report-empty"]')
+  const table = getElement('[data-cy="report-table"]')
+
+  head.innerHTML = `<tr>${config.columns.map((column) => `<th>${escapeHtml(column)}</th>`).join('')}</tr>`
+  body.innerHTML = items.map((item) => `<tr>${config.row(item).map((value) => `<td>${escapeHtml(value)}</td>`).join('')}</tr>`).join('')
+  table.classList.toggle('hidden', items.length === 0)
+  empty.classList.toggle('hidden', items.length > 0)
+}
+
+function renderReportPagination(pagination) {
+  reportCurrentPage = pagination.page
+  reportTotalPages = Math.max(1, pagination.totalPages)
+  getElement('[data-cy="report-total"]').textContent = String(pagination.total)
+  getElement('[data-cy="report-page-info"]').textContent = `Página ${reportCurrentPage} de ${reportTotalPages}`
+  getElement('[data-cy="report-previous"]').disabled = reportCurrentPage <= 1
+  getElement('[data-cy="report-next"]').disabled = reportCurrentPage >= reportTotalPages
+}
+
+async function loadReportSummary() {
+  const { response, body } = await request('/api/reports/summary')
+  if (!response.ok) throw new Error(getCommerceError(response, body, 'Não foi possível carregar os indicadores.'))
+  const summary = body.data
+  getElement('[data-cy="report-summary-clients"]').textContent = String(summary.clients)
+  getElement('[data-cy="report-summary-active-clients"]').textContent = `${summary.activeClients} ativos`
+  getElement('[data-cy="report-summary-orders"]').textContent = String(summary.orders)
+  getElement('[data-cy="report-summary-paid-orders"]').textContent = `${summary.paidOrders} pagos`
+  getElement('[data-cy="report-summary-payments"]').textContent = String(summary.payments)
+  getElement('[data-cy="report-summary-approved-payments"]').textContent = `${summary.approvedPayments} aprovados`
+  getElement('[data-cy="report-summary-revenue"]').textContent = formatCents(summary.approvedPaymentTotalCents)
+}
+
+async function loadReport(options = {}) {
+  const type = getElement('[data-cy="report-type"]').value
+  setReportFeedback('loading', 'Carregando relatório', 'Aplicando filtros e consultando a API.')
+  setReportsApiStatus('checking', 'Consultando')
+
+  try {
+    const query = getReportQuery()
+    const { response, body } = await request(`/api/reports/${type}?${query}`)
+    if (!response.ok) throw new Error(getCommerceError(response, body, 'Não foi possível gerar o relatório.'))
+    renderReportRows(type, body.data)
+    renderReportPagination(body.pagination)
+    if (!options.skipSummary) await loadReportSummary()
+    setReportsApiStatus('online', 'API online')
+    setReportFeedback('success', 'Relatório atualizado', `${body.pagination.total} registro(s) encontrado(s).`)
+  } catch (error) {
+    setReportsApiStatus('offline', 'Falha')
+    setReportFeedback('error', 'Falha ao gerar relatório', error.message, { retry: true })
+    showToast(error.message, 'error')
+  }
+}
+
+async function exportReportCsv() {
+  const type = getElement('[data-cy="report-type"]').value
+  const token = localStorage.getItem('token') || ''
+  const authorization = token.split('.').length === 3 ? `Bearer ${token}` : ''
+  const button = getElement('[data-cy="report-export"]')
+  button.disabled = true
+  button.textContent = 'Exportando...'
+
+  try {
+    const response = await fetch(`${API_URL}/api/reports/${type}/export?${getReportQuery(false)}`, {
+      headers: authorization ? { Authorization: authorization } : {},
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      throw new Error(getCommerceError(response, body, 'Não foi possível exportar o relatório.'))
+    }
+
+    const blob = await response.blob()
+    const disposition = response.headers.get('content-disposition') || ''
+    const fileName = disposition.match(/filename="?([^";]+)"?/i)?.[1] || `report-${type}.csv`
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(link.href)
+    showToast('Relatório CSV exportado com sucesso')
+  } catch (error) {
+    setReportFeedback('error', 'Falha na exportação', error.message)
+    showToast(error.message, 'error')
+  } finally {
+    button.disabled = false
+    button.textContent = 'Exportar CSV'
+  }
+}
+
+function setupReportsView() {
+  updateReportStatusOptions()
+  loadReport()
+}
+
+getElement('[data-cy="report-filters"]').addEventListener('submit', (event) => {
+  event.preventDefault()
+  reportCurrentPage = 1
+  loadReport()
+})
+
+getElement('[data-cy="report-type"]').addEventListener('change', () => {
+  reportCurrentPage = 1
+  updateReportStatusOptions()
+  loadReport()
+})
+
+getElement('[data-cy="report-limit"]').addEventListener('change', () => {
+  reportCurrentPage = 1
+  loadReport({ skipSummary: true })
+})
+
+getElement('[data-cy="report-clear"]').addEventListener('click', () => {
+  getElement('[data-cy="report-start-date"]').value = ''
+  getElement('[data-cy="report-end-date"]').value = ''
+  getElement('[data-cy="report-status"]').value = ''
+  getElement('[data-cy="report-limit"]').value = '10'
+  reportCurrentPage = 1
+  loadReport()
+})
+
+getElement('[data-cy="report-export"]').addEventListener('click', exportReportCsv)
+getElement('[data-cy="reports-retry"]').addEventListener('click', () => loadReport())
+getElement('[data-cy="report-previous"]').addEventListener('click', () => {
+  if (reportCurrentPage <= 1) return
+  reportCurrentPage -= 1
+  loadReport({ skipSummary: true })
+})
+getElement('[data-cy="report-next"]').addEventListener('click', () => {
+  if (reportCurrentPage >= reportTotalPages) return
+  reportCurrentPage += 1
+  loadReport({ skipSummary: true })
 })
 
 setupLoginAssistant()

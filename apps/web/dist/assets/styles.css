@@ -591,6 +591,93 @@ textarea:focus {
   color: var(--muted);
 }
 
+.reports-page {
+  background:
+    radial-gradient(circle at 90% 18%, rgba(242, 193, 78, 0.09), transparent 24%),
+    linear-gradient(180deg, #080d12 0%, #071113 100%);
+}
+
+.reports-container {
+  width: min(1240px, calc(100% - 32px));
+}
+
+.report-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.report-summary-grid article {
+  display: grid;
+  gap: 6px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(242, 193, 78, 0.05), var(--panel));
+}
+
+.report-summary-grid span,
+.report-summary-grid small {
+  color: var(--muted);
+}
+
+.report-summary-grid strong {
+  color: var(--gold);
+  font-size: 28px;
+}
+
+.report-panel,
+.report-results-panel {
+  margin-bottom: 22px;
+  border-color: rgba(45, 212, 191, 0.22);
+}
+
+.report-filter-grid {
+  display: grid;
+  grid-template-columns: 1.25fr repeat(4, minmax(140px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.report-filter-grid label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.report-filter-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.report-filter-actions button {
+  min-width: 150px;
+}
+
+.report-table-wrap {
+  min-height: 180px;
+}
+
+.report-table {
+  min-width: 920px;
+}
+
+.report-table-footer .table-pagination {
+  justify-content: flex-end;
+  width: auto;
+}
+
+.report-table-footer button:disabled,
+.report-filter-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .section-heading {
   display: flex;
   align-items: flex-end;
@@ -3420,5 +3507,30 @@ textarea:focus {
   .hobby-actions .ghost-btn,
   .hobby-actions .primary-btn {
     flex: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .report-summary-grid,
+  .report-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .report-summary-grid,
+  .report-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .report-filter-actions,
+  .report-table-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-filter-actions button,
+  .report-table-footer .table-pagination {
+    width: 100%;
   }
 }
