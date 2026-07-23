@@ -1,6 +1,4 @@
-import { fakerPT_BR as faker } from '@faker-js/faker'
-
-describe('GET /api/reports/clients - Relatório de clientes', () => {
+describe('GET /api/reports/clients - Paginação da primeira página', () => {
   let token
 
   beforeEach(() => {
@@ -9,10 +7,10 @@ describe('GET /api/reports/clients - Relatório de clientes', () => {
     })
   })
 
-  it('deve consultar o relatório de clientes', () => {
+  it('deve consultar a primeira página do relatório', () => {
     cy.api({
       method: 'GET',
-      url: 'http://localhost:3030/api/reports/clients?page=1&limit=10',
+      url: 'http://localhost:3030/api/reports/clients?page=1&limit=5&sortBy=id&sortOrder=asc',
       headers: {
         Authorization: `Bearer ${token}`,
       },

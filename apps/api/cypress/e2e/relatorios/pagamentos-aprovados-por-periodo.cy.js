@@ -1,6 +1,4 @@
-import { fakerPT_BR as faker } from '@faker-js/faker'
-
-describe('GET /api/reports/clients - Relatório de clientes', () => {
+describe('GET /api/reports/payments - Pagamentos aprovados por período', () => {
   let token
 
   beforeEach(() => {
@@ -9,10 +7,10 @@ describe('GET /api/reports/clients - Relatório de clientes', () => {
     })
   })
 
-  it('deve consultar o relatório de clientes', () => {
+  it('deve consultar os pagamentos aprovados no período informado', () => {
     cy.api({
       method: 'GET',
-      url: 'http://localhost:3030/api/reports/clients?page=1&limit=10',
+      url: 'http://localhost:3030/api/reports/payments?status=approved&startDate=2026-01-01&endDate=2026-12-31&page=1&limit=10',
       headers: {
         Authorization: `Bearer ${token}`,
       },
