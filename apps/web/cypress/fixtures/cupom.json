@@ -1,0 +1,9 @@
+{
+  "cdcupom": {
+    "codigoCupom": "QA-CUPOM-FIXO-001",
+    "tipoCupom": "Valor fixo",
+    "valorCupom": 500,
+    "descontoMaximo": 3000,
+    "descricaoCupom": "Cupom para regressao de pedidos com desconto fixo"
+  }
+}
