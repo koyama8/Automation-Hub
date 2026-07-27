@@ -23,6 +23,7 @@ runtime:
 
         if (res.getStatus() === 200 && body?.data?.token) {
           bru.setVar("authToken", body.data.token);
+          bru.setVar("refreshToken", body.data.refreshToken);
         }
     - type: tests
       code: |-

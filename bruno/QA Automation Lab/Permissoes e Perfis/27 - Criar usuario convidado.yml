@@ -1,0 +1,46 @@
+info:
+  name: Criar usuario convidado
+  type: http
+  seq: 27
+
+http:
+  method: POST
+  url: http://localhost:3030/api/permissions/users
+  headers:
+    - name: Idempotency-Key
+      value: "invitation-{{$timestamp}}"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Viewer Convidado",
+        "email": "{{invitationUserEmail}}",
+        "profile": "viewer",
+        "status": "invited",
+        "reason": "Convidar usuario para ativacao segura de credencial"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        if (!bru.getVar("invitationUserEmail")) {
+          bru.setVar("invitationUserEmail", `viewer.convidado.${Date.now()}@adminlab.com`);
+        }
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201) {
+          bru.setVar("invitationUserId", String(body.data.id));
+          bru.setVar("invitationUserVersion", String(body.data.version));
+          bru.setVar("invitationToken", body.invitation.token);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cria usuario em status invited, sem senha utilizavel, e devolve token temporario de ativacao.

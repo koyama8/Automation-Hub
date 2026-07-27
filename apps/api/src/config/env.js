@@ -7,5 +7,7 @@ export const env = {
   adminPassword: process.env.ADMIN_PASSWORD || 'pwd123',
   jwtSecret: process.env.JWT_SECRET || 'qa-automation-lab-local-secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '2h',
+  refreshTokenDays: Number(process.env.REFRESH_TOKEN_DAYS) || 7,
+  invitationTokenHours: Number(process.env.INVITATION_TOKEN_HOURS) || 24,
   resetTokenMinutes: Number(process.env.RESET_TOKEN_MINUTES) || 15,
 }

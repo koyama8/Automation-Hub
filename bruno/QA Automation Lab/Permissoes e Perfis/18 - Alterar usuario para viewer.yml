@@ -1,0 +1,35 @@
+info:
+  name: Alterar usuario para viewer
+  type: http
+  seq: 18
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/permissions/users/{{managedUserId}}/profile
+  headers:
+    - name: If-Match
+      value: "{{managedUserVersion}}"
+  body:
+    type: json
+    data: |-
+      {
+        "profile": "viewer",
+        "version": {{managedUserVersion}},
+        "reason": "Validar restricoes de escrita do perfil viewer"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 200) bru.setVar("managedUserVersion", String(body.data.version));
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Troca para viewer e revoga automaticamente o token QA salvo anteriormente.

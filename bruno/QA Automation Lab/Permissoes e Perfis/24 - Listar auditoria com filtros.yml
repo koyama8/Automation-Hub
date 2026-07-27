@@ -1,0 +1,26 @@
+info:
+  name: Listar auditoria com filtros
+  type: http
+  seq: 24
+
+http:
+  method: GET
+  url: http://localhost:3030/api/permissions/audit?page=1&limit=20&targetUserId={{managedUserId}}&sortOrder=desc
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 200 && body.data?.length) {
+          bru.setVar("auditEventId", String(body.data[0].id));
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Consulta trilha imutavel por usuario-alvo, com paginacao e ordenacao.

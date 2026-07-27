@@ -6,6 +6,9 @@ export const publicUserSelect = {
   email: true,
   role: true,
   active: true,
+  status: true,
+  version: true,
+  deletedAt: true,
   createdAt: true,
   updatedAt: true,
 }
@@ -41,6 +44,46 @@ export function findUserById(id) {
 
 export function findUserByEmail(email) {
   return prisma.user.findUnique({ where: { email } })
+}
+
+export function findUserForAuthenticationById(id) {
+  return prisma.user.findUnique({ where: { id } })
+}
+
+export function findAuthSessionById(id) {
+  return prisma.authSession.findUnique({ where: { id } })
+}
+
+export function findAuthSessionByRefreshTokenHash(refreshTokenHash) {
+  return prisma.authSession.findUnique({
+    where: { refreshTokenHash },
+    include: { user: true },
+  })
+}
+
+export function createAuthSession(data) {
+  return prisma.authSession.create({ data })
+}
+
+export function rotateAuthSession(id, data) {
+  return prisma.authSession.update({
+    where: { id },
+    data,
+  })
+}
+
+export function revokeAuthSession(id) {
+  return prisma.authSession.updateMany({
+    where: { id, revokedAt: null },
+    data: { revokedAt: new Date() },
+  })
+}
+
+export function revokeUserSessions(userId) {
+  return prisma.authSession.updateMany({
+    where: { userId, revokedAt: null },
+    data: { revokedAt: new Date() },
+  })
 }
 
 export function updateUser(id, data) {

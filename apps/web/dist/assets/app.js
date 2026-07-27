@@ -32,6 +32,7 @@ const ADMIN_EMAILS = ['qa@adminlab.com']
 const LEGACY_ADMIN_EMAILS = ['alab@hotmail.com', 'qa@cypressqalab.com']
 const ADMIN_PASSWORD = 'pwd123'
 const STORE_USERS = 'qa_automation_lab_users'
+const STORE_SESSION_USER = 'qa_automation_lab_session_user'
 const STORE_FORMS = 'qa_automation_lab_forms'
 const STORE_CHARACTERS = 'qa_automation_lab_characters'
 const STORE_CHARACTERS_SEEDED = 'qa_automation_lab_characters_seeded_v3'
@@ -74,6 +75,7 @@ const VIEW_ROUTES = {
   dashboardView: '/admin/dashboard',
   registerView: '/admin/cadastro',
   usersView: '/admin/usuarios',
+  permissionsView: '/admin/permissoes',
   clientsView: '/admin/clientes',
   contractsView: '/admin/contratos',
   productsView: '/admin/produtos',
@@ -165,6 +167,20 @@ let evidenceSearchTimer = null
 let currentSessionMode = 'local'
 let apiAvailability = 'unknown'
 let sessionRedirectInProgress = false
+let currentSessionUser = null
+let permissionProfiles = []
+let permissionUsers = []
+let permissionCurrentPage = 1
+let permissionTotalPages = 1
+let permissionSearchTimer = null
+
+try {
+  currentSessionUser = JSON.parse(localStorage.getItem(STORE_SESSION_USER) || 'null')
+  const storedToken = localStorage.getItem('token') || ''
+  if (storedToken.split('.').length === 3) currentSessionMode = 'api'
+} catch (error) {
+  localStorage.removeItem(STORE_SESSION_USER)
+}
 let tableRows = [
   { id: 1, name: 'Login com sucesso', status: 'Automatizado' },
   { id: 2, name: 'Formulário obrigatório', status: 'Planejado' },
@@ -546,7 +562,8 @@ function openRecoveryTokenModal(email, token = generateRecoveryToken()) {
 }
 
 function renderFeaturePagination() {
-  const cards = Array.from(document.querySelectorAll('.quick-grid .feature-card'))
+  const allCards = Array.from(document.querySelectorAll('.quick-grid .feature-card'))
+  const cards = allCards.filter((card) => card.dataset.accessHidden !== 'true')
   const pagination = getElement('[data-cy="feature-pagination"]')
   if (!cards.length || !pagination) return
 
@@ -554,6 +571,10 @@ function renderFeaturePagination() {
   currentFeaturePage = Math.min(Math.max(currentFeaturePage, 1), totalPages)
   const start = (currentFeaturePage - 1) * FEATURE_PAGE_SIZE
   const end = start + FEATURE_PAGE_SIZE
+
+  allCards.forEach((card) => {
+    if (card.dataset.accessHidden === 'true') card.classList.add('hidden')
+  })
 
   cards.forEach((card, index) => {
     card.classList.toggle('hidden', index < start || index >= end)
@@ -598,6 +619,25 @@ function updateRoute(viewId, mode = 'push') {
   history[method]({ viewId }, '', path)
 }
 
+function getCurrentProfile() {
+  return String(currentSessionUser?.profile || currentSessionUser?.role || '').toLowerCase()
+}
+
+function hasAdministrativeAccess() {
+  if (getCurrentProfile() === 'admin') return true
+  if (currentSessionMode !== 'local') return false
+  return ADMIN_EMAILS.includes(String(currentSessionUser?.email || '').toLowerCase())
+}
+
+function updateRoleBasedNavigation() {
+  const permissionsCard = getElement('[data-cy="card-permissions"]')
+  if (!permissionsCard) return
+
+  const shouldHide = Boolean(currentSessionUser) && !hasAdministrativeAccess()
+  permissionsCard.dataset.accessHidden = String(shouldHide)
+  permissionsCard.classList.toggle('hidden', shouldHide)
+}
+
 function showView(viewId, options = {}) {
   const nextView = getElement(`#${viewId}`)
   if (!nextView) return
@@ -619,6 +659,7 @@ function showView(viewId, options = {}) {
   window.scrollTo({ top: 0, behavior: 'auto' })
 
   if (viewId === 'dashboardView') {
+    updateRoleBasedNavigation()
     getElement('[data-cy="access-date"]').textContent = currentDate
     updateDashboardMetrics()
     refreshApiAvailability()
@@ -627,6 +668,10 @@ function showView(viewId, options = {}) {
 
   if (viewId === 'usersView') {
     loadUsers()
+  }
+
+  if (viewId === 'permissionsView') {
+    setupPermissionsView()
   }
 
   if (viewId === 'clientsView') {
@@ -1143,15 +1188,16 @@ function deleteLocalUser(userId) {
 async function request(path, options = {}) {
   const sessionToken = localStorage.getItem('token') || ''
   const authorization = sessionToken.split('.').length === 3 ? `Bearer ${sessionToken}` : ''
+  const { headers: optionHeaders = {}, ...requestOptions } = options
 
   try {
     const response = await fetch(`${API_URL}${path}`, {
+      ...requestOptions,
       headers: {
         'Content-Type': 'application/json',
         ...(authorization ? { Authorization: authorization } : {}),
-        ...(options.headers || {}),
+        ...optionHeaders,
       },
-      ...options,
     })
 
     const body = await response.json().catch(() => ({}))
@@ -1188,6 +1234,8 @@ function endApiSession(message, sessionLabel) {
   currentSessionMode = 'local'
   apiAvailability = 'unknown'
   localStorage.removeItem('token')
+  localStorage.removeItem(STORE_SESSION_USER)
+  currentSessionUser = null
   const sessionMode = getElement('[data-cy="session-mode"]')
   if (sessionMode) sessionMode.textContent = sessionLabel
   showToast(message, 'error')
@@ -1852,10 +1900,20 @@ function finishCheckout() {
 function completeLogin(user, mode, token = '') {
   currentSessionMode = mode
   apiAvailability = mode === 'api' ? 'online' : 'unknown'
+  currentSessionUser = {
+    id: user.id || null,
+    name: user.name || 'QA Automation Lab',
+    email: user.email || ADMIN_EMAILS[0],
+    profile: user.profile || user.role || (ADMIN_EMAILS.includes(String(user.email || '').toLowerCase()) ? 'admin' : 'viewer'),
+    status: user.status || (user.active === false ? 'blocked' : 'active'),
+    permissions: Array.isArray(user.permissions) ? user.permissions : [],
+  }
   localStorage.setItem('token', mode === 'api' ? token : 'local-session')
-  getElement('[data-cy="user-name"]').textContent = user.name || 'QA Automation Lab'
-  getElement('[data-cy="user-email"]').textContent = user.email || ADMIN_EMAILS[0]
+  localStorage.setItem(STORE_SESSION_USER, JSON.stringify(currentSessionUser))
+  getElement('[data-cy="user-name"]').textContent = currentSessionUser.name
+  getElement('[data-cy="user-email"]').textContent = currentSessionUser.email
   getElement('[data-cy="session-mode"]').textContent = mode === 'api' ? 'API conectada' : 'Login local'
+  updateRoleBasedNavigation()
   showView('dashboardView')
 }
 
@@ -1885,6 +1943,8 @@ window.addEventListener('popstate', () => {
 
 getElement('[data-cy="logout"]').addEventListener('click', () => {
   localStorage.removeItem('token')
+  localStorage.removeItem(STORE_SESSION_USER)
+  currentSessionUser = null
   showView('loginView')
 })
 
@@ -1914,7 +1974,7 @@ getElement('#loginForm').addEventListener('submit', async (event) => {
     if (response.ok) {
       const authData = body.data || {}
       const apiUser = authData.user || authData
-      completeLogin({ name: apiUser.name, email: apiUser.email || email }, 'api', authData.token)
+      completeLogin(apiUser, 'api', authData.token)
       showToast('Login realizado com sucesso pela API')
       return
     }
@@ -4998,6 +5058,456 @@ getElement('[data-cy="modal-close"]').addEventListener('click', async (event) =>
   }
 
   closeModal()
+})
+
+const ACCESS_PROFILE_LABELS = {
+  admin: 'Administrador',
+  qa: 'QA',
+  viewer: 'Viewer',
+}
+
+const ACCESS_STATUS_LABELS = {
+  invited: 'Convidado',
+  active: 'Ativo',
+  blocked: 'Bloqueado',
+  deleted: 'Excluído',
+}
+
+const ACCESS_AUDIT_LABELS = {
+  USER_CREATED: 'Usuário criado',
+  PROFILE_CHANGED: 'Perfil alterado',
+  USER_BLOCKED: 'Usuário bloqueado',
+  USER_UNBLOCKED: 'Usuário desbloqueado',
+  USER_DELETED: 'Usuário excluído',
+  SESSIONS_REVOKED: 'Sessões revogadas',
+  PERMISSION_DENIED: 'Permissão negada',
+  PROFILE_PERMISSIONS_CHANGED: 'Permissões do perfil alteradas',
+}
+
+function setPermissionsFeedback(state, title, message, options = {}) {
+  const feedback = getElement('[data-cy="permissions-feedback"]')
+  feedback.dataset.state = state
+  getElement('[data-cy="permissions-feedback-title"]').textContent = title
+  getElement('[data-cy="permissions-feedback-message"]').textContent = message
+  getElement('[data-cy="permissions-retry"]').classList.toggle('hidden', !options.retry)
+}
+
+function setPermissionsApiStatus(state, label) {
+  const badge = getElement('[data-cy="permissions-api-status"]')
+  badge.dataset.state = state
+  badge.textContent = label
+}
+
+function getAccessProfile(user) {
+  return String(user.profile || user.role || 'viewer').toLowerCase()
+}
+
+function getAccessStatus(user) {
+  if (user.status) return String(user.status).toLowerCase()
+  return user.active === false ? 'blocked' : 'active'
+}
+
+function getAccessProfileLabel(profile) {
+  return ACCESS_PROFILE_LABELS[profile] || profile
+}
+
+function getAccessStatusLabel(status) {
+  return ACCESS_STATUS_LABELS[status] || status
+}
+
+function populatePermissionProfileOptions() {
+  const profiles = permissionProfiles.length
+    ? permissionProfiles
+    : [
+        { name: 'admin' },
+        { name: 'qa' },
+        { name: 'viewer' },
+      ]
+
+  const createSelect = getElement('[data-cy="permissions-user-profile"]')
+  const filterSelect = getElement('[data-cy="permissions-profile-filter"]')
+  const createValue = createSelect.value
+  const filterValue = filterSelect.value
+  const options = profiles
+    .map((profile) => {
+      const name = String(profile.name || profile.profile || '').toLowerCase()
+      return `<option value="${escapeHtml(name)}">${escapeHtml(getAccessProfileLabel(name))}</option>`
+    })
+    .join('')
+
+  createSelect.innerHTML = `<option value="">Selecione um perfil</option>${options}`
+  filterSelect.innerHTML = `<option value="">Todos os perfis</option>${options}`
+  if (profiles.some((profile) => String(profile.name || profile.profile) === createValue)) createSelect.value = createValue
+  if (profiles.some((profile) => String(profile.name || profile.profile) === filterValue)) filterSelect.value = filterValue
+}
+
+function renderPermissionProfiles(profiles) {
+  const container = getElement('[data-cy="permissions-profile-grid"]')
+
+  if (!profiles.length) {
+    container.innerHTML = '<article class="access-profile-card access-loading-card">Nenhum perfil disponível.</article>'
+    return
+  }
+
+  container.innerHTML = profiles
+    .map((profile) => {
+      const name = String(profile.name || profile.profile || '').toLowerCase()
+      const permissions = Array.isArray(profile.permissions) ? profile.permissions : []
+      const permissionItems = permissions.length
+        ? permissions.map((permission) => `<li>${escapeHtml(permission)}</li>`).join('')
+        : '<li>Nenhuma permissão atribuída</li>'
+
+      return `
+        <article class="access-profile-card" data-profile="${escapeHtml(name)}">
+          <div class="access-profile-heading">
+            <div>
+              <span class="section-kicker">${escapeHtml(name.toUpperCase())}</span>
+              <h3>${escapeHtml(getAccessProfileLabel(name))}</h3>
+              <p>${escapeHtml(profile.description || 'Perfil de acesso da plataforma.')}</p>
+            </div>
+            <span class="status-badge">${permissions.length}</span>
+          </div>
+          <ul class="access-permission-list">${permissionItems}</ul>
+        </article>
+      `
+    })
+    .join('')
+}
+
+function renderPermissionSummary(summary = {}) {
+  getElement('[data-cy="permissions-summary-users"]').textContent = String(summary.users || summary.total || 0)
+  getElement('[data-cy="permissions-summary-admins"]').textContent = String(summary.admins || 0)
+  getElement('[data-cy="permissions-summary-qa"]').textContent = String(summary.qa || 0)
+  getElement('[data-cy="permissions-summary-blocked"]').textContent = String(summary.blocked || 0)
+}
+
+function renderPermissionUsers(users) {
+  const body = getElement('[data-cy="permissions-users-table-body"]')
+
+  if (!users.length) {
+    body.innerHTML = '<tr><td colspan="6">Nenhum usuário encontrado para os filtros informados.</td></tr>'
+    return
+  }
+
+  const profileOptions = permissionProfiles
+    .map((profile) => String(profile.name || profile.profile || '').toLowerCase())
+    .filter(Boolean)
+
+  body.innerHTML = users
+    .map((user) => {
+      const profile = getAccessProfile(user)
+      const status = getAccessStatus(user)
+      const version = Number(user.version || user.authVersion || 1)
+      const isCurrentUser = Number(user.id) === Number(currentSessionUser?.id)
+      const options = profileOptions
+        .map((option) => `<option value="${escapeHtml(option)}" ${option === profile ? 'selected' : ''}>${escapeHtml(getAccessProfileLabel(option))}</option>`)
+        .join('')
+      const toggleLabel = status === 'blocked' ? 'Desbloquear' : 'Bloquear'
+      const toggleStatus = status === 'blocked' ? 'active' : 'blocked'
+
+      return `
+        <tr data-access-user-row="${escapeHtml(user.id)}" data-version="${escapeHtml(version)}">
+          <td>${escapeHtml(user.id)}</td>
+          <td>
+            <div class="access-user-identity">
+              <strong>${escapeHtml(user.name)}</strong>
+              <small>${escapeHtml(user.email)}</small>
+            </div>
+          </td>
+          <td>
+            <div class="access-role-editor">
+              <select data-access-profile="${escapeHtml(user.id)}" aria-label="Perfil de ${escapeHtml(user.name)}">${options}</select>
+              <button class="secondary-btn compact-btn" data-access-save-profile="${escapeHtml(user.id)}" type="button">Salvar</button>
+            </div>
+          </td>
+          <td><span class="status-badge" data-state="${escapeHtml(status)}">${escapeHtml(getAccessStatusLabel(status))}</span></td>
+          <td>${escapeHtml(version)}</td>
+          <td>
+            <div class="access-actions">
+              <button class="secondary-btn compact-btn" data-access-status="${escapeHtml(user.id)}" data-next-status="${escapeHtml(toggleStatus)}" type="button" ${isCurrentUser ? 'disabled title="Sua própria conta está protegida"' : ''}>${escapeHtml(toggleLabel)}</button>
+              <button class="secondary-btn compact-btn" data-access-revoke="${escapeHtml(user.id)}" type="button">Revogar sessões</button>
+              <button class="danger-btn compact-btn" data-access-delete="${escapeHtml(user.id)}" type="button" ${isCurrentUser ? 'disabled title="Sua própria conta está protegida"' : ''}>Excluir</button>
+            </div>
+          </td>
+        </tr>
+      `
+    })
+    .join('')
+}
+
+function renderPermissionPagination(pagination = {}) {
+  permissionCurrentPage = Number(pagination.page || 1)
+  permissionTotalPages = Math.max(1, Number(pagination.totalPages || 1))
+  getElement('[data-cy="permissions-users-total"]').textContent = String(pagination.total || permissionUsers.length)
+  getElement('[data-cy="permissions-page-info"]').textContent = `Página ${permissionCurrentPage} de ${permissionTotalPages}`
+  getElement('[data-cy="permissions-previous"]').disabled = permissionCurrentPage <= 1
+  getElement('[data-cy="permissions-next"]').disabled = permissionCurrentPage >= permissionTotalPages
+}
+
+function renderPermissionAudit(events) {
+  const body = getElement('[data-cy="permissions-audit-table-body"]')
+
+  if (!events.length) {
+    body.innerHTML = '<tr><td colspan="5">Nenhum evento de auditoria encontrado.</td></tr>'
+    return
+  }
+
+  body.innerHTML = events
+    .map((event) => {
+      const action = ACCESS_AUDIT_LABELS[event.action] || event.action
+      const actor = event.actor || {}
+      const target = event.targetUser || event.target || {}
+
+      return `
+        <tr>
+          <td>${escapeHtml(formatDateForDisplay(event.createdAt))}</td>
+          <td>
+            <div class="access-audit-detail">
+              <strong>${escapeHtml(action)}</strong>
+              <small>${escapeHtml(event.action)}</small>
+            </div>
+          </td>
+          <td>${escapeHtml(actor.name || actor.email || `#${event.actorId || '-'}`)}</td>
+          <td>${escapeHtml(target.name || target.email || `#${event.targetUserId || '-'}`)}</td>
+          <td>${escapeHtml(event.reason || '-')}</td>
+        </tr>
+      `
+    })
+    .join('')
+}
+
+function getPermissionUsersQuery() {
+  const params = new URLSearchParams({
+    page: String(permissionCurrentPage),
+    limit: '10',
+    sortBy: 'id',
+    sortOrder: 'asc',
+  })
+  const search = getElement('[data-cy="permissions-search"]').value.trim()
+  const profile = getElement('[data-cy="permissions-profile-filter"]').value
+  const status = getElement('[data-cy="permissions-status-filter"]').value
+  if (search) params.set('search', search)
+  if (profile) params.set('profile', profile)
+  if (status) params.set('status', status)
+  return params.toString()
+}
+
+async function loadPermissionProfiles() {
+  const { response, body } = await request('/api/permissions/profiles')
+  if (!response.ok) throw new Error(getCommerceError(response, body, 'Não foi possível carregar os perfis.'))
+  permissionProfiles = Array.isArray(body.data) ? body.data : []
+  populatePermissionProfileOptions()
+  renderPermissionProfiles(permissionProfiles)
+}
+
+async function loadPermissionUsers() {
+  const { response, body } = await request(`/api/permissions/users?${getPermissionUsersQuery()}`)
+  if (!response.ok) throw new Error(getCommerceError(response, body, 'Não foi possível carregar os usuários.'))
+  permissionUsers = Array.isArray(body.data) ? body.data : []
+  renderPermissionUsers(permissionUsers)
+  renderPermissionPagination(body.pagination)
+  renderPermissionSummary(body.summary)
+}
+
+async function loadPermissionAudit() {
+  const { response, body } = await request('/api/permissions/audit?page=1&limit=10&sortOrder=desc')
+  if (!response.ok) throw new Error(getCommerceError(response, body, 'Não foi possível carregar a auditoria.'))
+  renderPermissionAudit(Array.isArray(body.data) ? body.data : [])
+}
+
+async function refreshPermissionWorkspace(options = {}) {
+  setPermissionsFeedback('loading', 'Carregando controle de acesso', 'Consultando perfis, usuários e trilhas de auditoria.')
+  setPermissionsApiStatus('checking', 'Consultando')
+
+  try {
+    if (!options.skipProfiles) await loadPermissionProfiles()
+    await Promise.all([loadPermissionUsers(), loadPermissionAudit()])
+    setPermissionsApiStatus('online', 'API online')
+    setPermissionsFeedback('success', 'Controle de acesso sincronizado', 'Perfis, usuários e auditoria atualizados com sucesso.')
+  } catch (error) {
+    setPermissionsApiStatus('offline', 'Falha')
+    const forbidden = /permission|permiss|forbidden|administrator/i.test(error.message)
+    setPermissionsFeedback(
+      'error',
+      forbidden ? 'Acesso administrativo necessário' : 'Falha ao carregar permissões',
+      error.message,
+      { retry: true },
+    )
+    showToast(error.message, 'error')
+  }
+}
+
+function setupPermissionsView() {
+  refreshPermissionWorkspace()
+}
+
+async function executePermissionAction(path, options, successMessage) {
+  const { response, body } = await request(path, options)
+  if (!response.ok) throw new Error(getCommerceError(response, body, 'Não foi possível concluir a ação.'))
+  showToast(successMessage)
+  await Promise.all([loadPermissionUsers(), loadPermissionAudit()])
+  return body
+}
+
+getElement('[data-cy="permissions-user-form"]').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const form = event.currentTarget
+  const result = getElement('[data-cy="permissions-form-result"]')
+
+  if (!form.checkValidity()) {
+    form.reportValidity()
+    result.textContent = 'Revise os campos obrigatórios antes de continuar.'
+    return
+  }
+
+  const payload = {
+    name: form.elements.name.value.trim(),
+    email: form.elements.email.value.trim().toLowerCase(),
+    password: form.elements.password.value,
+    profile: form.elements.profile.value,
+    reason: form.elements.reason.value.trim(),
+  }
+  const button = getElement('[data-cy="permissions-user-submit"]')
+  button.disabled = true
+  button.textContent = 'Criando...'
+
+  try {
+    const { response, body } = await request('/api/permissions/users', {
+      method: 'POST',
+      headers: {
+        'Idempotency-Key': `web-user-${payload.email}-${Date.now()}`,
+      },
+      body: JSON.stringify(payload),
+    })
+    if (!response.ok) throw new Error(getCommerceError(response, body, 'Não foi possível criar o usuário.'))
+    result.textContent = `Usuário criado com sucesso: ${body.data.email}`
+    showToast('Usuário criado com sucesso')
+    form.reset()
+    permissionCurrentPage = 1
+    await Promise.all([loadPermissionUsers(), loadPermissionAudit()])
+  } catch (error) {
+    result.textContent = error.message
+    showToast(error.message, 'error')
+  } finally {
+    button.disabled = false
+    button.textContent = 'Criar usuário'
+  }
+})
+
+getElement('[data-cy="permissions-filters"]').addEventListener('submit', (event) => {
+  event.preventDefault()
+  permissionCurrentPage = 1
+  loadPermissionUsers().catch((error) => showToast(error.message, 'error'))
+})
+
+getElement('[data-cy="permissions-search"]').addEventListener('input', () => {
+  clearTimeout(permissionSearchTimer)
+  permissionSearchTimer = setTimeout(() => {
+    permissionCurrentPage = 1
+    loadPermissionUsers().catch((error) => showToast(error.message, 'error'))
+  }, 350)
+})
+
+getElement('[data-cy="permissions-filter-clear"]').addEventListener('click', () => {
+  getElement('[data-cy="permissions-filters"]').reset()
+  permissionCurrentPage = 1
+  loadPermissionUsers().catch((error) => showToast(error.message, 'error'))
+})
+
+getElement('[data-cy="permissions-previous"]').addEventListener('click', () => {
+  if (permissionCurrentPage <= 1) return
+  permissionCurrentPage -= 1
+  loadPermissionUsers().catch((error) => showToast(error.message, 'error'))
+})
+
+getElement('[data-cy="permissions-next"]').addEventListener('click', () => {
+  if (permissionCurrentPage >= permissionTotalPages) return
+  permissionCurrentPage += 1
+  loadPermissionUsers().catch((error) => showToast(error.message, 'error'))
+})
+
+getElement('[data-cy="permissions-retry"]').addEventListener('click', () => refreshPermissionWorkspace())
+getElement('[data-cy="permissions-audit-refresh"]').addEventListener('click', () => {
+  loadPermissionAudit()
+    .then(() => showToast('Auditoria atualizada'))
+    .catch((error) => showToast(error.message, 'error'))
+})
+
+getElement('[data-cy="permissions-users-table-body"]').addEventListener('click', async (event) => {
+  const row = event.target.closest('[data-access-user-row]')
+  if (!row) return
+  const userId = row.dataset.accessUserRow
+  const version = Number(row.dataset.version || 1)
+
+  try {
+    const saveProfileButton = event.target.closest('[data-access-save-profile]')
+    if (saveProfileButton) {
+      const profile = row.querySelector('[data-access-profile]').value
+      const reason = window.prompt('Informe a justificativa para alterar o perfil:')
+      if (!reason?.trim()) return
+      await executePermissionAction(
+        `/api/permissions/users/${userId}/profile`,
+        {
+          method: 'PATCH',
+          headers: { 'If-Match': String(version) },
+          body: JSON.stringify({ profile, reason: reason.trim(), version }),
+        },
+        'Perfil atualizado com sucesso',
+      )
+      return
+    }
+
+    const statusButton = event.target.closest('[data-access-status]')
+    if (statusButton) {
+      const status = statusButton.dataset.nextStatus
+      const reason = window.prompt(`Informe a justificativa para ${status === 'blocked' ? 'bloquear' : 'desbloquear'} o usuário:`)
+      if (!reason?.trim()) return
+      await executePermissionAction(
+        `/api/permissions/users/${userId}/access`,
+        {
+          method: 'PATCH',
+          headers: { 'If-Match': String(version) },
+          body: JSON.stringify({ status, reason: reason.trim(), version }),
+        },
+        status === 'blocked' ? 'Usuário bloqueado com sucesso' : 'Usuário desbloqueado com sucesso',
+      )
+      return
+    }
+
+    const revokeButton = event.target.closest('[data-access-revoke]')
+    if (revokeButton) {
+      const reason = window.prompt('Informe o motivo para revogar todas as sessões:')
+      if (!reason?.trim()) return
+      await executePermissionAction(
+        `/api/permissions/users/${userId}/revoke-sessions`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ reason: reason.trim() }),
+        },
+        'Sessões revogadas com sucesso',
+      )
+      return
+    }
+
+    const deleteButton = event.target.closest('[data-access-delete]')
+    if (deleteButton) {
+      const target = permissionUsers.find((user) => String(user.id) === String(userId))
+      if (!window.confirm(`Excluir o usuário ${target?.name || `#${userId}`}?`)) return
+      const reason = window.prompt('Informe a justificativa para excluir o usuário:')
+      if (!reason?.trim()) return
+      await executePermissionAction(
+        `/api/permissions/users/${userId}`,
+        {
+          method: 'DELETE',
+          headers: { 'If-Match': String(version) },
+          body: JSON.stringify({ reason: reason.trim(), version }),
+        },
+        'Usuário excluído com sucesso',
+      )
+    }
+  } catch (error) {
+    showToast(error.message, 'error')
+  }
 })
 
 const REPORT_TYPES = {

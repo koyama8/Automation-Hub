@@ -163,6 +163,15 @@
                 <small>Listagem da API ou massa local</small>
               </span>
             </button>
+            <button class="feature-card highlight" data-cy="card-permissions" data-target="permissionsView" data-required-role="admin" type="button">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3 4 6v5c0 5.2 3.4 9 8 10 4.6-1 8-4.8 8-10V6z" /><path d="M9 12l2 2 4-5" /></svg>
+              </span>
+              <span class="feature-copy">
+                <strong>Permissões e Perfis</strong>
+                <small>Admin, QA, viewer, bloqueios e auditoria</small>
+              </span>
+            </button>
             <button class="feature-card highlight" data-cy="card-form" data-target="formView" type="button">
               <span class="feature-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M9 3h6" /><path d="M10 9h4" /><path d="M10 13h4" /><path d="M10 17h4" /><rect x="5" y="5" width="14" height="18" rx="2" /></svg>
@@ -769,6 +778,193 @@
             <tbody data-cy="users-table"></tbody>
           </table>
           <p class="result-text users-result" data-cy="users-result">Nenhuma acao executada.</p>
+        </main>
+      </section>
+
+      <section id="permissionsView" class="page hidden access-page" data-view="permissions">
+        <header class="hero compact">
+          <div class="hero-brand">
+            <span class="lab-mark">ACL</span>
+            <div>
+              <h1>Permissões e Perfis</h1>
+              <p>Gerencie identidades, perfis, bloqueios, sessões e trilhas de auditoria.</p>
+            </div>
+          </div>
+          <button class="ghost-btn" data-target="dashboardView" type="button">Voltar</button>
+        </header>
+
+        <main class="container access-container">
+          <section class="clients-feedback" data-cy="permissions-feedback" data-state="loading" role="status" aria-live="polite">
+            <div class="clients-feedback-copy">
+              <span class="clients-feedback-indicator" aria-hidden="true"></span>
+              <div>
+                <strong data-cy="permissions-feedback-title">Carregando controle de acesso</strong>
+                <p data-cy="permissions-feedback-message">Consultando perfis, usuários e permissões efetivas.</p>
+              </div>
+            </div>
+            <button class="secondary-btn hidden" data-cy="permissions-retry" type="button">Tentar novamente</button>
+          </section>
+
+          <section class="access-summary-grid" data-cy="permissions-summary">
+            <article>
+              <span>Usuários</span>
+              <strong data-cy="permissions-summary-users">0</strong>
+              <small>identidades cadastradas</small>
+            </article>
+            <article>
+              <span>Administradores</span>
+              <strong data-cy="permissions-summary-admins">0</strong>
+              <small>com acesso total</small>
+            </article>
+            <article>
+              <span>Profissionais QA</span>
+              <strong data-cy="permissions-summary-qa">0</strong>
+              <small>acesso operacional</small>
+            </article>
+            <article>
+              <span>Bloqueados</span>
+              <strong data-cy="permissions-summary-blocked">0</strong>
+              <small>sem sessão válida</small>
+            </article>
+          </section>
+
+          <div class="access-workspace">
+            <section class="tool-surface access-create-panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="section-kicker">Nova identidade</span>
+                  <h2>Criar usuário com perfil</h2>
+                </div>
+                <span class="status-badge api-status" data-cy="permissions-api-status" data-state="checking">Verificando</span>
+              </div>
+
+              <form class="access-user-form" data-cy="permissions-user-form" novalidate>
+                <label>
+                  Nome completo
+                  <input data-cy="permissions-user-name" name="name" autocomplete="name" maxlength="120" placeholder="Nome do profissional" required />
+                </label>
+                <label>
+                  E-mail
+                  <input data-cy="permissions-user-email" name="email" type="email" autocomplete="email" maxlength="160" placeholder="qa@empresa.com" required />
+                </label>
+                <label>
+                  Senha inicial
+                  <input data-cy="permissions-user-password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" placeholder="Mínimo de 8 caracteres" required />
+                </label>
+                <label>
+                  Perfil
+                  <select data-cy="permissions-user-profile" name="profile" required>
+                    <option value="">Carregando perfis...</option>
+                  </select>
+                </label>
+                <label class="access-reason-field">
+                  Justificativa administrativa
+                  <textarea data-cy="permissions-user-reason" name="reason" maxlength="240" placeholder="Motivo da concessão de acesso" required></textarea>
+                </label>
+                <button class="primary-btn" data-cy="permissions-user-submit" type="submit">Criar usuário</button>
+              </form>
+              <p class="result-text" data-cy="permissions-form-result">Preencha os dados para criar uma identidade.</p>
+            </section>
+
+            <section class="tool-surface access-users-panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="section-kicker">Diretório de acesso</span>
+                  <h2>Usuários e perfis</h2>
+                </div>
+                <strong class="clients-count" data-cy="permissions-users-total">0</strong>
+              </div>
+
+              <form class="access-filter-grid" data-cy="permissions-filters">
+                <label>
+                  Buscar
+                  <input data-cy="permissions-search" name="search" type="search" placeholder="Nome ou e-mail" />
+                </label>
+                <label>
+                  Perfil
+                  <select data-cy="permissions-profile-filter" name="profile">
+                    <option value="">Todos os perfis</option>
+                  </select>
+                </label>
+                <label>
+                  Status
+                  <select data-cy="permissions-status-filter" name="status">
+                    <option value="">Todos os status</option>
+                    <option value="invited">Convidados</option>
+                    <option value="active">Ativos</option>
+                    <option value="blocked">Bloqueados</option>
+                  </select>
+                </label>
+                <button class="primary-btn" data-cy="permissions-filter-submit" type="submit">Filtrar</button>
+                <button class="secondary-btn" data-cy="permissions-filter-clear" type="button">Limpar</button>
+              </form>
+
+              <div class="management-table-wrap access-table-wrap">
+                <table class="data-table management-table access-table" data-cy="permissions-users-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Usuário</th>
+                      <th>Perfil</th>
+                      <th>Status</th>
+                      <th>Versão</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody data-cy="permissions-users-table-body">
+                    <tr><td colspan="6">Carregando usuários...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <footer class="management-table-footer access-table-footer">
+                <span data-cy="permissions-page-info">Página 1 de 1</span>
+                <nav class="table-pagination" aria-label="Paginação de usuários">
+                  <button class="secondary-btn compact-btn" data-cy="permissions-previous" type="button">Anterior</button>
+                  <button class="secondary-btn compact-btn" data-cy="permissions-next" type="button">Próxima</button>
+                </nav>
+              </footer>
+            </section>
+          </div>
+
+          <section class="tool-surface access-matrix-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">RBAC</span>
+                <h2>Matriz de permissões</h2>
+                <p>Visualize o acesso efetivo atribuído a cada perfil.</p>
+              </div>
+            </div>
+            <div class="access-profile-grid" data-cy="permissions-profile-grid">
+              <article class="access-profile-card access-loading-card">Carregando matriz de permissões...</article>
+            </div>
+          </section>
+
+          <section class="tool-surface access-audit-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="section-kicker">Rastreabilidade</span>
+                <h2>Auditoria de segurança</h2>
+              </div>
+              <button class="secondary-btn compact-btn" data-cy="permissions-audit-refresh" type="button">Atualizar auditoria</button>
+            </div>
+            <div class="management-table-wrap">
+              <table class="data-table management-table access-audit-table" data-cy="permissions-audit-table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Ação</th>
+                    <th>Responsável</th>
+                    <th>Usuário afetado</th>
+                    <th>Motivo</th>
+                  </tr>
+                </thead>
+                <tbody data-cy="permissions-audit-table-body">
+                  <tr><td colspan="5">Nenhum evento carregado.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </main>
       </section>
 

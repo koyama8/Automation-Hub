@@ -1,0 +1,31 @@
+info:
+  name: Chave idempotente com payload divergente
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: http://localhost:3030/api/permissions/users
+  headers:
+    - name: Idempotency-Key
+      value: "{{idempotencyKey}}"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Payload divergente",
+        "email": "divergente.{{$timestamp}}@adminlab.com",
+        "password": "{{managedUserPassword}}",
+        "profile": "viewer",
+        "status": "active",
+        "reason": "Validar conflito de chave idempotente reutilizada"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Reutiliza a chave com outro payload. Esperado 409 Conflict.

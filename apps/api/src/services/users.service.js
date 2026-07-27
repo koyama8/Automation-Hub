@@ -40,15 +40,26 @@ export async function editUser(rawId, payload = {}) {
 
   if (payload.password !== undefined && payload.password !== '') {
     data.password = await hashPassword(requirePassword(payload.password))
+    data.authVersion = { increment: 1 }
+    data.version = { increment: 1 }
   }
 
-  return usersRepository.updateUser(id, data)
+  const user = await usersRepository.updateUser(id, data)
+  if (data.password) await usersRepository.revokeUserSessions(id)
+  return user
 }
 
-export function changeUserStatus(rawId, payload = {}) {
+export async function changeUserStatus(rawId, payload = {}) {
   const id = parsePositiveId(rawId, 'Invalid user id!')
   const active = parseBoolean(payload.active, 'Active must be true or false!')
-  return usersRepository.updateUser(id, { active })
+  const user = await usersRepository.updateUser(id, {
+    active,
+    status: active ? 'active' : 'blocked',
+    authVersion: { increment: 1 },
+    version: { increment: 1 },
+  })
+  await usersRepository.revokeUserSessions(id)
+  return user
 }
 
 export async function removeUser(rawId) {
@@ -71,5 +82,6 @@ export async function clearUsers() {
     password,
     role: 'admin',
     active: true,
+    status: 'active',
   })
 }

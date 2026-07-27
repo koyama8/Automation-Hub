@@ -1,0 +1,30 @@
+info:
+  name: Revogar sessoes do usuario
+  type: http
+  seq: 23
+
+http:
+  method: POST
+  url: http://localhost:3030/api/permissions/users/{{managedUserId}}/revoke-sessions
+  body:
+    type: json
+    data: |-
+      {
+        "reason": "Encerrar sessoes para validar resposta a incidente"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 200) bru.setVar("managedUserVersion", String(body.data.user.version));
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Revoga todas as sessoes, incrementa authVersion e informa quantas sessoes foram encerradas.

@@ -1,16 +1,16 @@
 import { Router } from 'express'
 import * as couponsController from '../controllers/coupons.controller.js'
-import { requireAdministrator, requireAuthentication } from '../middlewares/authentication.js'
+import { requireAuthentication, requirePermission } from '../middlewares/authentication.js'
 
 export const couponsRouter = Router()
 
 couponsRouter.use(requireAuthentication)
-couponsRouter.post('/', couponsController.create)
-couponsRouter.get('/', couponsController.index)
-couponsRouter.post('/validate', couponsController.validate)
-couponsRouter.post('/apply', couponsController.apply)
-couponsRouter.get('/:id', couponsController.show)
-couponsRouter.put('/:id', couponsController.update)
-couponsRouter.patch('/:id/expire', couponsController.expire)
-couponsRouter.delete('/:id', couponsController.destroy)
-couponsRouter.delete('/', requireAdministrator, couponsController.clear)
+couponsRouter.post('/', requirePermission('coupons:write'), couponsController.create)
+couponsRouter.get('/', requirePermission('coupons:read'), couponsController.index)
+couponsRouter.post('/validate', requirePermission('coupons:read'), couponsController.validate)
+couponsRouter.post('/apply', requirePermission('coupons:write'), couponsController.apply)
+couponsRouter.get('/:id', requirePermission('coupons:read'), couponsController.show)
+couponsRouter.put('/:id', requirePermission('coupons:write'), couponsController.update)
+couponsRouter.patch('/:id/expire', requirePermission('coupons:write'), couponsController.expire)
+couponsRouter.delete('/:id', requirePermission('coupons:delete'), couponsController.destroy)
+couponsRouter.delete('/', requirePermission('system:reset'), couponsController.clear)

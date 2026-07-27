@@ -1,0 +1,17 @@
+info:
+  name: Encerrar sessao
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://localhost:3030/api/auth/logout
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Revoga a sessao atual. Esperado 204; o token utilizado nao deve funcionar novamente.

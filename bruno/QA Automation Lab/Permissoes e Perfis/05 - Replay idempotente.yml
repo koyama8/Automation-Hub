@@ -1,0 +1,31 @@
+info:
+  name: Replay idempotente
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://localhost:3030/api/permissions/users
+  headers:
+    - name: Idempotency-Key
+      value: "{{idempotencyKey}}"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "QA Pleno Bruno",
+        "email": "{{managedUserEmail}}",
+        "password": "{{managedUserPassword}}",
+        "profile": "qa",
+        "status": "active",
+        "reason": "Criacao de massa para validar controle de acesso"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Reenvia a mesma chave e massa. Esperado 200 com idempotentReplay true e sem novo registro.

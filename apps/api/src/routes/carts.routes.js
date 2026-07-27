@@ -1,12 +1,12 @@
 import { Router } from 'express'
 import * as cartsController from '../controllers/carts.controller.js'
-import { requireAuthentication } from '../middlewares/authentication.js'
+import { requireAuthentication, requirePermission } from '../middlewares/authentication.js'
 
 export const cartsRouter = Router()
 
 cartsRouter.use(requireAuthentication)
-cartsRouter.get('/:clientId', cartsController.show)
-cartsRouter.post('/items', cartsController.addItem)
-cartsRouter.patch('/items/:itemId', cartsController.updateItem)
-cartsRouter.delete('/items/:itemId', cartsController.removeItem)
-cartsRouter.delete('/:clientId', cartsController.clear)
+cartsRouter.get('/:clientId', requirePermission('cart:read'), cartsController.show)
+cartsRouter.post('/items', requirePermission('cart:write'), cartsController.addItem)
+cartsRouter.patch('/items/:itemId', requirePermission('cart:write'), cartsController.updateItem)
+cartsRouter.delete('/items/:itemId', requirePermission('cart:delete'), cartsController.removeItem)
+cartsRouter.delete('/:clientId', requirePermission('cart:delete'), cartsController.clear)

@@ -1,0 +1,17 @@
+info:
+  name: Listar perfis
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://localhost:3030/api/permissions/profiles
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Lista admin, QA e viewer com matriz de permissoes e versao para concorrencia otimista.

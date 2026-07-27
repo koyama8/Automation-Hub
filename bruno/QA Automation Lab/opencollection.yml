@@ -63,6 +63,36 @@ request:
       value: "1"
     - name: mismatchedClientId
       value: "1"
+    - name: refreshToken
+      value: ""
+    - name: managedUserId
+      value: "2"
+    - name: managedUserVersion
+      value: "1"
+    - name: managedUserEmail
+      value: ""
+    - name: managedUserPassword
+      value: "QaPleno@123"
+    - name: idempotencyKey
+      value: ""
+    - name: profileVersion
+      value: "1"
+    - name: auditEventId
+      value: "1"
+    - name: invitationToken
+      value: ""
+    - name: qaToken
+      value: ""
+    - name: viewerToken
+      value: ""
+    - name: permissionClientId
+      value: "1"
+    - name: invitationUserId
+      value: "2"
+    - name: invitationUserVersion
+      value: "1"
+    - name: invitationUserEmail
+      value: ""
 bundled: false
 extensions:
   bruno:

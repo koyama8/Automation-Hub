@@ -1,0 +1,25 @@
+info:
+  name: Administrador nao bloqueia a si mesmo
+  type: http
+  seq: 30
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/permissions/users/1/access
+  body:
+    type: json
+    data: |-
+      {
+        "status": "blocked",
+        "version": 1,
+        "reason": "Validar protecao contra bloqueio do proprio administrador"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Regra critica. Esperado 409 e administrador preservado.

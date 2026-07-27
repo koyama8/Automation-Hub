@@ -1,0 +1,17 @@
+info:
+  name: Listar usuarios com filtros
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: http://localhost:3030/api/permissions/users?page=1&limit=10&profile=qa&status=active&sortBy=createdAt&sortOrder=desc
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Exercita filtros combinados, ordenacao, resumo e paginacao.

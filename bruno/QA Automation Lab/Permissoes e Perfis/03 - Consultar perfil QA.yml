@@ -1,0 +1,24 @@
+info:
+  name: Consultar perfil QA
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://localhost:3030/api/permissions/profiles/qa
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 200) bru.setVar("profileVersion", String(body.data.version));
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Consulta a matriz efetiva do perfil QA e salva sua versao.

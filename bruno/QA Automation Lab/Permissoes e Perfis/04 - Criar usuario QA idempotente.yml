@@ -1,0 +1,48 @@
+info:
+  name: Criar usuario QA idempotente
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:3030/api/permissions/users
+  headers:
+    - name: Idempotency-Key
+      value: "{{idempotencyKey}}"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "QA Pleno Bruno",
+        "email": "{{managedUserEmail}}",
+        "password": "{{managedUserPassword}}",
+        "profile": "qa",
+        "status": "active",
+        "reason": "Criacao de massa para validar controle de acesso"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        if (!bru.getVar("managedUserEmail")) {
+          const suffix = Date.now();
+          bru.setVar("managedUserEmail", `qa.pleno.${suffix}@adminlab.com`);
+          bru.setVar("idempotencyKey", `managed-user-${suffix}`);
+        }
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if ([200, 201].includes(res.getStatus()) && body?.data) {
+          bru.setVar("managedUserId", String(body.data.id));
+          bru.setVar("managedUserVersion", String(body.data.version));
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Cria usuario QA ativo e salva ID e versao. Repita sem alterar as variaveis para exercitar replay idempotente.

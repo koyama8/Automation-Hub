@@ -18,8 +18,22 @@ export function findToken(token) {
 }
 
 export function consumeToken(tokenId, userId, password) {
-  return prisma.$transaction([
-    prisma.user.update({ where: { id: userId }, data: { password } }),
-    prisma.passwordResetToken.update({ where: { id: tokenId }, data: { usedAt: new Date() } }),
-  ])
+  return prisma.$transaction(async (transaction) => {
+    await transaction.user.update({
+      where: { id: userId },
+      data: {
+        password,
+        authVersion: { increment: 1 },
+        version: { increment: 1 },
+      },
+    })
+    await transaction.authSession.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
+    return transaction.passwordResetToken.update({
+      where: { id: tokenId },
+      data: { usedAt: new Date() },
+    })
+  })
 }

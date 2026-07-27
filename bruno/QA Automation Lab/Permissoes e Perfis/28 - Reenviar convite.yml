@@ -1,0 +1,30 @@
+info:
+  name: Reenviar convite
+  type: http
+  seq: 28
+
+http:
+  method: POST
+  url: http://localhost:3030/api/permissions/users/{{invitationUserId}}/invitation/resend
+  body:
+    type: json
+    data: |-
+      {
+        "reason": "Invalidar convite anterior e emitir um novo token"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 200) bru.setVar("invitationToken", body.data.invitation.token);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Invalida convites pendentes anteriores, emite novo token e registra auditoria.

@@ -1,0 +1,35 @@
+info:
+  name: Desbloquear acesso
+  type: http
+  seq: 13
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/permissions/users/{{managedUserId}}/access
+  headers:
+    - name: If-Match
+      value: "{{managedUserVersion}}"
+  body:
+    type: json
+    data: |-
+      {
+        "status": "active",
+        "version": {{managedUserVersion}},
+        "reason": "Liberacao apos revisao administrativa do acesso"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 200) bru.setVar("managedUserVersion", String(body.data.version));
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Reativa o usuario sem restaurar tokens antigos.

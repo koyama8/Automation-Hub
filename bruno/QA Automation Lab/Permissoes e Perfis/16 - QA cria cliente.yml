@@ -1,0 +1,37 @@
+info:
+  name: QA cria cliente
+  type: http
+  seq: 16
+
+http:
+  method: POST
+  url: http://localhost:3030/api/clients
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Cliente criado por QA",
+        "email": "qa.cliente.{{$timestamp}}@adminlab.com",
+        "document": "{{$timestamp}}",
+        "phone": "11999990000",
+        "company": "QA Automation Lab",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: "{{qaToken}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 201) bru.setVar("permissionClientId", String(body.data.id));
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Fluxo positivo. QA possui clients write e deve criar dados operacionais.

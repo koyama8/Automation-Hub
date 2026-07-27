@@ -1,0 +1,28 @@
+info:
+  name: Conflito de versao
+  type: http
+  seq: 11
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/permissions/users/{{managedUserId}}/profile
+  headers:
+    - name: If-Match
+      value: "1"
+  body:
+    type: json
+    data: |-
+      {
+        "profile": "qa",
+        "version": 1,
+        "reason": "Simular atualizacao concorrente com versao obsoleta"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Usa versao obsoleta. Esperado 409 com a versao atual.

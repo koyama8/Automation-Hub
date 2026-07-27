@@ -9,6 +9,7 @@ import { evidencesRouter } from './evidences.routes.js'
 import { ordersRouter } from './orders.routes.js'
 import { passwordRouter } from './password.routes.js'
 import { paymentsRouter } from './payments.routes.js'
+import { permissionsRouter } from './permissions.routes.js'
 import { productsRouter } from './products.routes.js'
 import { reportsRouter } from './reports.routes.js'
 import { systemRouter } from './system.routes.js'
@@ -49,6 +50,7 @@ routes.use('/api/evidences', evidencesRouter)
 routes.use('/api/orders', ordersRouter)
 routes.use('/api/password', passwordRouter)
 routes.use('/api/payments', paymentsRouter)
+routes.use('/api/permissions', permissionsRouter)
 routes.use('/api/products', productsRouter)
 routes.use('/api/reports', reportsRouter)
 routes.use('/api/system', systemRouter)

@@ -1,0 +1,32 @@
+info:
+  name: Login como QA
+  type: http
+  seq: 15
+
+http:
+  method: POST
+  url: http://localhost:3030/api/auth/login
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{managedUserEmail}}",
+        "password": "{{managedUserPassword}}"
+      }
+  auth:
+    type: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 200) bru.setVar("qaToken", body.data.token);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Autentica o usuario QA e salva um token separado para os cenarios de autorizacao.

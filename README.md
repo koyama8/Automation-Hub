@@ -41,7 +41,8 @@ qa-automation-lab/
 
 | Modulo | Base path | Principais recursos |
 | --- | --- | --- |
-| Auth | `/api/auth` | login e sessao atual |
+| Auth | `/api/auth` | login, sessão atual, rotação de token e logout |
+| Permissões e Perfis | `/api/permissions` | RBAC admin/QA/viewer, convites, bloqueios, sessões, idempotência e auditoria |
 | Usuarios | `/api/users` | CRUD, ativacao, inativacao e limpeza de massa |
 | Clientes | `/api/clients` | CRUD, status, busca e reset de IDs |
 | Contratos | `/api/contracts` | criar, listar, buscar, atualizar, cancelar, ativar e excluir |
@@ -121,6 +122,8 @@ npx cypress run --browser electron --config video=false
 ## Bruno
 
 A colecao fica em `bruno/QA Automation Lab`. Abra essa pasta no Bruno Desktop e execute primeiro `Auth/01 - Login valido` para salvar o token usado nas rotas protegidas.
+
+Os fluxos avançados estão em `Permissoes e Perfis`. Eles foram organizados em ordem numérica para praticar cenários de nível Pleno+, como autorização por perfil, revogação imediata, concorrência otimista, idempotência, convites e auditoria. A pasta contém somente requisições e scripts de propagação de variáveis; as automações ficam a cargo do estudante.
 
 ## Observacoes
 

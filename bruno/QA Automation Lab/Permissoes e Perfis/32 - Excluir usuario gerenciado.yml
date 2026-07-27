@@ -1,0 +1,27 @@
+info:
+  name: Excluir usuario gerenciado
+  type: http
+  seq: 32
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/permissions/users/{{managedUserId}}
+  headers:
+    - name: If-Match
+      value: "{{managedUserVersion}}"
+  body:
+    type: json
+    data: |-
+      {
+        "version": {{managedUserVersion}},
+        "reason": "Encerrar massa de teste com exclusao logica auditavel"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Exclusao logica com controle de versao; revoga sessoes e preserva a trilha de auditoria.

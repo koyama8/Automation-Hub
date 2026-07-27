@@ -1,0 +1,32 @@
+info:
+  name: Login como viewer
+  type: http
+  seq: 20
+
+http:
+  method: POST
+  url: http://localhost:3030/api/auth/login
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{managedUserEmail}}",
+        "password": "{{managedUserPassword}}"
+      }
+  auth:
+    type: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 200) bru.setVar("viewerToken", body.data.token);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Emite um novo token ja com o perfil viewer.

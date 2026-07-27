@@ -1,0 +1,30 @@
+info:
+  name: Viewer nao altera dados
+  type: http
+  seq: 22
+
+http:
+  method: POST
+  url: http://localhost:3030/api/clients
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Tentativa viewer",
+        "email": "viewer.negado.{{$timestamp}}@adminlab.com",
+        "document": "{{$timestamp}}",
+        "phone": "11999990000",
+        "company": "Nao deve persistir",
+        "status": "active"
+      }
+  auth:
+    type: bearer
+    token: "{{viewerToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Viewer tenta gravar dados. Esperado 403 e nenhuma persistencia no banco.

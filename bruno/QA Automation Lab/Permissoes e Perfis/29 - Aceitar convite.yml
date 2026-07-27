@@ -1,0 +1,24 @@
+info:
+  name: Aceitar convite
+  type: http
+  seq: 29
+
+http:
+  method: POST
+  url: http://localhost:3030/api/permissions/invitations/{{invitationToken}}/accept
+  body:
+    type: json
+    data: |-
+      {
+        "password": "Viewer@123"
+      }
+  auth:
+    type: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Define a senha e muda invited para active. Token aceito nao pode ser reutilizado.

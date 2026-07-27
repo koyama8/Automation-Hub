@@ -1,0 +1,19 @@
+info:
+  name: Viewer consulta clientes
+  type: http
+  seq: 21
+
+http:
+  method: GET
+  url: http://localhost:3030/api/clients
+  auth:
+    type: bearer
+    token: "{{viewerToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Fluxo positivo de leitura para viewer. Esperado 200.

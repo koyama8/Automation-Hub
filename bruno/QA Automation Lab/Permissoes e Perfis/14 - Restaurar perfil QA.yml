@@ -1,0 +1,35 @@
+info:
+  name: Restaurar perfil QA
+  type: http
+  seq: 14
+
+http:
+  method: PATCH
+  url: http://localhost:3030/api/permissions/users/{{managedUserId}}/profile
+  headers:
+    - name: If-Match
+      value: "{{managedUserVersion}}"
+  body:
+    type: json
+    data: |-
+      {
+        "profile": "qa",
+        "version": {{managedUserVersion}},
+        "reason": "Restaurar perfil operacional para validar autorizacao QA"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        if (res.getStatus() === 200) bru.setVar("managedUserVersion", String(body.data.version));
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Retorna o usuario ao perfil QA e invalida qualquer sessao anterior.
