@@ -1,0 +1,24 @@
+info:
+  name: Excluir todos os usuarios gerenciados
+  type: http
+  seq: 34
+
+http:
+  method: DELETE
+  url: http://localhost:3030/api/permissions/users
+  body:
+    type: json
+    data: |-
+      {
+        "confirmation": "DELETE_MANAGED_USERS",
+        "reason": "Limpeza em lote da massa de usuarios do ambiente local"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Remove definitivamente todos os usuarios nao administradores em ambiente local ou de teste, elimina chaves de idempotencia antigas e reinicia a sequencia de usuarios apos o maior administrador preservado. Em producao, retorna 403.

@@ -1,6 +1,7 @@
 import 'dotenv/config'
 
 export const env = {
+  nodeEnv: process.env.NODE_ENV || 'development',
   port: Number(process.env.PORT) || 3030,
   webUrl: process.env.WEB_URL || 'http://localhost:3000',
   adminEmail: process.env.ADMIN_EMAIL || 'qa@adminlab.com',

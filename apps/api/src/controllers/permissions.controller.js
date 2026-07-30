@@ -69,6 +69,14 @@ export async function deleteUser(req, res) {
   return res.status(200).json({ message: 'Managed user deleted successfully', data })
 }
 
+export async function deleteUsers(req, res) {
+  const data = await permissionsService.deleteAllManagedUsers(req.body, req.auth)
+  return res.status(200).json({
+    message: 'Managed users deleted successfully',
+    data,
+  })
+}
+
 export async function effectivePermissions(req, res) {
   return res
     .status(200)
@@ -86,6 +94,14 @@ export async function audit(req, res) {
 
 export async function auditEvent(req, res) {
   return res.status(200).json({ data: await permissionsService.getAuditEvent(req.params.id) })
+}
+
+export async function clearAudit(req, res) {
+  const data = await permissionsService.clearAudit(req.body)
+  return res.status(200).json({
+    message: 'Audit records cleared successfully',
+    data,
+  })
 }
 
 export async function acceptInvitation(req, res) {

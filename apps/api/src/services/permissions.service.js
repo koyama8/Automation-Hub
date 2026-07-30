@@ -47,6 +47,7 @@ const AUDIT_ACTIONS = [
   'USER_BLOCKED',
   'USER_UNBLOCKED',
   'USER_DELETED',
+  'USERS_BULK_DELETED',
   'SESSIONS_REVOKED',
   'PERMISSION_DENIED',
   'PROFILE_PERMISSIONS_CHANGED',
@@ -414,6 +415,20 @@ export async function deleteManagedUser(rawId, payload, auth, headerVersion) {
   return toManagedUser(result.user)
 }
 
+export async function deleteAllManagedUsers(payload = {}, auth) {
+  if (env.nodeEnv === 'production') {
+    throw new AppError(403, 'Bulk user cleanup is not available in production!')
+  }
+  if (payload.confirmation !== 'DELETE_MANAGED_USERS') {
+    throw new AppError(400, 'confirmation must be DELETE_MANAGED_USERS!')
+  }
+  const reason = normalizeReason(payload.reason)
+  return permissionsRepository.hardDeleteAllManagedUsers({
+    actorId: auth.userId,
+    reason,
+  })
+}
+
 export async function revokeManagedUserSessions(rawId, payload, auth) {
   const id = parsePositiveId(rawId, 'Invalid managed user id!')
   const reason = normalizeReason(payload.reason)
@@ -507,6 +522,22 @@ export async function getAuditEvent(rawId) {
   const event = await permissionsRepository.findAuditById(id)
   if (!event) throw new AppError(404, 'Audit event not found!')
   return event
+}
+
+export async function clearAudit(payload = {}) {
+  if (env.nodeEnv === 'production') {
+    throw new AppError(403, 'Audit cleanup is not available in production!')
+  }
+  if (payload.confirmation !== 'CLEAR_AUDIT') {
+    throw new AppError(400, 'confirmation must be CLEAR_AUDIT!')
+  }
+  const reason = normalizeReason(payload.reason)
+  const deletedCount = await permissionsRepository.clearAudit()
+  return {
+    deletedCount,
+    reason,
+    environment: env.nodeEnv,
+  }
 }
 
 export async function acceptInvitation(rawToken, payload) {

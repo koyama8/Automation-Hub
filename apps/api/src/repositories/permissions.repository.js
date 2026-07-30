@@ -253,6 +253,52 @@ export function softDeleteManagedUser({ id, version, audit }) {
   })
 }
 
+export function hardDeleteAllManagedUsers({ actorId, reason }) {
+  return prisma.$transaction(async (transaction) => {
+    const users = await transaction.user.findMany({
+      where: {
+        role: { not: 'admin' },
+      },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    })
+    const userIds = users.map((user) => user.id)
+    const deleted = await transaction.user.deleteMany({
+      where: { role: { not: 'admin' } },
+    })
+    const deletedIdempotencyRecords = await transaction.idempotencyRecord.deleteMany()
+    const highestUser = await transaction.user.aggregate({
+      _max: { id: true },
+    })
+    const highestUserId = highestUser._max.id || 1
+    await transaction.$queryRaw`
+      SELECT setval(pg_get_serial_sequence('"User"', 'id'), ${highestUserId}, true)
+    `
+    await transaction.permissionAudit.create({
+      data: {
+        actorId,
+        action: 'USERS_BULK_DELETED',
+        reason,
+        metadata: {
+          deletedCount: deleted.count,
+          deletedUserIds: userIds,
+          preservedAdministrators: true,
+          deletedIdempotencyRecords: deletedIdempotencyRecords.count,
+          nextUserId: highestUserId + 1,
+        },
+      },
+    })
+
+    return {
+      deletedCount: deleted.count,
+      deletedUserIds: userIds,
+      preservedAdministrators: true,
+      deletedIdempotencyRecords: deletedIdempotencyRecords.count,
+      nextUserId: highestUserId + 1,
+    }
+  })
+}
+
 export function revokeManagedUserSessions({ id, actorId, reason }) {
   return prisma.$transaction(async (transaction) => {
     const user = await transaction.user.findFirst({
@@ -324,6 +370,11 @@ export function findAuditById(id) {
       targetUser: { select: auditUserSelect },
     },
   })
+}
+
+export async function clearAudit() {
+  const result = await prisma.permissionAudit.deleteMany()
+  return result.count
 }
 
 export function findInvitationByTokenHash(tokenHash) {
