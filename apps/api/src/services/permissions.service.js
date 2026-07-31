@@ -352,6 +352,7 @@ export async function changeManagedUserProfile(rawId, payload, auth, headerVersi
   await ensureProfileExists(profile)
   await protectLastAdministrator(user, profile)
   const version = resolveVersion(payload.version, headerVersion)
+  const reason = normalizeReason(payload.reason)
   const result = handleMutationOutcome(
     await permissionsRepository.updateManagedUserProfile({
       id,

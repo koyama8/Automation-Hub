@@ -742,6 +742,18 @@ textarea:focus {
   border-color: rgba(45, 212, 191, 0.22);
 }
 
+.access-create-panel .panel-heading {
+  align-items: flex-start;
+}
+
+.access-create-panel .api-status {
+  flex: 0 0 auto;
+  min-width: 96px;
+  padding: 0 14px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .access-user-form {
   display: grid;
   gap: 14px;
@@ -767,14 +779,18 @@ textarea:focus {
 
 .access-filter-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) repeat(2, minmax(130px, 0.7fr)) auto auto;
+  grid-template-columns: minmax(190px, 1fr) repeat(2, minmax(135px, 150px)) repeat(2, 96px);
   gap: 10px;
   align-items: end;
   margin-bottom: 18px;
 }
 
 .access-filter-grid button {
-  min-width: 92px;
+  width: 96px;
+  min-width: 96px;
+  min-height: 52px;
+  margin: 0;
+  padding: 0 12px;
 }
 
 .access-table-wrap {
@@ -786,7 +802,12 @@ textarea:focus {
 }
 
 .access-table td:nth-child(2) {
-  min-width: 210px;
+  min-width: 195px;
+}
+
+.access-table th:nth-child(3),
+.access-table td:nth-child(3) {
+  min-width: 295px;
 }
 
 .access-user-identity {
@@ -806,11 +827,14 @@ textarea:focus {
   display: flex;
   gap: 8px;
   align-items: center;
+  min-width: 263px;
 }
 
 .access-role-editor select {
-  min-width: 105px;
-  padding: 8px 10px;
+  width: 190px;
+  min-width: 190px;
+  flex: 0 0 190px;
+  padding: 8px 30px 8px 12px;
 }
 
 .access-actions {
@@ -841,6 +865,8 @@ textarea:focus {
 
 .access-profile-card {
   display: grid;
+  grid-template-rows: auto auto;
+  align-content: start;
   gap: 14px;
   padding: 20px;
   border: 1px solid var(--line);
@@ -865,6 +891,7 @@ textarea:focus {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  min-height: 118px;
 }
 
 .access-profile-heading h3 {
@@ -880,6 +907,9 @@ textarea:focus {
 .access-permission-list {
   display: flex;
   flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: flex-start;
+  align-self: start;
   gap: 7px;
   margin: 0;
   padding: 0;
@@ -887,12 +917,15 @@ textarea:focus {
 }
 
 .access-permission-list li {
+  flex: 0 0 auto;
   padding: 6px 9px;
   border: 1px solid rgba(45, 212, 191, 0.2);
   border-radius: 999px;
   color: var(--muted);
   background: rgba(45, 212, 191, 0.06);
   font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .access-loading-card {
