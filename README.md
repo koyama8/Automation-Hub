@@ -102,6 +102,36 @@ cd apps/web
 npx cypress run --browser electron --config video=false
 ```
 
+### Testes de Permissoes e Perfis
+
+Os testes Cypress validam os principais comportamentos de autorizacao da API:
+
+- QA pode criar clientes, mas nao pode exclui-los.
+- O administrador pode alterar o perfil de QA para viewer.
+- A troca de perfil revoga imediatamente o token antigo.
+- Viewer pode consultar clientes, mas nao pode criar novos registros.
+
+Para executar somente esses cenarios:
+
+```powershell
+cd apps/api
+npx cypress run --browser electron --config video=false --spec "cypress/e2e/permissoes-perfis/*.cy.js"
+```
+
+| Perfil | Consultar clientes | Criar clientes | Excluir clientes | Gerenciar perfis |
+| --- | --- | --- | --- | --- |
+| Admin | Sim | Sim | Sim | Sim |
+| QA | Sim | Sim | Nao | Nao |
+| Viewer | Sim | Nao | Nao | Nao |
+
+Fluxo principal dos testes:
+
+```text
+Login admin -> cria usuario QA -> login QA -> usa qaToken
+-> admin altera para viewer -> qaToken e revogado
+-> novo login do usuario -> usa viewerToken
+```
+
 ## URLs Locais
 
 | Servico | URL |
@@ -123,7 +153,9 @@ npx cypress run --browser electron --config video=false
 
 A colecao fica em `bruno/QA Automation Lab`. Abra essa pasta no Bruno Desktop e execute primeiro `Auth/01 - Login valido` para salvar o token usado nas rotas protegidas.
 
-Os fluxos avançados estão em `Permissoes e Perfis`. Eles foram organizados em ordem numérica para praticar cenários de nível Pleno+, como autorização por perfil, revogação imediata, concorrência otimista, idempotência, convites e auditoria. A pasta contém somente requisições e scripts de propagação de variáveis; as automações ficam a cargo do estudante.
+Os fluxos avançados estão em `Permissoes e Perfis`. Eles foram organizados em ordem numérica para praticar cenários de nível Pleno+, como autorização por perfil, revogação imediata, concorrência otimista, idempotência, convites e auditoria.
+
+A colecao Bruno contem requisicoes e scripts de propagacao de variaveis. Os principais fluxos de autorizacao tambem possuem automacoes Cypress em `apps/api/cypress/e2e/permissoes-perfis/`, cobrindo cenarios positivos, negativos, troca de perfil e revogacao de sessao.
 
 ## Observacoes
 
