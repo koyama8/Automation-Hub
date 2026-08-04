@@ -3406,23 +3406,54 @@ textarea:focus {
 }
 
 .assistant-header small {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   margin-top: 2px;
   color: rgba(255, 255, 255, 0.78);
   font-size: 11px;
 }
 
+.assistant-online-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #55f5bc;
+  box-shadow: 0 0 0 3px rgba(85, 245, 188, 0.16);
+}
+
+.assistant-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.assistant-new-chat,
 .assistant-close {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border: 0;
+  border-radius: 8px;
   background: transparent;
   color: #ffffff;
+  cursor: pointer;
+}
+
+.assistant-new-chat {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.assistant-new-chat:hover,
+.assistant-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.assistant-close {
   font-size: 36px;
   line-height: 1;
-  cursor: pointer;
 }
 
 .assistant-body {
@@ -3434,14 +3465,81 @@ textarea:focus {
 }
 
 .assistant-message {
+  position: relative;
   width: fit-content;
   max-width: 84%;
   margin: 0;
   border-radius: 18px;
-  padding: 12px 15px;
+  padding: 12px 15px 25px;
   color: #ffffff;
   font-size: 14px;
   line-height: 1.55;
+}
+
+.assistant-message-time {
+  position: absolute;
+  right: 12px;
+  bottom: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.assistant-session-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #d8e1e8;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #40515a;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.assistant-session-banner strong {
+  color: #6d3ee6;
+}
+
+.assistant-typing {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 58px;
+  padding: 15px 16px;
+}
+
+.assistant-typing span:not(.assistant-message-time) {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  animation: assistant-typing-dot 0.9s infinite ease-in-out;
+}
+
+.assistant-typing span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.assistant-typing span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes assistant-typing-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
 }
 
 .bot-message {
@@ -3477,6 +3575,57 @@ textarea:focus {
 .assistant-options button:hover {
   background: #f0eaff;
   transform: translateY(-1px);
+}
+
+.assistant-options button:focus-visible,
+.assistant-input-row input:focus-visible,
+.assistant-input-row button:focus-visible,
+.assistant-close:focus-visible,
+.assistant-launcher:focus-visible {
+  outline: 3px solid rgba(45, 212, 191, 0.72);
+  outline-offset: 2px;
+}
+
+.assistant-context-options {
+  padding-bottom: 2px;
+  animation: assistant-options-in 0.2s ease-out;
+}
+
+.assistant-summary {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #0b2b30, #39236d);
+}
+
+.assistant-summary strong {
+  color: #8ef4df;
+}
+
+.assistant-code {
+  display: block;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(4, 12, 20, 0.46);
+  padding: 10px;
+  color: #d8fff7;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+@keyframes assistant-options-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .assistant-input-row {
@@ -3515,13 +3664,24 @@ textarea:focus {
 }
 
 .assistant-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   border-top: 1px solid #d8e1e8;
   background: #f0f4f7;
   color: #0b2429;
   padding: 10px 14px;
-  text-align: right;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 10px;
+}
+
+.assistant-footer span {
+  color: #60717a;
+}
+
+.assistant-footer strong {
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .toast {

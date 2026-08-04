@@ -77,31 +77,44 @@
               </span>
               <div>
                 <strong>Automation Live</strong>
-                <small>assistente local de QA</small>
+                <small class="assistant-presence">
+                  <span class="assistant-online-dot" aria-hidden="true"></span>
+                  <span>Online</span>
+                  <span aria-hidden="true">•</span>
+                  <span data-cy="assistant-session-id">Sessão carregando</span>
+                </small>
               </div>
-              <button class="assistant-close" data-cy="assistant-close" type="button" aria-label="Fechar assistente">&times;</button>
+              <div class="assistant-header-actions">
+                <button class="assistant-new-chat" data-cy="assistant-new-chat" type="button" aria-label="Iniciar nova conversa" title="Nova conversa">&#8635;</button>
+                <button class="assistant-close" data-cy="assistant-close" type="button" aria-label="Fechar assistente">&times;</button>
+              </div>
             </header>
 
             <div class="assistant-body" data-cy="assistant-messages" aria-live="polite">
               <p class="assistant-message bot-message">
-                Olá! Sou seu assistente local de QA. Posso ajudar com login, cadastro e jornadas para automação web e API.
+                Olá! Sou seu assistente de estudos em QA Automation. Escolha um tema para praticar.
               </p>
               <div class="assistant-options">
-                <button type="button" data-assistant-action="credentials">Ver login local</button>
-                <button type="button" data-assistant-action="register">Criar conta de teste</button>
-                <button type="button" data-assistant-action="terms">Termos de uso</button>
-                <button type="button" data-assistant-action="dismiss">Agora não</button>
+                <button type="button" data-assistant-action="start-study-plan">Plano de estudo</button>
+                <button type="button" data-assistant-action="start-test-data">Criar massa</button>
+                <button type="button" data-assistant-action="start-exercise">Praticar exercício</button>
+                <button type="button" data-assistant-action="cypress-guide">Cypress</button>
+                <button type="button" data-assistant-action="playwright-guide">Playwright</button>
+                <button type="button" data-assistant-action="api-guide">Testes de API</button>
               </div>
             </div>
 
             <form class="assistant-input-row" data-cy="assistant-form">
-              <input data-cy="assistant-input" name="assistant-message" type="text" placeholder="Digite sua dúvida de teste" autocomplete="off" />
+              <input data-cy="assistant-input" name="assistant-message" type="text" placeholder="Digite sua dúvida de teste" aria-label="Digite sua dúvida para o assistente" autocomplete="off" maxlength="240" />
               <button data-cy="assistant-send" type="submit" aria-label="Enviar mensagem">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 8-16 8 4-8-4-8z" /></svg>
               </button>
             </form>
 
-            <footer class="assistant-footer">Powered by QA Automation Lab</footer>
+            <footer class="assistant-footer">
+              <span>Progresso salvo localmente</span>
+              <strong>QA Automation Lab</strong>
+            </footer>
           </section>
         </aside>
       </section>

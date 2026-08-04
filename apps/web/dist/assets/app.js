@@ -345,19 +345,225 @@ function showToast(message, type = 'success') {
   setTimeout(() => toast.classList.add('hidden'), 4200)
 }
 
+const ASSISTANT_HISTORY_STORE = 'qa_automation_lab_study_history_v1'
+const ASSISTANT_SESSION_STORE = 'qa_automation_lab_study_session_v1'
+const ASSISTANT_METRICS_STORE = 'qa_automation_lab_study_metrics_v1'
+const ASSISTANT_HISTORY_LIMIT = 80
+const ASSISTANT_HOME_ACTIONS = [
+  { action: 'start-study-plan', label: 'Plano de estudo' },
+  { action: 'start-test-data', label: 'Criar massa' },
+  { action: 'start-exercise', label: 'Praticar exercício' },
+  { action: 'cypress-guide', label: 'Cypress' },
+  { action: 'playwright-guide', label: 'Playwright' },
+  { action: 'api-guide', label: 'Testes de API' },
+  { action: 'credentials', label: 'Ver login local' },
+  { action: 'terms', label: 'Termos de uso' },
+  { action: 'dismiss', label: 'Agora não' },
+]
+
+const ASSISTANT_INTENTS = [
+  {
+    name: 'test-data',
+    keywords: ['massa de teste', 'massa de dados', 'criar massa', 'faker', 'dados dinamicos', 'dados dinâmicos', 'dados de teste'],
+    response: 'Posso ensinar a montar massas válidas, inválidas, de limite ou dinâmicas com Faker.',
+    actions: [{ action: 'start-test-data', label: 'Criar uma massa' }, { action: 'test-data-concepts', label: 'Entender estratégias' }],
+  },
+  {
+    name: 'playwright',
+    keywords: ['playwright', 'page locator', 'getbyrole', 'teste com playwright'],
+    response: 'Playwright automatiza navegadores com locators acessíveis, ações e assertions. Neste laboratório o código atual usa Cypress, mas você pode estudar os conceitos equivalentes.',
+    actions: [{ action: 'playwright-guide', label: 'Ver exemplo Playwright' }, { action: 'start-exercise', label: 'Praticar exercício' }],
+  },
+  {
+    name: 'cypress',
+    keywords: ['cypress', 'cy request', 'cy api', 'cy get', 'automatizar', 'automacao', 'automação', 'teste e2e'],
+    response: 'No Cypress, pense em três partes: preparar a massa, executar a ação e validar o resultado e o efeito no sistema.',
+    actions: [{ action: 'cypress-guide', label: 'Ver exemplo Cypress' }, { action: 'start-exercise', label: 'Praticar exercício' }],
+  },
+  {
+    name: 'api',
+    keywords: ['teste de api', 'api', 'endpoint', 'request', 'status http', 'backend', 'porta 3030'],
+    response: 'Em testes de API, valide método, URL, autenticação, status, contrato do body e o efeito produzido por cada operação.',
+    actions: [{ action: 'api-guide', label: 'Ver exemplo de API' }, { action: 'start-test-data', label: 'Preparar massa' }],
+  },
+  {
+    name: 'assertions',
+    keywords: ['assertion', 'assertions', 'expect', 'should', 'validacao', 'validação'],
+    response: 'Assertions provam o comportamento. Evite validar apenas o status: confira mensagem, estrutura, dados e o efeito final da ação.',
+    actions: [{ action: 'assertions-guide', label: 'Ver exemplos' }, { action: 'start-exercise', label: 'Praticar validações' }],
+  },
+  {
+    name: 'selectors',
+    keywords: ['seletor', 'seletores', 'data cy', 'data-cy', 'locator', 'elemento'],
+    response: 'Prefira seletores estáveis e acessíveis, como data-cy no Cypress e getByRole no Playwright. Evite classes visuais frágeis.',
+    actions: [{ action: 'selectors-guide', label: 'Comparar seletores' }, { action: 'start-exercise', label: 'Praticar exercício' }],
+  },
+  {
+    name: 'hooks',
+    keywords: ['beforeeach', 'before each', 'hook', 'fixtures', 'fixture'],
+    response: 'Use beforeEach para preparar o estado comum. A massa específica e a validação principal devem continuar claras dentro do cenário.',
+    actions: [{ action: 'hooks-guide', label: 'Ver estrutura' }, { action: 'start-test-data', label: 'Criar massa' }],
+  },
+  {
+    name: 'permissions',
+    keywords: ['permissoes', 'permissões', 'perfil qa', 'viewer', 'admin', 'token', '401', '403', 'autorizacao', 'autorização'],
+    response: 'Nos exercícios de autorização, admin gerencia perfis, QA executa ações permitidas e viewer consulta dados. Use 401 para sessão inválida e 403 para falta de permissão.',
+    actions: [{ action: 'permissions-guide', label: 'Revisar 401 e 403' }, { action: 'start-exercise', label: 'Criar exercício' }],
+  },
+  {
+    name: 'password',
+    keywords: ['esqueci minha senha', 'recuperar senha', 'redefinir senha', 'senha esquecida', 'problema com senha', 'senha'],
+    response: 'A recuperação de senha permite estudar campo obrigatório, formato de e-mail, usuário inexistente, token e redefinição com sucesso.',
+    actions: [{ action: 'forgot', label: 'Abrir recuperação' }, { action: 'start-exercise', label: 'Praticar cenário' }],
+  },
+  {
+    name: 'register',
+    keywords: ['criar conta', 'nova conta', 'cadastro', 'cadastrar', 'registrar usuario', 'registrar usuário'],
+    response: 'No cadastro você pode estudar campos obrigatórios, formatos inválidos, confirmação de senha, termos e e-mail duplicado.',
+    actions: [{ action: 'register', label: 'Abrir cadastro' }, { action: 'start-test-data', label: 'Criar massa de usuário' }],
+  },
+  {
+    name: 'login',
+    keywords: ['nao consigo entrar', 'não consigo entrar', 'fazer login', 'entrar', 'acesso', 'credenciais', 'login'],
+    response: 'Na jornada de login, valide campos, credenciais, resposta, armazenamento do token, sessão e acesso à tela protegida.',
+    actions: [{ action: 'credentials', label: 'Ver login local' }, { action: 'login-guide', label: 'Ver roteiro de teste' }],
+  },
+  {
+    name: 'greeting',
+    keywords: ['ola', 'olá', 'oi', 'bom dia', 'boa tarde', 'boa noite'],
+    response: 'Olá! Posso montar uma trilha de estudo, criar exemplos de massa e propor exercícios de Cypress, Playwright e API.',
+    actions: ASSISTANT_HOME_ACTIONS,
+  },
+  {
+    name: 'help',
+    keywords: ['ajuda', 'o que voce faz', 'o que você faz', 'opcoes', 'opções', 'assuntos', 'estudar'],
+    response: 'Escolha um tema para estudar. Também posso explicar seletores, assertions, hooks, permissões e autenticação.',
+    actions: [...ASSISTANT_HOME_ACTIONS, { action: 'show-progress', label: 'Meu progresso' }],
+  },
+]
+
+function generateAssistantSessionId() {
+  const datePart = new Date().toISOString().slice(2, 10).replaceAll('-', '')
+  const randomPart = Math.random().toString(36).slice(2, 6).toUpperCase()
+  return 'LAB-' + datePart + '-' + randomPart
+}
+
+function createAssistantState() {
+  return { sessionId: generateAssistantSessionId(), flow: null, step: null, intent: null, answers: {}, lastSummary: '' }
+}
+
+function readAssistantJson(key, fallback) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || 'null')
+    return value && typeof value === 'object' ? value : fallback
+  } catch (error) {
+    return fallback
+  }
+}
+
+let assistantState = { ...createAssistantState(), ...readAssistantJson(ASSISTANT_SESSION_STORE, {}) }
+
+function persistAssistantState() {
+  localStorage.setItem(ASSISTANT_SESSION_STORE, JSON.stringify(assistantState))
+  const session = getElement('[data-cy="assistant-session-id"]')
+  if (session) session.textContent = 'Sessão ' + assistantState.sessionId
+}
+
+function getAssistantHistory() {
+  const history = readAssistantJson(ASSISTANT_HISTORY_STORE, [])
+  return Array.isArray(history) ? history : []
+}
+
+function saveAssistantHistoryEntry(entry) {
+  const history = getAssistantHistory()
+  history.push(entry)
+  localStorage.setItem(ASSISTANT_HISTORY_STORE, JSON.stringify(history.slice(-ASSISTANT_HISTORY_LIMIT)))
+}
+
+function getAssistantTime() {
+  return new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date())
+}
+
+function escapeAssistantHtml(value = '') {
+  return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;')
+}
+
+function formatAssistantCode(code) {
+  return '<code class="assistant-code">' + escapeAssistantHtml(code).replaceAll('\n', '<br>') + '</code>'
+}
+
 function appendAssistantMessage(message, type = 'bot', options = {}) {
   const body = getElement('[data-cy="assistant-messages"]')
   if (!body) return
-
+  const timestamp = options.timestamp || getAssistantTime()
   const paragraph = document.createElement('p')
-  paragraph.className = `assistant-message ${type === 'user' ? 'user-message' : 'bot-message'}`
-  if (options.html) {
-    paragraph.innerHTML = message
-  } else {
-    paragraph.textContent = message
-  }
+  paragraph.className = 'assistant-message ' + (type === 'user' ? 'user-message' : 'bot-message')
+  if (options.summary) paragraph.classList.add('assistant-summary')
+  paragraph.dataset.cy = options.summary ? 'assistant-summary' : 'assistant-message'
+  paragraph.dataset.author = type === 'user' ? 'user' : 'bot'
+  if (options.html) paragraph.innerHTML = message
+  else paragraph.textContent = message
+  const time = document.createElement('span')
+  time.className = 'assistant-message-time'
+  time.textContent = timestamp
+  paragraph.appendChild(time)
   body.appendChild(paragraph)
   body.scrollTop = body.scrollHeight
+  if (options.persist !== false) saveAssistantHistoryEntry({ kind: 'message', message, type, html: Boolean(options.html), summary: Boolean(options.summary), timestamp })
+}
+
+function appendAssistantOptions(actions = [], options = {}) {
+  const body = getElement('[data-cy="assistant-messages"]')
+  if (!body || !actions.length) return
+  const container = document.createElement('div')
+  container.className = 'assistant-options assistant-context-options'
+  container.dataset.cy = 'assistant-context-options'
+  actions.forEach(({ action, label }) => {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.dataset.assistantAction = action
+    button.textContent = label
+    container.appendChild(button)
+  })
+  body.appendChild(container)
+  body.scrollTop = body.scrollHeight
+  if (options.persist !== false) saveAssistantHistoryEntry({ kind: 'options', actions })
+}
+
+function appendAssistantSessionBanner() {
+  const body = getElement('[data-cy="assistant-messages"]')
+  if (!body) return
+  const banner = document.createElement('div')
+  banner.className = 'assistant-session-banner'
+  banner.dataset.cy = 'assistant-session-banner'
+  banner.innerHTML = '<span>Laboratório de estudos</span><strong>' + escapeAssistantHtml(assistantState.sessionId) + '</strong>'
+  body.appendChild(banner)
+}
+
+function restoreAssistantConversation() {
+  const body = getElement('[data-cy="assistant-messages"]')
+  if (!body) return
+  body.innerHTML = ''
+  appendAssistantSessionBanner()
+  const history = getAssistantHistory()
+  if (!history.length) {
+    appendAssistantMessage('Olá! Sou seu assistente de estudos em QA Automation. Escolha um tema para praticar.')
+    appendAssistantOptions(ASSISTANT_HOME_ACTIONS)
+    return
+  }
+  history.forEach((entry) => {
+    if (entry.kind === 'message') appendAssistantMessage(entry.message, entry.type, { html: entry.html, summary: entry.summary, timestamp: entry.timestamp, persist: false })
+    if (entry.kind === 'options') appendAssistantOptions(entry.actions, { persist: false })
+  })
+  body.scrollTop = body.scrollHeight
+}
+
+function startNewAssistantConversation() {
+  assistantState = createAssistantState()
+  localStorage.removeItem(ASSISTANT_HISTORY_STORE)
+  persistAssistantState()
+  restoreAssistantConversation()
+  setAssistantOpen(true)
 }
 
 function setAssistantOpen(isOpen) {
@@ -365,62 +571,519 @@ function setAssistantOpen(isOpen) {
   getElement('[data-cy="assistant-open"]')?.classList.toggle('hidden', isOpen)
 }
 
+function normalizeAssistantText(value = '') {
+  return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function trackAssistantMetric(name) {
+  const metrics = readAssistantJson(ASSISTANT_METRICS_STORE, {})
+  metrics[name] = Number(metrics[name] || 0) + 1
+  localStorage.setItem(ASSISTANT_METRICS_STORE, JSON.stringify(metrics))
+}
+
+function findAssistantIntent(text) {
+  const normalizedText = normalizeAssistantText(text)
+  let bestMatch = null
+  let bestScore = 0
+  ASSISTANT_INTENTS.forEach((intent) => {
+    const score = intent.keywords.reduce((total, keyword) => {
+      const normalizedKeyword = normalizeAssistantText(keyword)
+      return normalizedText.includes(normalizedKeyword) ? total + normalizedKeyword.split(' ').length : total
+    }, 0)
+    if (score > bestScore) {
+      bestMatch = intent
+      bestScore = score
+    }
+  })
+  const followUp = /^(sim|quero|como faco|me explica|saiba mais|continuar)$/
+  if (!bestMatch && assistantState.intent && followUp.test(normalizedText)) {
+    return ASSISTANT_INTENTS.find((intent) => intent.name === assistantState.intent) || null
+  }
+  return bestMatch
+}
+
+function showAssistantTyping(callback) {
+  const body = getElement('[data-cy="assistant-messages"]')
+  const input = getElement('[data-cy="assistant-input"]')
+  const submit = getElement('[data-cy="assistant-send"]')
+  if (!body) return callback()
+  input?.setAttribute('disabled', '')
+  submit?.setAttribute('disabled', '')
+  const typing = document.createElement('p')
+  typing.className = 'assistant-message bot-message assistant-typing'
+  typing.dataset.cy = 'assistant-typing'
+  typing.setAttribute('aria-label', 'Assistente digitando')
+  typing.innerHTML = '<span></span><span></span><span></span>'
+  body.appendChild(typing)
+  body.scrollTop = body.scrollHeight
+  setTimeout(() => {
+    typing.remove()
+    input?.removeAttribute('disabled')
+    submit?.removeAttribute('disabled')
+    callback()
+    input?.focus()
+  }, 420)
+}
+
+function answerAssistantQuestion(text) {
+  const intent = findAssistantIntent(text)
+  if (!intent) {
+    assistantState.intent = null
+    persistAssistantState()
+    appendAssistantMessage('Ainda não entendi esse tema. Posso ajudar com plano de estudo, massa de testes, Cypress, Playwright, API, seletores, assertions e permissões.')
+    appendAssistantOptions([...ASSISTANT_HOME_ACTIONS, { action: 'show-progress', label: 'Meu progresso' }])
+    return
+  }
+  assistantState.intent = intent.name
+  persistAssistantState()
+  trackAssistantMetric('intent:' + intent.name)
+  appendAssistantMessage(intent.response)
+  appendAssistantOptions(intent.actions)
+}
+
+function resetAssistantFlow(flow, step) {
+  assistantState.flow = flow
+  assistantState.step = step
+  assistantState.answers = {}
+  assistantState.lastSummary = ''
+  persistAssistantState()
+  trackAssistantMetric('flow:' + flow)
+}
+
+function startStudyPlan() {
+  resetAssistantFlow('study-plan', 'level')
+  appendAssistantMessage('Vamos montar uma trilha de estudo. Qual é o seu nível atual?')
+  appendAssistantOptions([
+    { action: 'study-level-beginner', label: 'Iniciante' },
+    { action: 'study-level-intermediate', label: 'Intermediário' },
+    { action: 'study-level-advanced', label: 'Avançado' },
+  ])
+}
+
+function selectStudyLevel(level) {
+  assistantState.answers.level = level
+  assistantState.step = 'area'
+  persistAssistantState()
+  appendAssistantMessage('Qual área você quer priorizar nesta trilha?')
+  appendAssistantOptions([
+    { action: 'study-area-web', label: 'Automação Web' },
+    { action: 'study-area-api', label: 'Testes de API' },
+    { action: 'study-area-both', label: 'Web + API' },
+  ])
+}
+
+function selectStudyArea(area) {
+  assistantState.answers.area = area
+  assistantState.step = 'duration'
+  persistAssistantState()
+  appendAssistantMessage('Quanto tempo você quer dedicar a esta trilha?')
+  appendAssistantOptions([
+    { action: 'study-duration-7', label: '7 dias' },
+    { action: 'study-duration-14', label: '14 dias' },
+    { action: 'study-duration-30', label: '30 dias' },
+  ])
+}
+
+function completeStudyPlan(duration) {
+  const levelLabels = { beginner: 'Iniciante', intermediate: 'Intermediário', advanced: 'Avançado' }
+  const areaLabels = { web: 'Automação Web', api: 'Testes de API', both: 'Web + API' }
+  const levelTopics = {
+    beginner: 'fundamentos, seletores, ações e assertions básicas',
+    intermediate: 'hooks, massa dinâmica, cenários negativos e organização',
+    advanced: 'arquitetura, permissões, idempotência, CI e estratégia de cobertura',
+  }
+  const areaTopics = {
+    web: 'login, formulários, tabelas, modais e jornadas E2E',
+    api: 'HTTP, autenticação, contratos, filtros e efeitos entre requisições',
+    both: 'massa pela API, regras de negócio e jornadas essenciais pela interface',
+  }
+  const { level, area } = assistantState.answers
+  assistantState.answers.duration = duration
+  assistantState.step = 'complete'
+  assistantState.lastSummary = [
+    'Plano de estudo ' + assistantState.sessionId,
+    'Nível: ' + levelLabels[level],
+    'Foco: ' + areaLabels[area],
+    'Duração: ' + duration + ' dias',
+    'Fundamentos: ' + levelTopics[level],
+    'Prática: ' + areaTopics[area],
+  ].join('\n')
+  persistAssistantState()
+  trackAssistantMetric('study-plan:completed')
+  appendAssistantMessage(
+    '<strong>Plano de estudo</strong><br>Nível: ' + levelLabels[level] +
+      '<br>Foco: ' + areaLabels[area] +
+      '<br>Duração: ' + duration + ' dias' +
+      '<br><br><strong>Fundamentos:</strong> ' + levelTopics[level] +
+      '<br><strong>Prática:</strong> ' + areaTopics[area] +
+      '<br><br>Meta: estudar um conceito, implementar um cenário e explicar o que foi validado.',
+    'bot',
+    { html: true, summary: true },
+  )
+  appendAssistantOptions([
+    { action: 'copy-summary', label: 'Copiar plano' },
+    { action: 'start-exercise', label: 'Gerar exercício' },
+    { action: 'mark-useful', label: 'Marcar como útil' },
+    { action: 'new-conversation', label: 'Nova conversa' },
+  ])
+}
+
+function startTestDataFlow() {
+  resetAssistantFlow('test-data', 'entity')
+  appendAssistantMessage('Vamos criar uma massa para estudo. Qual entidade você quer testar?')
+  appendAssistantOptions([
+    { action: 'test-data-entity-user', label: 'Usuário' },
+    { action: 'test-data-entity-client', label: 'Cliente' },
+    { action: 'test-data-entity-product', label: 'Produto' },
+    { action: 'test-data-entity-order', label: 'Pedido' },
+  ])
+}
+
+function selectTestDataEntity(entity) {
+  assistantState.answers.entity = entity
+  assistantState.step = 'strategy'
+  persistAssistantState()
+  appendAssistantMessage('Qual estratégia de massa você quer praticar?')
+  appendAssistantOptions([
+    { action: 'test-data-strategy-valid', label: 'Dados válidos' },
+    { action: 'test-data-strategy-invalid', label: 'Dados inválidos' },
+    { action: 'test-data-strategy-boundary', label: 'Valores limite' },
+    { action: 'test-data-strategy-dynamic', label: 'Massa dinâmica' },
+  ])
+}
+
+function getTestDataExample(entity, strategy) {
+  const examples = {
+    user: {
+      valid: "const usuario = {\n  name: 'QA Aluno',\n  email: 'qa.aluno@adminlab.com',\n  password: 'QaPleno@123'\n}",
+      invalid: "const usuarioInvalido = {\n  name: '',\n  email: 'email-invalido',\n  password: '123'\n}",
+      boundary: "const usuarioLimite = {\n  name: 'QA',\n  email: 'a@b.com',\n  password: 'Qa@12345'\n}",
+      dynamic: "const usuario = {\n  name: faker.person.fullName(),\n  email: faker.internet.email(),\n  password: 'QaPleno@123'\n}",
+    },
+    client: {
+      valid: "const cliente = {\n  name: 'Cliente QA',\n  email: 'cliente.qa@adminlab.com',\n  document: '12345678901'\n}",
+      invalid: "const clienteInvalido = {\n  name: '',\n  email: 'sem-arroba',\n  document: '123'\n}",
+      boundary: "const clienteLimite = {\n  name: 'AB',\n  email: 'a@b.com',\n  document: '12345678901'\n}",
+      dynamic: "const cliente = {\n  name: faker.person.fullName(),\n  email: faker.internet.email(),\n  document: faker.string.numeric(11)\n}",
+    },
+    product: {
+      valid: "const produto = {\n  name: 'Produto de Teste',\n  price: 99.9,\n  stock: 10\n}",
+      invalid: "const produtoInvalido = {\n  name: '',\n  price: -1,\n  stock: -5\n}",
+      boundary: "const produtoLimite = {\n  name: 'A',\n  price: 0.01,\n  stock: 0\n}",
+      dynamic: "const produto = {\n  name: faker.commerce.productName(),\n  price: Number(faker.commerce.price()),\n  stock: faker.number.int({ min: 0, max: 100 })\n}",
+    },
+    order: {
+      valid: "const pedido = {\n  clientId: 1,\n  items: [{ productId: 1, quantity: 2 }]\n}",
+      invalid: "const pedidoInvalido = {\n  clientId: null,\n  items: []\n}",
+      boundary: "const pedidoLimite = {\n  clientId: 1,\n  items: [{ productId: 1, quantity: 1 }]\n}",
+      dynamic: "const pedido = {\n  clientId,\n  items: [{ productId, quantity: faker.number.int({ min: 1, max: 5 }) }]\n}",
+    },
+  }
+  return examples[entity]?.[strategy] || ''
+}
+
+function completeTestDataFlow(strategy) {
+  const entityLabels = { user: 'Usuário', client: 'Cliente', product: 'Produto', order: 'Pedido' }
+  const strategyLabels = { valid: 'Dados válidos', invalid: 'Dados inválidos', boundary: 'Valores limite', dynamic: 'Massa dinâmica com Faker' }
+  const { entity } = assistantState.answers
+  const example = getTestDataExample(entity, strategy)
+  assistantState.answers.strategy = strategy
+  assistantState.step = 'complete'
+  assistantState.lastSummary = strategyLabels[strategy] + ' para ' + entityLabels[entity] + '\n\n' + example
+  persistAssistantState()
+  trackAssistantMetric('test-data:generated')
+  appendAssistantMessage(
+    '<strong>Massa de estudo: ' + entityLabels[entity] + '</strong><br>Estratégia: ' +
+      strategyLabels[strategy] + '<br><br>' + formatAssistantCode(example) +
+      '<br><br>Use um identificador dinâmico quando o teste criar registros persistentes, evitando conflito entre execuções.',
+    'bot',
+    { html: true, summary: true },
+  )
+  appendAssistantOptions([
+    { action: 'copy-summary', label: 'Copiar massa' },
+    { action: 'start-test-data', label: 'Criar outra massa' },
+    { action: 'start-exercise', label: 'Usar em exercício' },
+    { action: 'mark-useful', label: 'Marcar como útil' },
+  ])
+}
+
+function startExerciseFlow() {
+  resetAssistantFlow('exercise', 'tool')
+  appendAssistantMessage('Qual tecnologia você quer praticar agora?')
+  appendAssistantOptions([
+    { action: 'exercise-tool-cypress', label: 'Cypress Web' },
+    { action: 'exercise-tool-api', label: 'Cypress API' },
+    { action: 'exercise-tool-playwright', label: 'Playwright' },
+  ])
+}
+
+function selectExerciseTool(tool) {
+  assistantState.answers.tool = tool
+  assistantState.step = 'level'
+  persistAssistantState()
+  appendAssistantMessage('Escolha a dificuldade do exercício.')
+  appendAssistantOptions([
+    { action: 'exercise-level-beginner', label: 'Iniciante' },
+    { action: 'exercise-level-intermediate', label: 'Intermediário' },
+    { action: 'exercise-level-advanced', label: 'Avançado' },
+  ])
+}
+
+function completeExerciseFlow(level) {
+  const toolLabels = { cypress: 'Cypress Web', api: 'Cypress API', playwright: 'Playwright' }
+  const challenges = {
+    cypress: {
+      beginner: 'Abra o login, preencha credenciais válidas e valide a navegação para o dashboard.',
+      intermediate: 'Cadastre um usuário com massa dinâmica e valide o modal e os dados exibidos.',
+      advanced: 'Automatize uma jornada com preparação pela API, ação na interface e validação de efeito.',
+    },
+    api: {
+      beginner: 'Faça login pela API e valide status, mensagem e presença do token.',
+      intermediate: 'Crie um cliente, guarde o ID e consulte o mesmo registro para validar o contrato.',
+      advanced: 'Crie um QA, revogue sua sessão e prove que o token antigo retorna 401.',
+    },
+    playwright: {
+      beginner: 'Use getByRole para preencher o login e valide a URL após entrar.',
+      intermediate: 'Modele uma jornada de cadastro com locators acessíveis e assertions visíveis.',
+      advanced: 'Prepare massa via request, execute a jornada no navegador e valide permissões por perfil.',
+    },
+  }
+  const levelLabels = { beginner: 'Iniciante', intermediate: 'Intermediário', advanced: 'Avançado' }
+  const { tool } = assistantState.answers
+  const challenge = challenges[tool][level]
+  assistantState.answers.level = level
+  assistantState.step = 'complete'
+  assistantState.lastSummary = 'Exercício ' + toolLabels[tool] + ' - ' + levelLabels[level] + '\n' + challenge
+  persistAssistantState()
+  trackAssistantMetric('exercise:generated')
+  appendAssistantMessage(
+    '<strong>Exercício de estudo</strong><br>Tecnologia: ' + toolLabels[tool] +
+      '<br>Nível: ' + levelLabels[level] +
+      '<br><br><strong>Desafio:</strong> ' + challenge +
+      '<br><br><strong>Critério de conclusão:</strong> explique a massa usada, a ação executada e o motivo de cada assertion.',
+    'bot',
+    { html: true, summary: true },
+  )
+  appendAssistantOptions([
+    { action: 'copy-summary', label: 'Copiar exercício' },
+    { action: 'start-test-data', label: 'Preparar massa' },
+    { action: 'start-exercise', label: 'Novo exercício' },
+    { action: 'mark-useful', label: 'Marcar como útil' },
+  ])
+}
+
+async function copyAssistantSummary() {
+  if (!assistantState.lastSummary) {
+    appendAssistantMessage('Ainda não existe conteúdo pronto para copiar.')
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(assistantState.lastSummary)
+    appendAssistantMessage('Conteúdo copiado para a área de transferência.')
+  } catch (error) {
+    appendAssistantMessage('Não consegui copiar automaticamente. Selecione o resumo e copie manualmente.')
+  }
+}
+
+function showStudyProgress() {
+  const metrics = readAssistantJson(ASSISTANT_METRICS_STORE, {})
+  const plans = Number(metrics['study-plan:completed'] || 0)
+  const masses = Number(metrics['test-data:generated'] || 0)
+  const exercises = Number(metrics['exercise:generated'] || 0)
+  const useful = Number(metrics['feedback:useful'] || 0)
+  appendAssistantMessage(
+    '<strong>Progresso local de estudo</strong><br>Planos concluídos: ' + plans +
+      '<br>Massas geradas: ' + masses +
+      '<br>Exercícios propostos: ' + exercises +
+      '<br>Conteúdos marcados como úteis: ' + useful +
+      '<br><br>Esses dados ficam somente neste navegador.',
+    'bot',
+    { html: true, summary: true },
+  )
+}
+
+function registerStudyFeedback(type) {
+  trackAssistantMetric('feedback:' + type)
+  const message = type === 'useful'
+    ? 'Ótimo! Este conteúdo foi marcado como útil no seu progresso local.'
+    : 'Anotado. Tente outro nível ou peça um exemplo diferente para reforçar o conceito.'
+  appendAssistantMessage(message)
+  appendAssistantOptions([
+    { action: 'show-progress', label: 'Ver meu progresso' },
+    { action: 'start-exercise', label: 'Continuar praticando' },
+    { action: 'new-conversation', label: 'Novo assunto' },
+  ])
+}
+
+function showCypressGuide() {
+  const example = "describe('Login', () => {\n  it('deve entrar com sucesso', () => {\n    cy.visit('/admin/login')\n    cy.get('[data-cy=\"login-email\"]').type('qa@adminlab.com')\n    cy.get('[data-cy=\"login-submit\"]').click()\n    cy.url().should('include', '/dashboard')\n  })\n})"
+  appendAssistantMessage(
+    '<strong>Estrutura Cypress</strong><br><br>' + formatAssistantCode(example) +
+      '<br><br>Estude o fluxo Arrange, Act e Assert: prepare, execute e valide.',
+    'bot',
+    { html: true, summary: true },
+  )
+  appendAssistantOptions([{ action: 'start-exercise', label: 'Gerar exercício Cypress' }, { action: 'selectors-guide', label: 'Estudar seletores' }])
+}
+
+function showPlaywrightGuide() {
+  const example = "test('deve entrar com sucesso', async ({ page }) => {\n  await page.goto('/admin/login')\n  await page.getByLabel('E-mail').fill('qa@adminlab.com')\n  await page.getByRole('button', { name: 'Entrar' }).click()\n  await expect(page).toHaveURL(/dashboard/)\n})"
+  appendAssistantMessage(
+    '<strong>Estrutura Playwright</strong><br><br>' + formatAssistantCode(example) +
+      '<br><br>Prefira locators por papel e nome acessível. Este projeto está configurado atualmente com Cypress; o exemplo é para comparação de estudos.',
+    'bot',
+    { html: true, summary: true },
+  )
+  appendAssistantOptions([{ action: 'start-exercise', label: 'Gerar exercício Playwright' }, { action: 'selectors-guide', label: 'Comparar locators' }])
+}
+
+function showApiGuide() {
+  const example = "cy.api({\n  method: 'GET',\n  url: 'http://localhost:3030/api/clients',\n  headers: { Authorization: 'Bearer ' + token },\n}).then((response) => {\n  expect(response.status).to.eq(200)\n  expect(response.body.data).to.be.an('array')\n})"
+  appendAssistantMessage(
+    '<strong>Estrutura de teste de API</strong><br><br>' + formatAssistantCode(example) +
+      '<br><br>Depois do status, valide contrato, conteúdo e regras de negócio.',
+    'bot',
+    { html: true, summary: true },
+  )
+  appendAssistantOptions([{ action: 'start-test-data', label: 'Criar massa para API' }, { action: 'assertions-guide', label: 'Melhorar assertions' }])
+}
+
+function handleAssistantAction(action) {
+  if (action === 'start-study-plan') return startStudyPlan()
+  if (action === 'start-test-data') return startTestDataFlow()
+  if (action === 'start-exercise') return startExerciseFlow()
+  if (action === 'new-conversation') return startNewAssistantConversation()
+  if (action === 'copy-summary') return copyAssistantSummary()
+  if (action === 'show-progress') return showStudyProgress()
+  if (action === 'mark-useful') return registerStudyFeedback('useful')
+  if (action === 'mark-review') return registerStudyFeedback('review')
+  if (action === 'cypress-guide') return showCypressGuide()
+  if (action === 'playwright-guide') return showPlaywrightGuide()
+  if (action === 'api-guide') return showApiGuide()
+  if (action.startsWith('study-level-')) return selectStudyLevel(action.replace('study-level-', ''))
+  if (action.startsWith('study-area-')) return selectStudyArea(action.replace('study-area-', ''))
+  if (action.startsWith('study-duration-')) return completeStudyPlan(action.replace('study-duration-', ''))
+  if (action.startsWith('test-data-entity-')) return selectTestDataEntity(action.replace('test-data-entity-', ''))
+  if (action.startsWith('test-data-strategy-')) return completeTestDataFlow(action.replace('test-data-strategy-', ''))
+  if (action.startsWith('exercise-tool-')) return selectExerciseTool(action.replace('exercise-tool-', ''))
+  if (action.startsWith('exercise-level-')) return completeExerciseFlow(action.replace('exercise-level-', ''))
+
+  if (action === 'test-data-concepts') {
+    appendAssistantMessage('Use massa válida para o caminho feliz, inválida para regras de erro, valores limite para fronteiras e massa dinâmica para evitar conflito entre execuções.')
+    return appendAssistantOptions([{ action: 'start-test-data', label: 'Montar exemplo' }])
+  }
+
+  if (action === 'credentials') {
+    appendAssistantMessage(
+      'Credenciais locais para estudo:<br><strong>Login:</strong> qa@adminlab.com<br><strong>Senha:</strong> pwd123<br><span>Use apenas neste laboratório local.</span>',
+      'bot',
+      { html: true },
+    )
+    return appendAssistantOptions([{ action: 'login-guide', label: 'Ver roteiro de login' }, { action: 'forgot', label: 'Estudar recuperação' }])
+  }
+
+  if (action === 'register') {
+    appendAssistantMessage('Vou abrir o cadastro para você praticar validações e cenários positivos e negativos.')
+    return showView('registerView')
+  }
+
+  if (action === 'forgot') {
+    appendAssistantMessage('Vou abrir a recuperação de senha para você estudar o fluxo de token.')
+    return showView('forgotView')
+  }
+
+  if (action === 'terms') {
+    return appendAssistantMessage(
+      '<strong>Sobre o laboratório:</strong><br>Este ambiente foi criado para estudos de automação web e API com dados fictícios. Nenhuma informação da conversa é enviada para serviços externos.',
+      'bot',
+      { html: true },
+    )
+  }
+
+  if (action === 'login-guide') {
+    appendAssistantMessage('Roteiro: valide campos obrigatórios, credenciais inválidas, login válido, token ou sessão e acesso ao dashboard.')
+    return appendAssistantOptions([{ action: 'credentials', label: 'Ver credenciais' }, { action: 'start-exercise', label: 'Criar exercício' }])
+  }
+
+  if (action === 'selectors-guide') {
+    const example = "Cypress: cy.get('[data-cy=\"login-submit\"]')\nPlaywright: page.getByRole('button', { name: 'Entrar' })"
+    return appendAssistantMessage(
+      '<strong>Seletores estáveis</strong><br><br>' + formatAssistantCode(example) +
+        '<br><br>O primeiro usa um contrato técnico; o segundo usa papel e nome acessível.',
+      'bot',
+      { html: true },
+    )
+  }
+
+  if (action === 'assertions-guide') {
+    const example = "expect(response.status).to.eq(200)\nexpect(response.body.data).to.be.an('array').and.not.be.empty\ncy.contains('Login realizado com sucesso').should('be.visible')"
+    return appendAssistantMessage(
+      '<strong>Assertions úteis</strong><br><br>' + formatAssistantCode(example) +
+        '<br><br>Valide apenas comportamentos importantes e mensagens previstas pela regra.',
+      'bot',
+      { html: true },
+    )
+  }
+
+  if (action === 'hooks-guide') {
+    const example = "beforeEach(() => {\n  cy.loginApi().then((token) => {\n    adminToken = token\n  })\n})"
+    return appendAssistantMessage(
+      '<strong>Preparação com beforeEach</strong><br><br>' + formatAssistantCode(example) +
+        '<br><br>Use o hook para o estado comum, sem esconder a validação principal do it.',
+      'bot',
+      { html: true },
+    )
+  }
+
+  if (action === 'permissions-guide') {
+    return appendAssistantMessage('401 significa que a autenticação ou sessão não é válida. 403 significa que o usuário está autenticado, mas não possui permissão para aquela ação.')
+  }
+
+  if (action === 'help') return answerAssistantQuestion('ajuda')
+
+  if (action === 'dismiss') {
+    appendAssistantMessage('Tudo bem. Quando quiser continuar estudando, clique no robô para reabrir.')
+    return setTimeout(() => setAssistantOpen(false), 700)
+  }
+}
+
+function handleAssistantInput(text) {
+  answerAssistantQuestion(text)
+}
+
 function setupLoginAssistant() {
   const launcher = getElement('[data-cy="assistant-open"]')
   const closeButton = getElement('[data-cy="assistant-close"]')
-  const options = document.querySelector('.assistant-options')
+  const newChatButton = getElement('[data-cy="assistant-new-chat"]')
+  const messages = getElement('[data-cy="assistant-messages"]')
   const form = getElement('[data-cy="assistant-form"]')
   const input = getElement('[data-cy="assistant-input"]')
 
   if (!launcher || launcher.dataset.ready === 'true') return
 
   launcher.dataset.ready = 'true'
+  persistAssistantState()
+  restoreAssistantConversation()
   launcher.addEventListener('click', () => setAssistantOpen(true))
   closeButton?.addEventListener('click', () => setAssistantOpen(false))
+  newChatButton?.addEventListener('click', startNewAssistantConversation)
   setAssistantOpen(false)
 
-  options?.addEventListener('click', (event) => {
+  messages?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-assistant-action]')
     if (!button) return
-
     const action = button.dataset.assistantAction
     appendAssistantMessage(button.textContent.trim(), 'user')
-
-    if (action === 'credentials') {
-      appendAssistantMessage(
-        'Acesso local pronto para automação:<br><strong>Login:</strong> qa@adminlab.com<br><strong>Senha:</strong> pwd123<br><span>Você pode validar esse fluxo mesmo com a API desligada.</span>',
-        'bot',
-        { html: true },
-      )
-    }
-
-    if (action === 'register') {
-      appendAssistantMessage('Vou abrir a tela de cadastro. Depois valide o modal de sucesso ou o alerta de e-mail duplicado.')
-      showView('registerView')
-    }
-
-    if (action === 'terms') {
-      appendAssistantMessage(
-        '<strong>Termos do laboratório:</strong><br>Este ambiente foi criado para estudos de automação web e API com dados fictícios. Use as telas para treinar login, cadastro, validações, modais, tabelas e evidências sem depender de uma API real.',
-        'bot',
-        { html: true },
-      )
-    }
-
-    if (action === 'dismiss') {
-      appendAssistantMessage('Tudo bem. Quando precisar, clique no robô no canto da tela para reabrir.')
-      setTimeout(() => setAssistantOpen(false), 700)
-    }
+    handleAssistantAction(action)
   })
 
   form?.addEventListener('submit', (event) => {
     event.preventDefault()
     const text = input.value.trim()
     if (!text) return
-
     appendAssistantMessage(text, 'user')
     input.value = ''
-    appendAssistantMessage('Anotado. Para treinar Cypress, valide este chat pelo botão, pela mensagem e pelo texto digitado.')
+    showAssistantTyping(() => handleAssistantInput(text))
   })
 }
 
