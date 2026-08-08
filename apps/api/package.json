@@ -14,6 +14,9 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run"
   },
+  "cypress-cucumber-preprocessor": {
+    "stepDefinitions": "cypress/e2e/step_definitions/**/*.{js,mjs,ts,tsx}"
+  },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
@@ -26,6 +29,8 @@
     "prisma": "^7.8.0"
   },
   "devDependencies": {
+    "@badeball/cypress-cucumber-preprocessor": "^22.0.1",
+    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.8",
     "@faker-js/faker": "^10.4.0",
     "cypress": "^14.3.1",
     "cypress-plugin-api": "^2.11.2",

@@ -2,6 +2,13 @@ const fs = require('fs')
 const http = require('http')
 const path = require('path')
 const { defineConfig } = require('cypress')
+const createBundler = require('@bahmutov/cypress-esbuild-preprocessor')
+const {
+  addCucumberPreprocessorPlugin,
+} = require('@badeball/cypress-cucumber-preprocessor')
+const {
+  createEsbuildPlugin,
+} = require('@badeball/cypress-cucumber-preprocessor/esbuild')
 
 let staticServer
 
@@ -41,8 +48,14 @@ function startStaticServer(port = 3000) {
 module.exports = defineConfig({
   projectId: '2hmvki',
   e2e: {
-    setupNodeEvents(on, config) {
+    async setupNodeEvents(on, config) {
       startStaticServer()
+
+      await addCucumberPreprocessorPlugin(on, config)
+
+      on('file:preprocessor', createBundler({
+        plugins: [createEsbuildPlugin(config)],
+      }))
 
       on('after:run', () => {
         staticServer?.close()
@@ -51,6 +64,10 @@ module.exports = defineConfig({
 
       return config
     },
+    specPattern: [
+      'cypress/e2e/**/*.cy.js',
+      'cypress/e2e/features/**/*.feature',
+    ],
     experimentalStudio: true,
     video: true,
     baseUrl: 'http://localhost:3000',
