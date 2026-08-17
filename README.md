@@ -1,64 +1,84 @@
-# QA Automation Lab
+# QA Automation Lab — Engenharia de Automação de Testes
 
-[![QA Automation Lab CI](https://github.com/koyama8/Automation-Hub/actions/workflows/qa-ci.yml/badge.svg)](https://github.com/koyama8/Automation-Hub/actions)
-[![Cypress Cloud](https://img.shields.io/badge/Cypress%20Cloud-runs-04C38E?logo=cypress&logoColor=white)](https://cloud.cypress.io/projects/2hmvki/branches/master/runs)
-[![Node.js](https://img.shields.io/badge/Node.js-Express%20%2B%20Prisma-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Quality Gate](https://img.shields.io/github/actions/workflow/status/koyama8/Automation-Hub/qa-ci.yml?branch=master&label=QUALITY%20GATE&style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/koyama8/Automation-Hub/actions/workflows/qa-ci.yml)
+[![Relatório Cucumber](https://img.shields.io/badge/RELATORIO-CUCUMBER-00D084?style=for-the-badge&logo=cucumber&logoColor=white)](https://koyama8.github.io/Automation-Hub/)
+[![Cypress Cloud](https://img.shields.io/badge/CYPRESS%20CLOUD-RUNS-04C38E?style=for-the-badge&logo=cypress&logoColor=white)](https://cloud.cypress.io/projects/2hmvki/branches/master/runs)
+[![k6](https://img.shields.io/badge/PERFORMANCE-K6%20PLANEJADO-F97316?style=for-the-badge&logo=k6&logoColor=white)](#segurança-e-performance)
+[![Lighthouse](https://img.shields.io/badge/PERFORMANCE-LIGHTHOUSE%20PLANEJADO-F43F5E?style=for-the-badge&logo=lighthouse&logoColor=white)](#segurança-e-performance)
+[![Download do projeto](https://img.shields.io/badge/BAIXAR%20PROJETO-ZIP-1677FF?style=for-the-badge&logo=github&logoColor=white)](https://github.com/koyama8/Automation-Hub/archive/refs/heads/master.zip)
 
-Repositorio de estudos praticos em QA Automation, reunindo API REST, interface web, banco PostgreSQL, colecao Bruno, testes Cypress e CI/CD com GitHub Actions + Cypress Cloud.
+Laboratório prático de **Quality Engineering / SDET** para automações Web e API com Cypress. O projeto evolui de testes legados para uma arquitetura BDD, priorizando reutilização, validações confiáveis, prevenção de falsos positivos e integração contínua.
 
-## Visao Geral
+> **Implementação futura:** k6 será usado para carga e desempenho da API; Lighthouse para Web Vitals, acessibilidade e boas práticas da interface Web.
 
-| Pasta | Objetivo | Stack principal | CI / Evidencias |
-| --- | --- | --- | --- |
-| `apps/api/` | API REST para estudos de API Testing e massa de dados | Node.js, Express, Prisma, PostgreSQL | Cypress API + GitHub Actions |
-| `apps/web/` | Interface local para praticar testes E2E | HTML, CSS, JavaScript, Serve | Cypress E2E + Cypress Cloud |
-| `bruno/QA Automation Lab/` | Colecao de requisicoes para estudo de API | Bruno | Cenarios positivos e negativos |
-| `database/` | Seed e apoio de massa local | Prisma, PostgreSQL | Base usada no CI |
+## Visão geral
 
-## Estrutura
+| Área | Objetivo | Tecnologias |
+| --- | --- | --- |
+| `apps/api/` | API REST e automação de serviços | Node.js, Express, Prisma, PostgreSQL, Cypress |
+| `apps/web/` | Interface e automação E2E | HTML, CSS, JavaScript, Cypress |
+| `bruno/QA Automation Lab/` | Coleção para testes manuais de API | Bruno |
+| `.github/workflows/` | Pipeline de qualidade | GitHub Actions, Cypress Cloud, GitHub Pages |
+
+## Arquitetura em evolução
+
+| Capacidade | Status | Padrão adotado |
+| --- | --- | --- |
+| Cypress Web e API | Implementado | Suítes independentes |
+| BDD com Cucumber | Em evolução | Features e Steps organizados por domínio |
+| Automação Web | Em evolução | Feature → Steps → Page Objects → Web |
+| Automação de API | Em evolução | Feature → Steps → API Clients → API REST |
+| CI/CD e evidências | Implementado | GitHub Actions, Cypress Cloud e artefatos |
+| Relatórios Cucumber | Implementado | HTML/JSON para Web e API no GitHub Pages |
+| Performance e DAST | Planejado | k6, Lighthouse e OWASP ZAP |
+
+Testes antigos e BDD convivem durante a migração. Um teste legado somente é removido após a comparação das validações, execução da suíte relacionada e confirmação de que o novo cenário passou pelo motivo correto.
+
+## Relatórios Cucumber
+
+[![Portal](https://img.shields.io/badge/PORTAL-ABRIR-00D084?style=for-the-badge&logo=cucumber&logoColor=white)](https://koyama8.github.io/Automation-Hub/)
+[![Web](https://img.shields.io/badge/WEB-RELATORIO-22E6A2?style=for-the-badge&logo=cypress&logoColor=white)](https://koyama8.github.io/Automation-Hub/web/)
+[![API](https://img.shields.io/badge/API-RELATORIO-6CB6FF?style=for-the-badge&logo=cypress&logoColor=white)](https://koyama8.github.io/Automation-Hub/api/)
+
+Os relatórios são atualizados automaticamente pela pipeline após a aprovação das suítes Web e API na branch `master`.
+
+## Estrutura principal
 
 ```text
 qa-automation-lab/
-|-- apps/
-|   |-- api/
-|   |   |-- cypress/              # Automacoes de API
-|   |   |-- prisma/               # Schema e migrations
-|   |   |-- src/                  # Controllers, rotas, services e repositories
-|   |   `-- index.js              # Inicializacao da API
-|   `-- web/
-|       |-- cypress/              # Automacoes E2E
-|       |-- dist/                 # Interface local
-|       `-- src/                  # Scripts da interface
-|-- bruno/
-|   `-- QA Automation Lab/        # Requisicoes da API no Bruno
-|-- database/
-|   `-- seed/                     # Massa inicial
-|-- docker-compose.yml            # PostgreSQL e PgAdmin
-`-- README.md
+├── .github/workflows/qa-ci.yml
+├── apps/
+│   ├── api/
+│   │   └── cypress/
+│   │       ├── e2e/features/
+│   │       ├── e2e/step_definitions/
+│   │       └── support/api_clients/
+│   └── web/
+│       └── cypress/
+│           ├── e2e/features/
+│           ├── e2e/step_definitions/
+│           └── support/page_objects/
+├── bruno/QA Automation Lab/
+├── database/seed/
+└── docker-compose.yml
 ```
 
-## Modulos da API
+## Baixar e executar
 
-| Modulo | Base path | Principais recursos |
-| --- | --- | --- |
-| Auth | `/api/auth` | login, sessão atual, rotação de token e logout |
-| Permissões e Perfis | `/api/permissions` | RBAC admin/QA/viewer, convites, bloqueios, sessões, idempotência e auditoria |
-| Usuarios | `/api/users` | CRUD, ativacao, inativacao e limpeza de massa |
-| Clientes | `/api/clients` | CRUD, status, busca e reset de IDs |
-| Contratos | `/api/contracts` | criar, listar, buscar, atualizar, cancelar, ativar e excluir |
-| Produtos | `/api/products` | CRUD, status, validacoes de preco/estoque e limpeza total |
-| Pedidos | `/api/orders` | criar pedido com itens, listar, buscar, atualizar status e cancelar |
-| Carrinho | `/api/cart` | adicionar, remover, atualizar quantidade e limpar itens |
-| Pagamentos | `/api/payments` | Pix, cartao, boleto, confirmacao, recusa e estorno |
-| Cupons | `/api/coupons` | criar, validar, aplicar desconto, expirar e controlar uso |
-| Evidencias | `/api/evidences` | upload, listagem, metadata e exclusao de arquivos |
-| Senha | `/api/password` | solicitacao e redefinicao de senha |
-| Sistema | `/api/system` | reset de laboratorio |
-| Health | `/api/health` | status da API e conexao com banco |
+Pré-requisitos: **Node.js 24**, npm e Docker Desktop com Docker Compose. Git é necessário somente para a opção de clone.
 
-## Como Rodar
+Baixe pelo botão **BAIXAR PROJETO · ZIP** no topo, extraia o arquivo e abra um PowerShell na pasta extraída. Como alternativa, clone o repositório:
 
-Suba o banco:
+```powershell
+git clone https://github.com/koyama8/Automation-Hub.git
+cd Automation-Hub
+```
+
+Ordem de inicialização: **PostgreSQL → API → Web → testes Cypress**. Os comandos completos estão nas próximas seções.
+
+## Execução local
+
+Suba o PostgreSQL:
 
 ```powershell
 docker compose up -d
@@ -76,7 +96,7 @@ npm run prisma:seed
 npm run dev
 ```
 
-Execute a interface web em outro terminal:
+Execute a aplicação Web em outro terminal:
 
 ```powershell
 cd apps/web
@@ -84,9 +104,7 @@ npm install
 npm run dev
 ```
 
-## Execucao dos Testes
-
-Para os testes Web, mantenha a API rodando em `http://localhost:3030`.
+## Execução dos testes
 
 API:
 
@@ -102,39 +120,65 @@ cd apps/web
 npx cypress run --browser electron --config video=false
 ```
 
-### Testes de Permissoes e Perfis
-
-Os testes Cypress validam os principais comportamentos de autorizacao da API:
-
-- QA pode criar clientes, mas nao pode exclui-los.
-- O administrador pode alterar o perfil de QA para viewer.
-- A troca de perfil revoga imediatamente o token antigo.
-- Viewer pode consultar clientes, mas nao pode criar novos registros.
-
-Para executar somente esses cenarios:
+Feature específica:
 
 ```powershell
-cd apps/api
-npx cypress run --browser electron --config video=false --spec "cypress/e2e/permissoes-perfis/*.cy.js"
+npx cypress run --spec "cypress/e2e/features/usuarios.feature"
 ```
 
-| Perfil | Consultar clientes | Criar clientes | Excluir clientes | Gerenciar perfis |
-| --- | --- | --- | --- | --- |
-| Admin | Sim | Sim | Sim | Sim |
-| QA | Sim | Sim | Nao | Nao |
-| Viewer | Sim | Nao | Nao | Nao |
+Durante a migração, as configurações aceitam testes `.cy.js` e `.feature` simultaneamente.
 
-Fluxo principal dos testes:
+## Padrão BDD
 
-```text
-Login admin -> cria usuario QA -> login QA -> usa qaToken
--> admin altera para viewer -> qaToken e revogado
--> novo login do usuario -> usa viewerToken
+As palavras estruturais permanecem em inglês e o comportamento é descrito em português:
+
+```gherkin
+Feature: Usuários da API
+
+  Scenario: CT01 - Listar todos os usuários cadastrados
+    Given que possuo um token de administrador válido
+    When solicito a listagem de usuários
+    And recebo a resposta da listagem de usuários
+    Then os usuários cadastrados devem ser retornados
 ```
 
-## URLs Locais
+Steps existentes devem ser reutilizados. Page Objects concentram seletores, ações e validações Web; API Clients concentram requisições e validações dos serviços.
 
-| Servico | URL |
+## CI/CD
+
+O workflow [`qa-ci.yml`](.github/workflows/qa-ci.yml) executa:
+
+- preparação do PostgreSQL, Prisma e massa inicial;
+- suítes Cypress Web e API em jobs separados;
+- bloqueio de `.only` e registro no Cypress Cloud;
+- evidências em falhas, incluindo screenshots, vídeos e logs;
+- geração dos relatórios Cucumber Web/API;
+- publicação automática do portal no GitHub Pages.
+
+## Segurança e performance
+
+| Iniciativa | Estado | Objetivo |
+| --- | --- | --- |
+| Autenticação, perfis e permissões | Implementado | Validar RBAC, revogação de token e acessos Admin, QA e Viewer |
+| Proteção de dados e segredos | Em evolução | Evitar dados sensíveis e utilizar variáveis de ambiente |
+| Contratos e JSON Schema | Planejado | Detectar quebras de contrato da API |
+| Performance de API com k6 | Planejado | Carga, tempo de resposta, throughput e taxa de erro |
+| Performance Web com Lighthouse | Planejado | Web Vitals, acessibilidade e boas práticas |
+| DAST com OWASP ZAP | Planejado | Verificações automatizadas de segurança |
+| Quality gates avançados | Planejado | Bloquear regressões de contrato, performance e segurança |
+
+Essas implementações serão adicionadas gradualmente após a consolidação da migração BDD, sem misturar responsabilidades dos testes funcionais.
+
+## Próximas evoluções
+
+1. concluir a migração estrutural Web e API;
+2. adicionar tags de smoke, regressão e cenários negativos;
+3. ampliar contratos, métricas e identificação de testes instáveis;
+4. implementar k6, Lighthouse, DAST e quality gates avançados.
+
+## Ambiente local
+
+| Serviço | URL |
 | --- | --- |
 | Web | `http://localhost:3000` |
 | API | `http://localhost:3030` |
@@ -142,24 +186,15 @@ Login admin -> cria usuario QA -> login QA -> usa qaToken
 | PostgreSQL | `localhost:5434` |
 | PgAdmin | `http://localhost:15434` |
 
-## Credenciais Locais
+Credenciais exclusivas do laboratório local:
 
-| Acesso | &#9993; E-mail | &#128273; Senha |
+| Acesso | E-mail | Senha |
 | --- | --- | --- |
 | API/Web | `qa@adminlab.com` | `pwd123` |
 | PgAdmin | `dba@pgadmin.com` | `dba` |
 
 ## Bruno
 
-A colecao fica em `bruno/QA Automation Lab`. Abra essa pasta no Bruno Desktop e execute primeiro `Auth/01 - Login valido` para salvar o token usado nas rotas protegidas.
+Abra `bruno/QA Automation Lab` no Bruno Desktop e execute primeiro `Auth/01 - Login valido` para armazenar o token das rotas protegidas. A coleção inclui cenários positivos, negativos, permissões, perfis, idempotência e auditoria.
 
-Os fluxos avançados estão em `Permissoes e Perfis`. Eles foram organizados em ordem numérica para praticar cenários de nível Pleno+, como autorização por perfil, revogação imediata, concorrência otimista, idempotência, convites e auditoria.
-
-A colecao Bruno contem requisicoes e scripts de propagacao de variaveis. Os principais fluxos de autorizacao tambem possuem automacoes Cypress em `apps/api/cypress/e2e/permissoes-perfis/`, cobrindo cenarios positivos, negativos, troca de perfil e revogacao de sessao.
-
-## Observacoes
-
-- IDs podem mudar depois de limpezas ou seeds; use os retornos da API como referencia.
-- Rotas protegidas usam `Authorization: Bearer <token>`.
-- GitHub Actions executa as suites de API e Web a cada push.
-- Cypress Cloud guarda historico, videos/screenshots quando habilitados e evidencias dos runs.
+> Rotas protegidas utilizam `Authorization: Bearer <token>`. IDs podem mudar após limpezas ou seeds; prefira os valores retornados pela API.

@@ -113,6 +113,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx cypress run --record --key "$CYPRESS_RECORD_KEY" --group "API Cypress" --ci-build-id "${{ github.run_id }}-${{ github.run_attempt }}" --browser electron --config video=false
 
+      - name: Upload relatorio Cucumber API
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-report-api
+          path: apps/api/cypress/reports/cucumber
+          if-no-files-found: warn
+
       - name: Upload evidencias API
         if: failure()
         uses: actions/upload-artifact@v4
@@ -215,6 +223,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx cypress run --record --key "$CYPRESS_RECORD_KEY" --group "Web Cypress" --ci-build-id "${{ github.run_id }}-${{ github.run_attempt }}" --browser electron --config video=false
 
+      - name: Upload relatorio Cucumber Web
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-report-web
+          path: apps/web/cypress/reports/cucumber
+          if-no-files-found: warn
+
       - name: Upload evidencias Web
         if: failure()
         uses: actions/upload-artifact@v4
@@ -225,3 +241,54 @@ jobs:
             apps/web/cypress/videos
             apps/api/api-ci.log
           if-no-files-found: ignore
+
+  publish-cucumber-reports:
+    name: Publicar relatorios Cucumber
+    if: github.event_name != 'pull_request'
+    needs:
+      - api-tests
+      - web-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Baixar relatorio Web
+        uses: actions/download-artifact@v4
+        with:
+          name: cucumber-report-web
+          path: pages/web
+
+      - name: Baixar relatorio API
+        uses: actions/download-artifact@v4
+        with:
+          name: cucumber-report-api
+          path: pages/api
+
+      - name: Montar portal de relatorios
+        run: |
+          cp reports/site/index.html pages/index.html
+          touch pages/.nojekyll
+
+          cd pages
+          zip -r cucumber-reports.zip web api
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar artefato do GitHub Pages
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: pages
+
+      - name: Publicar GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -5,6 +5,7 @@ const { defineConfig } = require('cypress')
 const createBundler = require('@bahmutov/cypress-esbuild-preprocessor')
 const {
   addCucumberPreprocessorPlugin,
+  afterRunHandler,
 } = require('@badeball/cypress-cucumber-preprocessor')
 const {
   createEsbuildPlugin,
@@ -51,13 +52,16 @@ module.exports = defineConfig({
     async setupNodeEvents(on, config) {
       startStaticServer()
 
-      await addCucumberPreprocessorPlugin(on, config)
+      await addCucumberPreprocessorPlugin(on, config, {
+        omitAfterRunHandler: true,
+      })
 
       on('file:preprocessor', createBundler({
         plugins: [createEsbuildPlugin(config)],
       }))
 
-      on('after:run', () => {
+      on('after:run', async (results) => {
+        await afterRunHandler(config, results)
         staticServer?.close()
         staticServer = null
       })
