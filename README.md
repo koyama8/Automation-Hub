@@ -123,7 +123,7 @@ npx cypress run --browser electron --config video=false
 Feature específica:
 
 ```powershell
-npx cypress run --spec "cypress/e2e/features/usuarios.feature"
+npx cypress run --spec "cypress/e2e/features/usuarios/usuarios.feature"
 ```
 
 Durante a migração, as configurações aceitam testes `.cy.js` e `.feature` simultaneamente.

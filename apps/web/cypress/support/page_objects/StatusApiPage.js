@@ -1,14 +1,9 @@
-describe('Status da API', () => {
-  beforeEach(() => {
-    cy.iniciar()
-    cy.submeterLogin('qa@adminlab.com', 'pwd123')
-
-    cy.url().should('include', '/dashboard')
-
+class StatusApiPage {
+  acessarTelaStatusApi() {
     cy.visit('/admin/status-api')
-  })
+  }
 
-  it('deve informar quando a API estiver indisponivel', () => {
+  verificarStatusComApiIndisponivel() {
     cy.intercept('GET', 'http://localhost:3030/api/health', {
       forceNetworkError: true,
     }).as('healthIndisponivel')
@@ -16,13 +11,19 @@ describe('Status da API', () => {
     cy.contains('button', 'Verificar API').click()
 
     cy.wait('@healthIndisponivel')
+  }
 
+  validarMensagemApiIndisponivel() {
     cy.get('[data-role="apiResult"]')
       .should('be.visible')
       .and('contain.text', 'API indispon')
+  }
 
+  validarNotificacaoErro() {
     cy.get('[data-cy="toast"]')
       .should('be.visible')
       .and('have.class', 'error-toast')
-  })
-})
+  }
+}
+
+export default new StatusApiPage()
