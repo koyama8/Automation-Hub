@@ -1,6 +1,6 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
-import LoginPage from '../../../support/page_objects/LoginPage'
+import LoginPage from '../../../support/page_objects/auth/LoginPage'
 
 let nome
 let email

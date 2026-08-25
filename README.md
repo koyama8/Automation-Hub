@@ -57,7 +57,14 @@ qa-automation-lab/
 │       └── cypress/
 │           ├── e2e/features/
 │           ├── e2e/step_definitions/
-│           └── support/page_objects/
+│           └── support/
+│               ├── factories/
+│               └── page_objects/
+│                   ├── auth/
+│                   ├── clientes/
+│                   ├── componentes/
+│                   ├── sistema/
+│                   └── usuarios/
 ├── bruno/QA Automation Lab/
 ├── database/seed/
 └── docker-compose.yml
@@ -143,6 +150,10 @@ Feature: Usuários da API
 ```
 
 Steps existentes devem ser reutilizados. Page Objects concentram seletores, ações e validações Web; API Clients concentram requisições e validações dos serviços.
+
+### Massas de teste
+
+Massas dinâmicas e reutilizáveis ficam em `apps/web/cypress/support/factories/`, como `ClienteFactory.js`. Dados estáticos de referência permanecem em `apps/web/cypress/fixtures/`; credenciais e segredos não devem ser armazenados nesses arquivos.
 
 ## CI/CD
 

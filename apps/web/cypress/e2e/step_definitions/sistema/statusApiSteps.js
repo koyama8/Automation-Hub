@@ -1,6 +1,6 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
-import StatusApiPage from '../../../support/page_objects/StatusApiPage'
+import StatusApiPage from '../../../support/page_objects/sistema/StatusApiPage'
 
 When('acesso a tela de status da API', () => {
   StatusApiPage.acessarTelaStatusApi()

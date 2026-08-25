@@ -1,6 +1,6 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
-import ModalTermosPage from '../../../support/page_objects/ModalTermosPage'
+import ModalTermosPage from '../../../support/page_objects/componentes/ModalTermosPage'
 
 When('acesso a tela de termos', () => {
   ModalTermosPage.acessarTelaTermos()

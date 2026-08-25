@@ -1,7 +1,7 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
-import LoginPage from '../../../support/page_objects/LoginPage'
-import UsuariosPage from '../../../support/page_objects/UsuariosPage'
+import LoginPage from '../../../support/page_objects/auth/LoginPage'
+import UsuariosPage from '../../../support/page_objects/usuarios/UsuariosPage'
 
 Given('que estou autenticado como administrador', () => {
   LoginPage.acessarTelaLogin()
