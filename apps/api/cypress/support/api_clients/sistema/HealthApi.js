@@ -2,7 +2,7 @@ class HealthApi {
   consultarSaude() {
     return cy.api({
       method: 'GET',
-      url: 'http://localhost:3030/api/health',
+      url: '/api/health',
     })
   }
 

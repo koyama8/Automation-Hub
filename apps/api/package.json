@@ -13,10 +13,14 @@
     "prisma:seed": "node --env-file=.env ../../database/seed/seed-admin.js",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
-    "cypress:run:bdd": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\""
+    "cypress:run:bdd": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\"",
+    "cypress:run:bdd:smoke": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\" --env tags=\"@smoke\"",
+    "cypress:run:bdd:regression": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\" --env tags=\"@regression\"",
+    "cypress:run:bdd:negative": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\" --env tags=\"@negative\""
   },
   "cypress-cucumber-preprocessor": {
     "stepDefinitions": "cypress/e2e/step_definitions/**/*.{js,mjs,ts,tsx}",
+    "filterSpecs": true,
     "messages": {
       "enabled": true,
       "output": "cypress/reports/cucumber/messages.ndjson"

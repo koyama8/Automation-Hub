@@ -2,7 +2,7 @@ class ClientesApi {
   cadastrarCliente(token, cliente) {
     return cy.api({
       method: 'POST',
-      url: 'http://localhost:3030/api/clients',
+      url: '/api/clients',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -13,7 +13,7 @@ class ClientesApi {
   listagemCliente(token, cliente) {
     return cy.api({
       method: 'GET',
-      url: 'http://localhost:3030/api/clients',
+      url: '/api/clients',
       headers: {
         Authorization: `Bearer ${token}`,
       },

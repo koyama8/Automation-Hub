@@ -1,19 +1,23 @@
+@web @auth @regression
 Feature: Login
 
   Scenario: CT01 - Exibir os elementos da tela de login
     Given que estou na tela de login
     Then devo visualizar todos os elementos da tela de login
 
+  @smoke
   Scenario: CT02 - Login com sucesso
     Given que estou na tela de login
     When realizo o login com credenciais validas
     Then devo ser redirecionado para o dashboard
 
+  @negative
   Scenario: CT03 - Login com email invalido
     Given que estou na tela de login
     When realizo o login com email invalido
     Then devo visualizar a mensagem de email invalido
 
+  @negative
   Scenario: CT04 - Login com senha invalida
     Given que estou na tela de login
     When realizo o login com senha invalida
@@ -24,6 +28,7 @@ Feature: Login
     When realizo o fluxo do assistente Automation Live
     Then o assistente deve ser fechado
 
+  @negative
   Scenario: CT06 - Recuperacao de senha com email nao cadastrado
     Given que estou na tela de recuperacao de senha
     When solicito a recuperacao com um email nao cadastrado
@@ -34,16 +39,19 @@ Feature: Login
     When solicito a recuperacao com um email valido
     Then devo visualizar os dados da recuperacao de senha
 
+  @negative
   Scenario: CT08 - Cadastro sem preencher o nome
     Given que estou na tela de cadastro
     When tento cadastrar um usuario sem preencher o nome
     Then devo visualizar uma mensagem de validacao para o nome
 
+  @negative
   Scenario: CT09 - Cadastro sem preencher o email
     Given que estou na tela de cadastro
     When tento cadastrar um usuario sem preencher o email
     Then devo visualizar uma mensagem de validacao para o email
 
+  @negative
   Scenario: CT10 - Cadastro sem preencher a senha
     Given que estou na tela de cadastro
     When tento cadastrar um usuario sem preencher a senha

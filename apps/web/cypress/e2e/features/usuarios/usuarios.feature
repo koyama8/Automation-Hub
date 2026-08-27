@@ -1,5 +1,7 @@
+@web @usuarios @regression
 Feature: Usuarios
 
+  @smoke
   Scenario: CT01 - Listar o usuario administrador
     Given que estou autenticado como administrador
     When acesso a tela de usuarios

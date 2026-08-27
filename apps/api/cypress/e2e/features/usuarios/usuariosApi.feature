@@ -1,5 +1,7 @@
+@api @usuarios @regression
 Feature: Usuarios da API
 
+  @smoke
   Scenario: CT01 - Listar todos os usuarios cadastrados
     Given que possuo um token de administrador valido
     When solicito a listagem de usuarios

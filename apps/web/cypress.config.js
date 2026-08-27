@@ -12,6 +12,8 @@ const {
 } = require('@badeball/cypress-cucumber-preprocessor/esbuild')
 
 let staticServer
+const webPort = Number(process.env.WEB_PORT || 3000)
+const webUrl = process.env.WEB_URL || `http://localhost:${webPort}`
 
 function startStaticServer(port = 3000) {
   if (staticServer) return
@@ -50,7 +52,7 @@ module.exports = defineConfig({
   projectId: '2hmvki',
   e2e: {
     async setupNodeEvents(on, config) {
-      startStaticServer()
+      startStaticServer(webPort)
 
       await addCucumberPreprocessorPlugin(on, config, {
         omitAfterRunHandler: true,
@@ -74,7 +76,7 @@ module.exports = defineConfig({
     ],
     experimentalStudio: true,
     video: true,
-    baseUrl: 'http://localhost:3000',
+    baseUrl: webUrl,
     viewportWidth: 1440,
     viewportHeight: 900,
   },

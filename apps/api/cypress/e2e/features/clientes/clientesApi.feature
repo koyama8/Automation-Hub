@@ -1,5 +1,7 @@
+@api @clientes @regression
 Feature: Clientes da API
 
+  @smoke
   Scenario: CT01 - Cadastrar novo cliente com sucesso
     Given que possuo um token de administrador para clientes
     And que possuo dados validos para cadastro de cliente

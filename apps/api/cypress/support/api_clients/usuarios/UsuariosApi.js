@@ -4,7 +4,7 @@ class UsuariosApi {
   listarUsuarios(token) {
     return cy.api({
       method: "GET",
-      url: "http://localhost:3030/api/users",
+      url: "/api/users",
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -14,7 +14,7 @@ class UsuariosApi {
   cadastrarUsuario(token, usuario) {
     return cy.api({
       method: "POST",
-      url: "http://localhost:3030/api/users/register",
+      url: "/api/users/register",
       headers: token
         ? {
             Authorization: `Bearer ${token}`,
@@ -27,7 +27,7 @@ class UsuariosApi {
   buscarUsuarioPorId(token, usuarioId) {
     return cy.api({
       method: "GET",
-      url: `http://localhost:3030/api/users/${usuarioId}`,
+      url: `/api/users/${usuarioId}`,
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -37,7 +37,7 @@ class UsuariosApi {
   atualizarUsuario(token, usuarioId, dadosAtualizados) {
     return cy.api({
       method: "PUT",
-      url: `http://localhost:3030/api/users/${usuarioId}`,
+      url: `/api/users/${usuarioId}`,
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -48,7 +48,7 @@ class UsuariosApi {
   alterarStatusUsuario(token, usuarioId, ativo) {
     return cy.api({
       method: "PATCH",
-      url: `http://localhost:3030/api/users/${usuarioId}/status`,
+      url: `/api/users/${usuarioId}/status`,
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -61,7 +61,7 @@ class UsuariosApi {
   excluirUsuarioID(token, userId) {
     return cy.api({
       method: "DELETE",
-      url: `http://localhost:3030/api/users/${userId}`,
+      url: `/api/users/${userId}`,
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -71,7 +71,7 @@ class UsuariosApi {
   excluirUsuarios(token) {
     return cy.api({
       method: "DELETE",
-      url: "http://localhost:3030/api/users",
+      url: "/api/users",
       headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -1,5 +1,7 @@
+@web @clientes @regression
 Feature: Clientes
 
+  @smoke
   Scenario: CT01 - Cadastrar cliente com sucesso
     Given que estou autenticado como administrador
     When acesso a tela de clientes

@@ -1,3 +1,4 @@
+@web @componentes @regression
 Feature: Modal de termos
 
   Scenario: CT01 - Aceitar os termos com sucesso
@@ -6,6 +7,7 @@ Feature: Modal de termos
     And concluo o aceite dos termos
     Then devo visualizar a confirmacao de termos aceitos com sucesso
 
+  @negative
   Scenario: CT02 - Exibir mensagem ao finalizar sem marcar o aceite
     Given que estou autenticado como administrador
     When acesso a tela de termos

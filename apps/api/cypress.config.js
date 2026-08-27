@@ -6,11 +6,12 @@ import { createEsbuildPlugin } from '@badeball/cypress-cucumber-preprocessor/esb
 import { deleteUserByEmail } from './cypress/support/database.js'
 
 const port = process.env.PORT || 3030
+const apiUrl = process.env.API_URL || `http://localhost:${port}`
 
 export default defineConfig({
   projectId: '2hmvki',
   e2e: {
-    baseUrl: `http://localhost:${port}`,
+    baseUrl: apiUrl,
     async setupNodeEvents(on, config) {
       await addCucumberPreprocessorPlugin(on, config)
 

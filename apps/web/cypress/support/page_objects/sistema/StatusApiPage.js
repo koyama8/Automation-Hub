@@ -4,7 +4,7 @@ class StatusApiPage {
   }
 
   verificarStatusComApiIndisponivel() {
-    cy.intercept('GET', 'http://localhost:3030/api/health', {
+    cy.intercept('GET', '**/api/health', {
       forceNetworkError: true,
     }).as('healthIndisponivel')
 

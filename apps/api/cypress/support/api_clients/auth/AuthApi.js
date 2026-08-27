@@ -4,7 +4,7 @@ class AuthApi {
   autenticar(credenciais) {
     return cy.api({
       method: 'POST',
-      url: 'http://localhost:3030/api/auth/login',
+      url: '/api/auth/login',
       body: credenciais,
       failOnStatusCode: false,
     })
@@ -38,7 +38,7 @@ class AuthApi {
   consultarSessaoAtual(token) {
     return cy.api({
       method: 'GET',
-      url: 'http://localhost:3030/api/auth/me',
+      url: '/api/auth/me',
       headers: {
         Authorization: `Bearer ${token}`,
       },
