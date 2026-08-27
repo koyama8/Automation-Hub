@@ -1,11 +1,14 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
+import { obterCredenciaisAdministrador } from '../../../support/data/Credenciais'
 import LoginPage from '../../../support/page_objects/auth/LoginPage'
 import UsuariosPage from '../../../support/page_objects/usuarios/UsuariosPage'
 
 Given('que estou autenticado como administrador', () => {
+  const credenciais = obterCredenciaisAdministrador()
+
   LoginPage.acessarTelaLogin()
-  LoginPage.submeterLogin('qa@adminlab.com', 'pwd123')
+  LoginPage.submeterLogin(credenciais.email, credenciais.password)
   LoginPage.validarRedirecionamentoDashboard()
 })
 

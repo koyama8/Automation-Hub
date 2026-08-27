@@ -1,3 +1,5 @@
+import { obterCredenciaisAdministrador } from '../../data/Credenciais'
+
 class UsuariosPage {
   acessarUsuarios() {
     cy.visit('/admin/usuarios')
@@ -9,9 +11,11 @@ class UsuariosPage {
   }
 
   validarUsuarioAdministrador() {
+    const { email } = obterCredenciaisAdministrador()
+
     cy.get('[data-cy="users-table"]').within(() => {
       cy.contains('td', /QA Admin( Lab)?/).should('be.visible')
-      cy.contains('td', 'qa@adminlab.com').should('be.visible')
+      cy.contains('td', email).should('be.visible')
       cy.contains('td', 'Ativo').should('be.visible')
     })
   }

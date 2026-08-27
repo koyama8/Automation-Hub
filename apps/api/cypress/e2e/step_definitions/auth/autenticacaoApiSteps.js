@@ -1,15 +1,13 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
-import AuthApi from '../../../support/api_clients/AuthApi'
+import { obterCredenciaisAdministrador } from '../../../support/data/Credenciais'
+import AuthApi from '../../../support/api_clients/auth/AuthApi'
 
 let credenciais
 let response
 
 Given('que possuo credenciais validas', () => {
-  credenciais = {
-    email: 'qa@adminlab.com',
-    password: 'pwd123',
-  }
+  credenciais = obterCredenciaisAdministrador()
 })
 
 When('envio uma solicitacao de autenticacao', () => {

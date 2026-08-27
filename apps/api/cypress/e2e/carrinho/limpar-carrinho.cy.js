@@ -25,7 +25,7 @@ describe('DELETE /api/cart/:clientId - Limpeza do carrinho', () => {
         sku: `BRU-${faker.string.alphanumeric(6).toUpperCase()}-${timestamp}`,
         description: faker.commerce.productDescription(),
         priceCents: faker.number.int({ min: 1000, max: 99900 }),
-        stock: faker.number.int({ min: 1, max: 100 }),
+        stock: faker.number.int({ min: 2, max: 100 }),
         status: 'active',
       }
 

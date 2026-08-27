@@ -1,6 +1,6 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
-import HealthApi from '../../../support/api_clients/HealthApi'
+import HealthApi from '../../../support/api_clients/sistema/HealthApi'
 
 let response
 

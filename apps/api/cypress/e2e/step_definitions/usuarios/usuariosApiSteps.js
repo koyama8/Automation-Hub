@@ -6,8 +6,9 @@ import {
 } from "@badeball/cypress-cucumber-preprocessor";
 
 import { fakerPT_BR as faker } from "@faker-js/faker";
-import AuthApi from "../../../support/api_clients/AuthApi";
-import UsuariosApi from "../../../support/api_clients/UsuariosApi";
+import { obterCredenciaisAdministrador } from "../../../support/data/Credenciais";
+import AuthApi from "../../../support/api_clients/auth/AuthApi";
+import UsuariosApi from "../../../support/api_clients/usuarios/UsuariosApi";
 
 let token;
 let response;
@@ -24,10 +25,7 @@ Before(() => {
 });
 
 Given("que possuo um token de administrador valido", () => {
-  const credenciais = {
-    email: "qa@adminlab.com",
-    password: "pwd123",
-  };
+  const credenciais = obterCredenciaisAdministrador();
 
   AuthApi.autenticar(credenciais).then((respostaRecebida) => {
     token = respostaRecebida.body.data.token;

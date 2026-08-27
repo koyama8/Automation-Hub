@@ -1,15 +1,13 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
-import AuthApi from '../../../support/api_clients/AuthApi'
+import { obterCredenciaisAdministrador } from '../../../support/data/Credenciais'
+import AuthApi from '../../../support/api_clients/auth/AuthApi'
 
 let token
 let response
 
 Given('que possuo um token de autenticacao valido', () => {
-  const credenciais = {
-    email: 'qa@adminlab.com',
-    password: 'pwd123',
-  }
+  const credenciais = obterCredenciaisAdministrador()
 
   AuthApi.autenticar(credenciais).then((respostaLogin) => {
     token = respostaLogin.body.data.token

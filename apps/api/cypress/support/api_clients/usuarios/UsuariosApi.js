@@ -1,3 +1,5 @@
+import { obterCredenciaisAdministrador } from '../../data/Credenciais';
+
 class UsuariosApi {
   listarUsuarios(token) {
     return cy.api({
@@ -106,7 +108,9 @@ class UsuariosApi {
     const resultado = response.body.data;
 
     expect(resultado.admin).to.have.property("name", "QA Admin");
-    expect(resultado.admin).to.have.property("email", "qa@adminlab.com");
+    const { email } = obterCredenciaisAdministrador();
+
+    expect(resultado.admin).to.have.property("email", email);
     expect(resultado.admin).to.have.property("status", "active");
     expect(resultado.admin).to.have.property("role", "admin");
     expect(resultado.admin).to.not.have.property("password");

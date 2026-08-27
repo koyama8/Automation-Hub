@@ -1,5 +1,6 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
+import { obterCredenciaisAdministrador } from '../../../support/data/Credenciais'
 import LoginPage from '../../../support/page_objects/auth/LoginPage'
 
 let nome
@@ -10,7 +11,9 @@ Given('que estou na tela de login', () => {
 })
 
 When('realizo o login com credenciais validas', () => {
-  LoginPage.submeterLogin('qa@adminlab.com', 'pwd123')
+  const credenciais = obterCredenciaisAdministrador()
+
+  LoginPage.submeterLogin(credenciais.email, credenciais.password)
 })
 
 Then('devo ser redirecionado para o dashboard', () => {
@@ -22,7 +25,9 @@ Then('devo visualizar todos os elementos da tela de login', () => {
 })
 
 When('realizo o login com email invalido', () => {
-  LoginPage.submeterLogin('qa@adminla.com', 'pwd123')
+  const { password } = obterCredenciaisAdministrador()
+
+  LoginPage.submeterLogin('qa@adminla.com', password)
 })
 
 Then('devo visualizar a mensagem de email invalido', () => {
@@ -30,7 +35,9 @@ Then('devo visualizar a mensagem de email invalido', () => {
 })
 
 When('realizo o login com senha invalida', () => {
-  LoginPage.submeterLogin('qa@adminlab.com', 'pwd12345')
+  const { email: emailAdministrador } = obterCredenciaisAdministrador()
+
+  LoginPage.submeterLogin(emailAdministrador, 'pwd12345')
 })
 
 Then('devo visualizar a mensagem de credenciais invalidas', () => {
@@ -58,7 +65,9 @@ Then('devo visualizar uma mensagem de erro na recuperacao de senha', () => {
 })
 
 When('solicito a recuperacao com um email valido', () => {
-  LoginPage.solicitarRecuperacaoSenha('qa@adminlab.com')
+  const { email: emailAdministrador } = obterCredenciaisAdministrador()
+
+  LoginPage.solicitarRecuperacaoSenha(emailAdministrador)
 })
 
 Then('devo visualizar os dados da recuperacao de senha', () => {
@@ -70,7 +79,9 @@ Given('que estou na tela de cadastro', () => {
 })
 
 When('tento cadastrar um usuario sem preencher o nome', () => {
-  LoginPage.cadastrarUsuario('', 'qa@adminlab.com', 'pwd123')
+  const credenciais = obterCredenciaisAdministrador()
+
+  LoginPage.cadastrarUsuario('', credenciais.email, credenciais.password)
 })
 
 Then('devo visualizar uma mensagem de validacao para o nome', () => {
@@ -78,7 +89,9 @@ Then('devo visualizar uma mensagem de validacao para o nome', () => {
 })
 
 When('tento cadastrar um usuario sem preencher o email', () => {
-  LoginPage.cadastrarUsuario('Teste', '', 'pwd123')
+  const { password } = obterCredenciaisAdministrador()
+
+  LoginPage.cadastrarUsuario('Teste', '', password)
 })
 
 Then('devo visualizar uma mensagem de validacao para o email', () => {
@@ -86,7 +99,9 @@ Then('devo visualizar uma mensagem de validacao para o email', () => {
 })
 
 When('tento cadastrar um usuario sem preencher a senha', () => {
-  LoginPage.cadastrarUsuario('Teste', 'qa@adminlab.com', '')
+  const { email: emailAdministrador } = obterCredenciaisAdministrador()
+
+  LoginPage.cadastrarUsuario('Teste', emailAdministrador, '')
 })
 
 Then('devo visualizar uma mensagem de validacao para a senha', () => {

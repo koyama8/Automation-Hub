@@ -1,3 +1,5 @@
+import { obterCredenciaisAdministrador } from '../../data/Credenciais'
+
 class LoginPage {
   acessarTelaLogin() {
     cy.visit('/admin/login')
@@ -68,10 +70,12 @@ class LoginPage {
   }
 
   validarDadosRecuperacaoSenha() {
+    const { email } = obterCredenciaisAdministrador()
+
     cy.get('[data-cy="success-modal"]').within(() => {
       cy.contains('[data-cy="modal-list"] li', 'E-mail validado')
         .find('strong')
-        .should('have.text', 'qa@adminlab.com')
+        .should('have.text', email)
 
       cy.contains('[data-cy="modal-list"] li', 'Token')
         .find('strong')
