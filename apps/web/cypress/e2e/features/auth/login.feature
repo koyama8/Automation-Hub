@@ -1,4 +1,6 @@
-@web @auth @regression
+@web
+@auth
+@regression
 Feature: Login
 
   Scenario: CT01 - Exibir os elementos da tela de login

@@ -99,10 +99,7 @@ class ClientesApi {
   validarClienteCadastrado(response, cliente) {
     expect(response.status).to.eq(201)
     expect(response.body.message).to.eq('Client created successfully')
-    expect(response.body.data)
-      .to.have.property('id')
-      .and.be.a('number')
-      .and.be.greaterThan(0)
+    expect(response.body.data).to.have.property('id').and.be.a('number').and.be.greaterThan(0)
 
     const clienteCadastrado = response.body.data
 

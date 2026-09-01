@@ -25,20 +25,15 @@ class LoginPage {
   }
 
   validarMensagemEmailInvalido() {
-    cy.contains('Informe um e-mail valido de provedor conhecido')
-      .should('be.visible')
+    cy.contains('Informe um e-mail valido de provedor conhecido').should('be.visible')
   }
 
   validarMensagemCredenciaisInvalidas() {
-    cy.get('[data-error-for="loginEmail"], [data-error-for="loginPassword"]')
-      .should(($errors) => {
-        const messages = [...$errors]
-          .map((error) => error.textContent.trim())
-          .filter(Boolean)
+    cy.get('[data-error-for="loginEmail"], [data-error-for="loginPassword"]').should(($errors) => {
+      const messages = [...$errors].map((error) => error.textContent.trim()).filter(Boolean)
 
-        expect(messages.join(' '))
-          .to.match(/API|senha|credenciais|credentials|inv/i)
-      })
+      expect(messages.join(' ')).to.match(/API|senha|credenciais|credentials|inv/i)
+    })
   }
 
   realizarFluxoAssistente() {
@@ -49,8 +44,7 @@ class LoginPage {
   }
 
   validarAssistenteFechado() {
-    cy.get('[data-cy="assistant-window"]')
-      .should('have.class', 'hidden')
+    cy.get('[data-cy="assistant-window"]').should('have.class', 'hidden')
   }
 
   acessarRecuperacaoSenha() {
@@ -63,10 +57,9 @@ class LoginPage {
   }
 
   validarErroRecuperacaoSenha() {
-    cy.get('[data-error-for="forgotEmail"]')
-      .should(($element) => {
-        expect($element.text().trim()).to.match(/.+/)
-      })
+    cy.get('[data-error-for="forgotEmail"]').should(($element) => {
+      expect($element.text().trim()).to.match(/.+/)
+    })
   }
 
   validarDadosRecuperacaoSenha() {
@@ -116,10 +109,9 @@ class LoginPage {
   }
 
   validarErroEmailCadastro() {
-    cy.get('[data-error-for="registerEmail"]')
-      .should(($element) => {
-        expect($element.text().trim()).to.match(/.+/)
-      })
+    cy.get('[data-error-for="registerEmail"]').should(($element) => {
+      expect($element.text().trim()).to.match(/.+/)
+    })
   }
 
   validarErroSenha() {

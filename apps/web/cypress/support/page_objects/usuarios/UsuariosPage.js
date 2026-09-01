@@ -6,8 +6,7 @@ class UsuariosPage {
   }
 
   validarTabelaUsuariosVisivel() {
-    cy.get('[data-cy="users-table"]', { timeout: 10000 })
-      .should('be.visible')
+    cy.get('[data-cy="users-table"]', { timeout: 10000 }).should('be.visible')
   }
 
   validarUsuarioAdministrador() {

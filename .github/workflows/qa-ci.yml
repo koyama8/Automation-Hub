@@ -69,6 +69,10 @@ jobs:
         working-directory: apps/api
         run: npm ci
 
+      - name: Validar qualidade da automacao BDD da API
+        working-directory: apps/api
+        run: npm run quality:check
+
       - name: Criar .env da API para CI
         working-directory: apps/api
         run: |
@@ -215,6 +219,10 @@ jobs:
       - name: Instalar dependencias da Web
         working-directory: apps/web
         run: npm ci
+
+      - name: Validar qualidade da automacao BDD da Web
+        working-directory: apps/web
+        run: npm run quality:check
 
       - name: Rodar testes web
         working-directory: apps/web

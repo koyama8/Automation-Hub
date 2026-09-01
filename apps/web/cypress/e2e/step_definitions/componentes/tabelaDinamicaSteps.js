@@ -27,7 +27,7 @@ Then('devo visualizar somente os registros com status automatizado', () => {
 })
 
 When('removo uma linha da tabela dinamica', () => {
-    TabelaDinamicaPage.removerLinha()
+  TabelaDinamicaPage.removerLinha()
 })
 
 When('recebo a confirmacao da remocao', () => {

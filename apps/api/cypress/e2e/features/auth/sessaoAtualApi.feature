@@ -1,4 +1,6 @@
-@api @auth @regression
+@api
+@auth
+@regression
 Feature: Sessao atual da API
 
   @smoke

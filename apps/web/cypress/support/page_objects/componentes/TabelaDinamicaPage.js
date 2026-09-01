@@ -32,9 +32,7 @@ class TabelaDinamicaPage {
   }
 
   filtrarDadosTabela() {
-    cy.get('[data-cy="table-filter"]')
-      .select('Automatizado')
-      .should('have.value', 'Automatizado')
+    cy.get('[data-cy="table-filter"]').select('Automatizado').should('have.value', 'Automatizado')
   }
 
   validarFiltroTabela() {
@@ -54,9 +52,7 @@ class TabelaDinamicaPage {
   }
 
   validarLinhaRemovidaTabela() {
-    cy.get('[data-role="dynamicTable"]')
-      .contains('tr', 'Login com sucesso')
-      .should('not.exist')
+    cy.get('[data-role="dynamicTable"]').contains('tr', 'Login com sucesso').should('not.exist')
   }
 }
 

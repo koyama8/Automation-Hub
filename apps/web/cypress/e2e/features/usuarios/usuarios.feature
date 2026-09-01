@@ -1,4 +1,6 @@
-@web @usuarios @regression
+@web
+@usuarios
+@regression
 Feature: Usuarios
 
   @smoke

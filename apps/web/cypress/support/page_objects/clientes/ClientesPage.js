@@ -34,10 +34,9 @@ class ClientesPage {
   solicitarInativacao(nomeCliente) {
     cy.contains('[data-cy="clients-table-body"] tr', nomeCliente, {
       timeout: 10000,
+    }).within(() => {
+      cy.contains('button', 'Inativar').click()
     })
-      .within(() => {
-        cy.contains('button', 'Inativar').click()
-      })
   }
 
   validarConfirmacaoInativacao(nomeCliente) {

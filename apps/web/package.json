@@ -10,7 +10,11 @@
     "cypress:run:bdd": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\"",
     "cypress:run:bdd:smoke": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\" --env tags=\"@smoke\"",
     "cypress:run:bdd:regression": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\" --env tags=\"@regression\"",
-    "cypress:run:bdd:negative": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\" --env tags=\"@negative\""
+    "cypress:run:bdd:negative": "cypress run --config \"specPattern=cypress/e2e/features/**/*.feature\" --env tags=\"@negative\"",
+    "lint:bdd": "eslint \"cypress/e2e/step_definitions/**/*.js\" \"cypress/support/**/*.js\"",
+    "format:bdd": "prettier --write \"cypress/e2e/features/**/*.feature\" \"cypress/e2e/step_definitions/**/*.js\" \"cypress/support/**/*.js\"",
+    "format:check:bdd": "prettier --check \"cypress/e2e/features/**/*.feature\" \"cypress/e2e/step_definitions/**/*.js\" \"cypress/support/**/*.js\"",
+    "quality:check": "npm run lint:bdd && npm run format:check:bdd"
   },
   "cypress-cucumber-preprocessor": {
     "stepDefinitions": "cypress/e2e/step_definitions/**/*.{js,mjs,ts,tsx}",
@@ -39,6 +43,9 @@
     "@badeball/cypress-cucumber-preprocessor": "^26.0.0",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.8",
     "@faker-js/faker": "^10.5.0",
-    "cypress": "^14.1.0"
+    "cypress": "^14.1.0",
+    "eslint": "^10.9.1",
+    "prettier": "^3.9.6",
+    "prettier-plugin-gherkin": "^4.0.0"
   }
 }

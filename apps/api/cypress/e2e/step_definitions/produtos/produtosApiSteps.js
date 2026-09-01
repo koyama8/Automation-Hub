@@ -15,6 +15,7 @@ let response
 let produtoAtualizado
 
 Before(() => {
+  token = undefined
   produto = undefined
   produtoAtualizado = undefined
   produtoId = undefined
@@ -54,12 +55,10 @@ Given('que existe um produto cadastrado e ativo', () => {
     status: 'active',
   }
 
-  return ProdutosApi.cadastrarProduto(token, produtoAtualizado).then(
-    (respostaRecebida) => {
-      response = respostaRecebida
-      produtoId = respostaRecebida.body.data.id
-    },
-  )
+  return ProdutosApi.cadastrarProduto(token, produtoAtualizado).then((respostaRecebida) => {
+    response = respostaRecebida
+    produtoId = respostaRecebida.body.data.id
+  })
 })
 
 When('solicito a inativacao do produto cadastrado', () => {
@@ -79,12 +78,10 @@ Then('o produto deve ser retornado com status inativo', () => {
 Given('que existe um produto cadastrado para consulta', () => {
   produto = gerarProdutoValido()
 
-  return ProdutosApi.cadastrarProduto(token, produto).then(
-    (respostaRecebida) => {
-      expect(respostaRecebida.status).to.eq(201)
-      produtoId = respostaRecebida.body.data.id
-    },
-  )
+  return ProdutosApi.cadastrarProduto(token, produto).then((respostaRecebida) => {
+    expect(respostaRecebida.status).to.eq(201)
+    produtoId = respostaRecebida.body.data.id
+  })
 })
 
 When('solicito a listagem de produtos', () => {
@@ -122,11 +119,9 @@ Given('que possuo novos dados validos para o produto', () => {
 })
 
 When('solicito a atualizacao do produto cadastrado', () => {
-  ProdutosApi.atualizarProduto(token, produtoId, produtoAtualizado).then(
-    (respostaRecebida) => {
-      response = respostaRecebida
-    },
-  )
+  ProdutosApi.atualizarProduto(token, produtoId, produtoAtualizado).then((respostaRecebida) => {
+    response = respostaRecebida
+  })
 })
 
 When('recebo a resposta da atualizacao do produto', () => {
@@ -143,11 +138,9 @@ Given('que existe um produto cadastrado e inativo', () => {
     status: 'inactive',
   }
 
-  return ProdutosApi.cadastrarProduto(token, produtoAtualizado).then(
-    (respostaRecebida) => {
-      produtoId = respostaRecebida.body.data.id
-    },
-  )
+  return ProdutosApi.cadastrarProduto(token, produtoAtualizado).then((respostaRecebida) => {
+    produtoId = respostaRecebida.body.data.id
+  })
 })
 
 When('solicito a ativacao do produto cadastrado', () => {
@@ -174,11 +167,9 @@ Given('que existe um produto cadastrado para exclusao', () => {
 })
 
 When('solicito a exclusao do produto cadastrado pelo ID', () => {
-  ProdutosApi.excluirProdutoPorId(token, produtoId).then(
-    (respostaRecebida) => {
-      response = respostaRecebida
-    },
-  )
+  ProdutosApi.excluirProdutoPorId(token, produtoId).then((respostaRecebida) => {
+    response = respostaRecebida
+  })
 })
 
 When('recebo a resposta da exclusao do produto', () => {
@@ -192,21 +183,17 @@ Then('o produto deve ser excluido com sucesso', () => {
 Given('que existe um produto cadastrado para validacao de duplicidade', () => {
   produto = gerarProdutoDuplicado()
 
-  return ProdutosApi.cadastrarProduto(token, produto).then(
-    (respostaRecebida) => {
-      expect(respostaRecebida.status).to.eq(201)
-    },
-  )
+  return ProdutosApi.cadastrarProduto(token, produto).then((respostaRecebida) => {
+    expect(respostaRecebida.status).to.eq(201)
+  })
 })
 
 When('solicito um novo cadastro com o mesmo nome de produto', () => {
   response = undefined
 
-  return ProdutosApi.cadastrarProdutoComNomeDuplicado(token, produto).then(
-    (respostaRecebida) => {
-      response = respostaRecebida
-    },
-  )
+  return ProdutosApi.cadastrarProdutoComNomeDuplicado(token, produto).then((respostaRecebida) => {
+    response = respostaRecebida
+  })
 })
 
 When('recebo a resposta do cadastro com nome duplicado', () => {

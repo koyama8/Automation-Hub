@@ -108,10 +108,7 @@ class ProdutosApi {
     expect(response.status).to.eq(201)
     expect(response.body.message).to.eq('Product created successfully')
 
-    expect(response.body.data)
-      .to.have.property('id')
-      .and.be.a('number')
-      .and.be.greaterThan(0)
+    expect(response.body.data).to.have.property('id').and.be.a('number').and.be.greaterThan(0)
 
     const produtoCadastrado = response.body.data
 

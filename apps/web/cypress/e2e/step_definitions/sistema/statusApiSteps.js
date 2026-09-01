@@ -10,8 +10,7 @@ When('verifico o status com a API indisponivel', () => {
   StatusApiPage.verificarStatusComApiIndisponivel()
 })
 
-Then('devo visualizar a mensagem de API indisponivel e uma notificacao de erro',() => {
-    StatusApiPage.validarMensagemApiIndisponivel()
-    StatusApiPage.validarNotificacaoErro()
-  },
-)
+Then('devo visualizar a mensagem de API indisponivel e uma notificacao de erro', () => {
+  StatusApiPage.validarMensagemApiIndisponivel()
+  StatusApiPage.validarNotificacaoErro()
+})

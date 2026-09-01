@@ -1,4 +1,6 @@
-@api @sistema @regression
+@api
+@sistema
+@regression
 Feature: Health Check da API
 
   @smoke

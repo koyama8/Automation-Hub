@@ -1,4 +1,6 @@
-@web @componentes @regression
+@web
+@componentes
+@regression
 Feature: Tabela dinamica
 
   Scenario: CT01 - Exibir os dados iniciais da tabela dinamica

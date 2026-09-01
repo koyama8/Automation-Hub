@@ -1,4 +1,6 @@
-@web @sistema @regression
+@web
+@sistema
+@regression
 Feature: Status da API
 
   @negative

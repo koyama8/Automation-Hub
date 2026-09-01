@@ -73,47 +73,47 @@ Then('o cliente cadastrado deve ser retornado', () => {
   ClientesApi.validarClienteNaListagem(response, cliente, clientId)
 })
 
-When('solicito a busca do cliente cadastrado pelo ID',() => {
+When('solicito a busca do cliente cadastrado pelo ID', () => {
   response = undefined
 
-  ClientesApi.buscarCliente(token,clientId).then((respostaRecebida) => {
+  ClientesApi.buscarCliente(token, clientId).then((respostaRecebida) => {
     response = respostaRecebida
   })
 })
 
-When('recebo a resposta da busca do cliente',() => {
+When('recebo a resposta da busca do cliente', () => {
   ClientesApi.validarRespostaRecebida(response)
 })
 
-Then('os dados do cliente cadastrado devem ser retornados',() => {
+Then('os dados do cliente cadastrado devem ser retornados', () => {
   ClientesApi.validarClienteBusca(response, cliente, clientId)
 })
 
-Given('que possuo novos dados validos para o cliente',() => {
+Given('que possuo novos dados validos para o cliente', () => {
   clienteAtualizado = {
     ...gerarClienteValido(),
     status: 'inactive',
   }
 })
 
-When('solicito a atualizacao do cliente cadastrado',() => {
+When('solicito a atualizacao do cliente cadastrado', () => {
   response = undefined
 
-  ClientesApi.atualizarCliente(token,clientId,clienteAtualizado).then((respostaRecebida) => {
+  ClientesApi.atualizarCliente(token, clientId, clienteAtualizado).then((respostaRecebida) => {
     expect(respostaRecebida.status).to.eq(200)
     response = respostaRecebida
   })
 })
 
-When('recebo a resposta da atualizacao do cliente',() => {
+When('recebo a resposta da atualizacao do cliente', () => {
   ClientesApi.validarRespostaRecebida(response)
 })
 
-Then('os dados do cliente devem ser atualizados com sucesso',() => {
-  ClientesApi.validarClienteAtualizado(response,clienteAtualizado)
+Then('os dados do cliente devem ser atualizados com sucesso', () => {
+  ClientesApi.validarClienteAtualizado(response, clienteAtualizado)
 })
 
-When('solicito a inativacao do cliente cadastrado',() => {
+When('solicito a inativacao do cliente cadastrado', () => {
   response = undefined
 
   ClientesApi.inativarCliente(token, clientId).then((respostaRecebida) => {
@@ -121,11 +121,11 @@ When('solicito a inativacao do cliente cadastrado',() => {
   })
 })
 
-When('recebo a resposta da inativacao do cliente',() => {
+When('recebo a resposta da inativacao do cliente', () => {
   ClientesApi.validarRespostaRecebida(response)
 })
 
-Then('o cliente deve ser retornado com status inativo',() => {
+Then('o cliente deve ser retornado com status inativo', () => {
   ClientesApi.validarClienteInativo(response, cliente, clientId)
 })
 
@@ -156,13 +156,15 @@ Then('somente o cliente solicitado deve ser excluido', () => {
   return ClientesApi.buscarCliente(token, clientId, false).then((respostaClienteExcluido) => {
     ClientesApi.validarClienteNaoEncontrado(respostaClienteExcluido)
 
-    return ClientesApi.buscarCliente(token, clientIdPreservado).then((respostaClientePreservado) => {
-      ClientesApi.validarClienteBusca(
-        respostaClientePreservado,
-        clientePreservado,
-        clientIdPreservado,
-      )
-    })
+    return ClientesApi.buscarCliente(token, clientIdPreservado).then(
+      (respostaClientePreservado) => {
+        ClientesApi.validarClienteBusca(
+          respostaClientePreservado,
+          clientePreservado,
+          clientIdPreservado,
+        )
+      },
+    )
   })
 })
 

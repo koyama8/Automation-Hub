@@ -1,4 +1,6 @@
-@api @usuarios @regression
+@api
+@usuarios
+@regression
 Feature: Usuarios da API
 
   @smoke

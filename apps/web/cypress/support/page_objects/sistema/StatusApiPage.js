@@ -14,15 +14,11 @@ class StatusApiPage {
   }
 
   validarMensagemApiIndisponivel() {
-    cy.get('[data-role="apiResult"]')
-      .should('be.visible')
-      .and('contain.text', 'API indispon')
+    cy.get('[data-role="apiResult"]').should('be.visible').and('contain.text', 'API indispon')
   }
 
   validarNotificacaoErro() {
-    cy.get('[data-cy="toast"]')
-      .should('be.visible')
-      .and('have.class', 'error-toast')
+    cy.get('[data-cy="toast"]').should('be.visible').and('have.class', 'error-toast')
   }
 }
 

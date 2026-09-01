@@ -1,4 +1,6 @@
-@web @componentes @regression
+@web
+@componentes
+@regression
 Feature: Modal de termos
 
   Scenario: CT01 - Aceitar os termos com sucesso

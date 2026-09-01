@@ -1,4 +1,6 @@
-@api @auth @regression
+@api
+@auth
+@regression
 Feature: Autenticacao da API
 
   @smoke

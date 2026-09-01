@@ -1,4 +1,6 @@
-@api @produtos @regression
+@api
+@produtos
+@regression
 Feature: Produtos da API
 
   @smoke
@@ -22,6 +24,7 @@ Feature: Produtos da API
     When solicito a busca do produto cadastrado pelo ID
     And recebo a resposta da busca do produto
     Then os dados do produto cadastrado devem ser retornados
+
   Scenario: CT04 - Atualizar os dados de um produto cadastrado
     Given que possuo um token de administrador para produtos
     And que existe um produto cadastrado para consulta
