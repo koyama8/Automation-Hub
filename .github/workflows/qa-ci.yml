@@ -7,13 +7,15 @@ on:
   pull_request:
     branches:
       - master
+  schedule:
+    - cron: "0 6 * * 1-5"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: qa-ci-${{ github.ref }}
+  group: qa-ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -28,9 +30,71 @@ env:
   CI: true
 
 jobs:
+  quality-gates:
+    name: Quality Gates BDD
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CYPRESS_INSTALL_BINARY: 0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            apps/api/package-lock.json
+            apps/web/package-lock.json
+
+      - name: Bloquear testes focados
+        run: |
+          if grep -R -nE '\.(only)\(' apps/api/cypress apps/web/cypress; then
+            echo "Remova .only antes de rodar o CI."
+            exit 1
+          fi
+
+      - name: Instalar dependencias da API
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Instalar dependencias da Web
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Validar qualidade da automacao BDD da API
+        working-directory: apps/api
+        run: npm run quality:check
+
+      - name: Validar qualidade da automacao BDD da Web
+        working-directory: apps/web
+        run: npm run quality:check
+
+      - name: Validar formatacao dos arquivos de configuracao
+        working-directory: apps/api
+        run: >-
+          npx prettier --check
+          "../../.github/workflows/*.yml"
+          "../../.vscode/*.json"
+          "package.json"
+          "../web/package.json"
+
+      - name: Resumo dos quality gates
+        if: always()
+        run: |
+          echo "## Quality Gates BDD" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ESLint: API e Web" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Prettier: Features, Steps, Clients, Pages e Factories" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Testes focados (.only): bloqueados" >> "$GITHUB_STEP_SUMMARY"
+
   api-tests:
     name: API Cypress
     runs-on: ubuntu-latest
+    needs: quality-gates
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -58,20 +122,18 @@ jobs:
           cache: npm
           cache-dependency-path: apps/api/package-lock.json
 
-      - name: Bloquear testes focados
-        run: |
-          if grep -R -nE '\.(only)\(' apps/api/cypress apps/web/cypress; then
-            echo "Remova .only antes de rodar o CI."
-            exit 1
-          fi
+      - name: Restaurar cache do Cypress
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-api-${{ hashFiles('apps/api/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-cypress-api-
+            ${{ runner.os }}-cypress-
 
       - name: Instalar dependencias da API
         working-directory: apps/api
         run: npm ci
-
-      - name: Validar qualidade da automacao BDD da API
-        working-directory: apps/api
-        run: npm run quality:check
 
       - name: Criar .env da API para CI
         working-directory: apps/api
@@ -111,11 +173,26 @@ jobs:
           exit 1
 
       - name: Rodar testes de API
+        id: api_cypress
         working-directory: apps/api
         env:
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx cypress run --record --key "$CYPRESS_RECORD_KEY" --group "API Cypress" --ci-build-id "${{ github.run_id }}-${{ github.run_attempt }}" --browser electron --config video=false
+        run: |
+          if [ -n "$CYPRESS_RECORD_KEY" ]; then
+            npx cypress run --record --key "$CYPRESS_RECORD_KEY" --group "API Cypress" --ci-build-id "${{ github.run_id }}-${{ github.run_attempt }}" --browser electron --config video=false
+          else
+            echo "CYPRESS_RECORD_KEY indisponivel; executando sem gravacao no Cypress Cloud."
+            npx cypress run --browser electron --config video=false
+          fi
+
+      - name: Resumo da execucao da API
+        if: always()
+        run: |
+          echo "## API Cypress" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Resultado: ${{ steps.api_cypress.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Evento: ${{ github.event_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Escopo: suite completa da API" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload relatorio Cucumber API
         if: always()
@@ -124,6 +201,7 @@ jobs:
           name: cucumber-report-api
           path: apps/api/cypress/reports/cucumber
           if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload evidencias API
         if: failure()
@@ -135,10 +213,13 @@ jobs:
             apps/api/cypress/videos
             apps/api/api-ci.log
           if-no-files-found: ignore
+          retention-days: 7
 
   web-tests:
     name: Web Cypress
     runs-on: ubuntu-latest
+    needs: quality-gates
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -168,12 +249,14 @@ jobs:
             apps/api/package-lock.json
             apps/web/package-lock.json
 
-      - name: Bloquear testes focados
-        run: |
-          if grep -R -nE '\.(only)\(' apps/api/cypress apps/web/cypress; then
-            echo "Remova .only antes de rodar o CI."
-            exit 1
-          fi
+      - name: Restaurar cache do Cypress
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-web-${{ hashFiles('apps/web/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-cypress-web-
+            ${{ runner.os }}-cypress-
 
       - name: Instalar dependencias da API
         working-directory: apps/api
@@ -220,16 +303,27 @@ jobs:
         working-directory: apps/web
         run: npm ci
 
-      - name: Validar qualidade da automacao BDD da Web
-        working-directory: apps/web
-        run: npm run quality:check
-
       - name: Rodar testes web
+        id: web_cypress
         working-directory: apps/web
         env:
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx cypress run --record --key "$CYPRESS_RECORD_KEY" --group "Web Cypress" --ci-build-id "${{ github.run_id }}-${{ github.run_attempt }}" --browser electron --config video=false
+        run: |
+          if [ -n "$CYPRESS_RECORD_KEY" ]; then
+            npx cypress run --record --key "$CYPRESS_RECORD_KEY" --group "Web Cypress" --ci-build-id "${{ github.run_id }}-${{ github.run_attempt }}" --browser electron --config video=false
+          else
+            echo "CYPRESS_RECORD_KEY indisponivel; executando sem gravacao no Cypress Cloud."
+            npx cypress run --browser electron --config video=false
+          fi
+
+      - name: Resumo da execucao Web
+        if: always()
+        run: |
+          echo "## Web Cypress" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Resultado: ${{ steps.web_cypress.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Evento: ${{ github.event_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Escopo: suite completa Web" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload relatorio Cucumber Web
         if: always()
@@ -238,6 +332,7 @@ jobs:
           name: cucumber-report-web
           path: apps/web/cypress/reports/cucumber
           if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload evidencias Web
         if: failure()
@@ -249,6 +344,7 @@ jobs:
             apps/web/cypress/videos
             apps/api/api-ci.log
           if-no-files-found: ignore
+          retention-days: 7
 
   publish-cucumber-reports:
     name: Publicar relatorios Cucumber
@@ -257,6 +353,7 @@ jobs:
       - api-tests
       - web-tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pages: write
@@ -300,3 +397,8 @@ jobs:
       - name: Publicar GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Resumo da publicacao
+        run: |
+          echo "## Relatorios Cucumber" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Portal: ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
