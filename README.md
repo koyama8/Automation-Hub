@@ -52,7 +52,9 @@ qa-automation-lab/
 │   │   └── cypress/
 │   │       ├── e2e/features/
 │   │       ├── e2e/step_definitions/
-│   │       └── support/api_clients/
+│   │       └── support/
+│   │           ├── api_clients/
+│   │           └── factories/
 │   └── web/
 │       └── cypress/
 │           ├── e2e/features/
@@ -61,6 +63,7 @@ qa-automation-lab/
 │               ├── factories/
 │               └── page_objects/
 │                   ├── auth/
+│                   ├── carrinho/
 │                   ├── clientes/
 │                   ├── componentes/
 │                   ├── sistema/
@@ -153,7 +156,9 @@ Steps existentes devem ser reutilizados. Page Objects concentram seletores, aç�
 
 ### Massas de teste
 
-Massas dinâmicas e reutilizáveis ficam em `apps/web/cypress/support/factories/`, como `ClienteFactory.js`. Dados estáticos de referência permanecem em `apps/web/cypress/fixtures/`; credenciais e segredos não devem ser armazenados nesses arquivos.
+Massas dinâmicas e reutilizáveis ficam em `apps/web/cypress/support/factories/` para Web e em `apps/api/cypress/support/factories/` para API. Na API, as Factories são organizadas por domínio, como `clientes/ClienteFactory.js` e `produtos/ProdutoFactory.js`, e permitem sobrescrever campos para preparar diferentes cenários.
+
+Factories montam os dados; Page Objects e API Clients executam as ações. Dados estáticos de referência permanecem em `apps/web/cypress/fixtures/`; credenciais e segredos não devem ser armazenados nesses arquivos.
 
 ## CI/CD
 
