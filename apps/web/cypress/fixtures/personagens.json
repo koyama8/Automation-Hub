@@ -1,0 +1,53 @@
+{
+  "cadastro": {
+    "nome": "Goku",
+    "historia": "Goku, um guerreiro Saiyajin criado na Terra, treinou sem parar, protegeu seus amigos e enfrentou inimigos poderosos, sempre superando seus limites com coragem e determinação.",
+    "universo": "Dragon Ball",
+    "ano": "1984",
+    "arquivo": "cypress/fixtures/historia_goku.pdf",
+    "destaque": true
+  },
+  "listados": [
+    {
+      "nome": "Mulher-Maravilha",
+      "universo": "Liga da Justica",
+      "ano": "1941",
+      "destaque": "Destaque"
+    },
+    {
+      "nome": "Flash",
+      "universo": "Liga da Justica",
+      "ano": "1940",
+      "destaque": "Padrao"
+    },
+    {
+      "nome": "Naruto Uzumaki",
+      "universo": "Naruto",
+      "ano": "1999",
+      "destaque": "Destaque"
+    }
+  ],
+  "personagemGerenciado": {
+    "nome": "Mulher-Maravilha",
+    "universo": "Liga da Justica",
+    "ano": "1941"
+  },
+  "edicao": {
+    "nome": "Super Man",
+    "historia": "Superman é um herói vindo do planeta Krypton. Criado na Terra como Clark Kent, usa seus poderes para proteger a humanidade e lutar pela justiça.",
+    "ano": "1938"
+  },
+  "filtroUniverso": {
+    "nome": "Dragon Ball",
+    "personagens": ["Goku", "Vegeta", "Gohan"]
+  },
+  "busca": {
+    "termo": "Naruto",
+    "resultado": {
+      "nome": "Naruto Uzumaki",
+      "universo": "Naruto",
+      "ano": "1999",
+      "destaque": "Destaque"
+    }
+  }
+}

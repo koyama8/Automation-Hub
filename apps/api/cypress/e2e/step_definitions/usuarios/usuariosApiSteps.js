@@ -1,9 +1,9 @@
 import { Before, Given, When, Then } from '@badeball/cypress-cucumber-preprocessor'
 
-import { fakerPT_BR as faker } from '@faker-js/faker'
 import { obterCredenciaisAdministrador } from '../../../support/data/Credenciais'
 import AuthApi from '../../../support/api_clients/auth/AuthApi'
 import UsuariosApi from '../../../support/api_clients/usuarios/UsuariosApi'
+import { gerarUsuarioValido } from '../../../support/factories/usuarios/UsuarioFactory'
 
 let token
 let response
@@ -42,16 +42,7 @@ Then('os usuarios cadastrados devem ser retornados', () => {
 })
 
 Given('que existe um usuario cadastrado', () => {
-  usuario = {
-    name: faker.person.fullName(),
-    email: faker.internet
-      .email({
-        firstName: 'buscar',
-        lastName: String(Date.now()),
-      })
-      .toLowerCase(),
-    password: faker.internet.password(),
-  }
+  usuario = gerarUsuarioValido()
 
   return UsuariosApi.cadastrarUsuario(token, usuario).then((respostaRecebida) => {
     expect(respostaRecebida.status).to.eq(201)
@@ -74,16 +65,7 @@ Then('o usuario solicitado deve ser retornado', () => {
 })
 
 Given('que possuo dados validos para cadastro de usuario', () => {
-  usuario = {
-    name: faker.person.fullName(),
-    email: faker.internet
-      .email({
-        firstName: 'cadastrar',
-        lastName: String(Date.now()),
-      })
-      .toLowerCase(),
-    password: faker.internet.password(),
-  }
+  usuario = gerarUsuarioValido()
 })
 
 When('solicito o cadastro do usuario', () => {
@@ -101,16 +83,7 @@ Then('o usuario deve ser cadastrado com sucesso', () => {
 })
 
 Given('que possuo novos dados validos para o usuario', () => {
-  dadosAtualizados = {
-    name: faker.person.fullName(),
-    email: faker.internet
-      .email({
-        firstName: 'atualizar',
-        lastName: String(Date.now()),
-      })
-      .toLowerCase(),
-    password: faker.internet.password(),
-  }
+  dadosAtualizados = gerarUsuarioValido()
 })
 
 When('solicito a atualizacao do usuario pelo ID', () => {
@@ -142,16 +115,7 @@ Then('o usuario deve ser inativado com sucesso', () => {
 })
 
 Given('que existe um usuario cadastrado e inativo', () => {
-  usuario = {
-    name: faker.person.fullName(),
-    email: faker.internet
-      .email({
-        firstName: 'buscar',
-        lastName: String(Date.now()),
-      })
-      .toLowerCase(),
-    password: faker.internet.password(),
-  }
+  usuario = gerarUsuarioValido()
 
   return UsuariosApi.cadastrarUsuario(token, usuario).then((respostaRecebida) => {
     expect(respostaRecebida.status).to.eq(201)

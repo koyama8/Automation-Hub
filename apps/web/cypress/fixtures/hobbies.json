@@ -1,0 +1,11 @@
+{
+  "valido": {
+    "titulo": "Futebol",
+    "descricao": "Futebol aos domingos com os amigos",
+    "tipo": "Futebol",
+    "frequencia": "Mensal",
+    "temporada": "Verão",
+    "horasSemanais": "4",
+    "destaqueSemanal": true
+  }
+}

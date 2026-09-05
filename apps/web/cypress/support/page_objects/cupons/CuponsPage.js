@@ -13,18 +13,18 @@ class CuponsPage {
     cy.contains('button', 'Cadastrar cupom').should('be.visible')
 
     cy.get('[data-cy="coupon-submit"]').click()
+    cy.get('[data-cy="coupon-result"]', { timeout: 10000 }).should(
+      'contain.text',
+      `Cupom cadastrado: ${cupom.codigoCupom}`,
+    )
   }
 
-  validarCupom() {
-    cy.get('[data-cy="coupon-submit"]').click()
-
-    cy.get('[data-cy="coupons-table-body"]').within(() => {
-      cy.contains('tr', '1').within(() => {
-        cy.contains('strong', 'QA-CUPOM-FIXO-001').should('be.visible')
-        cy.contains('td', 'R$ 5,00').should('be.visible')
-        cy.contains('small', 'Min R$ 0,00 | Max R$ 30,00').scrollIntoView().should('be.visible')
-        cy.contains('span', 'Ativo').should('be.visible')
-      })
+  validarCupom(cupom) {
+    cy.contains('[data-cy="coupons-table-body"] tr', cupom.codigoCupom).within(() => {
+      cy.contains('strong', cupom.codigoCupom).should('be.visible')
+      cy.contains('td', 'R$ 5,00').should('be.visible')
+      cy.contains('small', 'Min R$ 0,00 | Max R$ 30,00').scrollIntoView().should('be.visible')
+      cy.contains('span', 'Ativo').should('be.visible')
     })
   }
 
