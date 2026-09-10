@@ -7,32 +7,56 @@
 [![Lighthouse](https://img.shields.io/badge/PERFORMANCE-LIGHTHOUSE%20PLANEJADO-F43F5E?style=for-the-badge&logo=lighthouse&logoColor=white)](#segurança-e-performance)
 [![Download do projeto](https://img.shields.io/badge/BAIXAR%20PROJETO-ZIP-1677FF?style=for-the-badge&logo=github&logoColor=white)](https://github.com/koyama8/Automation-Hub/archive/refs/heads/master.zip)
 
-Laboratório prático de **Quality Engineering / SDET** para automações Web e API com Cypress. O projeto evolui de testes legados para uma arquitetura BDD, priorizando reutilização, validações confiáveis, prevenção de falsos positivos e integração contínua.
+Laboratório de **Quality Engineering (QE) e SDET** para desenvolvimento e validação de uma aplicação local completa. O projeto reúne automação Web e API com Cypress, arquitetura BDD por domínio, preparação de dados, controles de acesso, relatórios executivos e quality gates em CI/CD.
 
 > **Implementação futura:** k6 será usado para carga e desempenho da API; Lighthouse para Web Vitals, acessibilidade e boas práticas da interface Web.
 
 ## Visão geral
 
-| Área | Objetivo | Tecnologias |
-| --- | --- | --- |
-| `apps/api/` | API REST e automação de serviços | Node.js, Express, Prisma, PostgreSQL, Cypress |
-| `apps/web/` | Interface e automação E2E | HTML, CSS, JavaScript, Cypress |
-| `bruno/QA Automation Lab/` | Coleção para testes manuais de API | Bruno |
-| `.github/workflows/` | Pipeline de qualidade | GitHub Actions, Cypress Cloud, GitHub Pages |
+| Área                       | Objetivo                           | Tecnologias                                   |
+| -------------------------- | ---------------------------------- | --------------------------------------------- |
+| `apps/api/`                | API REST e automação de serviços   | Node.js, Express, Prisma, PostgreSQL, Cypress |
+| `apps/web/`                | Interface e automação E2E          | HTML, CSS, JavaScript, Cypress                |
+| `bruno/QA Automation Lab/` | Coleção para testes manuais de API | Bruno                                         |
+| `.github/workflows/`       | Pipeline de qualidade              | GitHub Actions, Cypress Cloud, GitHub Pages   |
 
-## Arquitetura em evolução
+## Engenharia de Qualidade — QE & SDET
 
-| Capacidade | Status | Padrão adotado |
-| --- | --- | --- |
-| Cypress Web e API | Implementado | Suítes independentes |
-| BDD com Cucumber | Em evolução | Features e Steps organizados por domínio |
-| Automação Web | Em evolução | Feature → Steps → Page Objects → Web |
-| Automação de API | Em evolução | Feature → Steps → API Clients → API REST |
-| CI/CD e evidências | Implementado | GitHub Actions, Cypress Cloud e artefatos |
-| Relatórios Cucumber | Implementado | HTML/JSON para Web e API no GitHub Pages |
-| Performance e DAST | Planejado | k6, Lighthouse e OWASP ZAP |
+O projeto trata automação como software: os cenários de negócio permanecem legíveis nas Features, enquanto detalhes técnicos são distribuídos em camadas com responsabilidades claras. Essa organização reduz duplicação, facilita manutenção e permite que Web e API evoluam como suítes independentes.
 
-Testes antigos e BDD convivem durante a migração. Um teste legado somente é removido após a comparação das validações, execução da suíte relacionada e confirmação de que o novo cenário passou pelo motivo correto.
+As principais práticas de Engenharia de Qualidade aplicadas são:
+
+- arquitetura BDD orientada por domínio, com rastreabilidade entre comportamento e implementação;
+- Page Objects para encapsular seletores, ações e validações da interface;
+- API Clients para centralizar endpoints, autenticação e contratos de resposta;
+- Factories com dados sintéticos e sobrescritas para cenários positivos e negativos;
+- preparação isolada de pré-condições, evitando dependência entre testes e IDs fixos;
+- validações de RBAC, idempotência, concorrência otimista, revogação de sessão e regras de negócio;
+- quality gates com ESLint, Prettier e bloqueio de testes focados por `.only`;
+- evidências de execução no Cypress Cloud e relatórios Cucumber publicados pelo GitHub Pages.
+
+Esse desenho representa a atuação de um SDET além da escrita de scripts: arquitetura de testes, confiabilidade da suíte, testabilidade, integração contínua e comunicação objetiva da qualidade do produto.
+
+## Arquitetura de automação
+
+| Capacidade          | Status       | Padrão adotado                            |
+| ------------------- | ------------ | ----------------------------------------- |
+| Cypress Web e API   | Implementado | Suítes independentes                      |
+| BDD com Cucumber    | Implementado | Features e Steps organizados por domínio  |
+| Automação Web       | Implementado | Feature → Steps → Page Objects → Web      |
+| Automação de API    | Implementado | Feature → Steps → API Clients → API REST  |
+| CI/CD e evidências  | Implementado | GitHub Actions, Cypress Cloud e artefatos |
+| Relatórios Cucumber | Implementado | HTML/JSON para Web e API no GitHub Pages  |
+| Performance e DAST  | Planejado    | k6, Lighthouse e OWASP ZAP                |
+
+As suítes Web e API foram consolidadas no padrão BDD. Features expressam os comportamentos, Steps coordenam os fluxos e as camadas de Page Objects, API Clients e Factories concentram responsabilidades técnicas e massas reutilizáveis.
+
+## Escopo automatizado
+
+| Suíte | Domínios cobertos                                                                                                                                                             |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API   | Autenticação, sessão, usuários, clientes, produtos, carrinho, pedidos, pagamentos, contratos, cupons, evidências, permissões, recuperação de senha, relatórios e health check |
+| Web   | Autenticação, usuários, clientes, carrinho, checkout, contratos, cupons, cenários, componentes, formulários, hobbies, personagens, upload e status do sistema                 |
 
 ## Relatórios Cucumber
 
@@ -49,27 +73,33 @@ qa-automation-lab/
 ├── .github/workflows/qa-ci.yml
 ├── apps/
 │   ├── api/
+│   │   ├── src/
 │   │   └── cypress/
-│   │       ├── e2e/features/
-│   │       ├── e2e/step_definitions/
+│   │       ├── e2e/
+│   │       │   ├── features/
+│   │       │   │   ├── auth/ carrinho/ clientes/ contratos/
+│   │       │   │   ├── cupons/ evidencias/ pagamentos/ pedidos/
+│   │       │   │   └── permissoes/ produtos/ relatorios/ senha/ sistema/ usuarios/
+│   │       │   └── step_definitions/       # Steps organizados pelos mesmos domínios
 │   │       └── support/
-│   │           ├── api_clients/
-│   │           └── factories/
+│   │           ├── api_clients/             # Comunicação com os serviços
+│   │           ├── factories/               # Massas dinâmicas e reutilizáveis
+│   │           └── data/                    # Dados de referência
 │   └── web/
+│       ├── dist/                             # Aplicação servida localmente
 │       └── cypress/
-│           ├── e2e/features/
-│           ├── e2e/step_definitions/
+│           ├── e2e/
+│           │   ├── features/
+│           │   │   ├── auth/ carrinho/ cenarios/ checkout/ clientes/
+│           │   │   ├── componentes/ contratos/ cupons/ formularios/
+│           │   │   └── hobbies/ personagens/ sistema/ upload/ usuarios/
+│           │   └── step_definitions/         # Steps organizados pelos mesmos domínios
 │           └── support/
-│               ├── factories/
-│               └── page_objects/
-│                   ├── auth/
-│                   ├── carrinho/
-│                   ├── clientes/
-│                   ├── componentes/
-│                   ├── sistema/
-│                   └── usuarios/
+│               ├── factories/                # Massas de teste da interface
+│               └── page_objects/             # Ações, seletores e validações Web
 ├── bruno/QA Automation Lab/
 ├── database/seed/
+├── docs/
 └── docker-compose.yml
 ```
 
@@ -87,6 +117,8 @@ cd Automation-Hub
 Ordem de inicialização: **PostgreSQL → API → Web → testes Cypress**. Os comandos completos estão nas próximas seções.
 
 ## Execução local
+
+Os serviços devem permanecer ativos durante a execução do Cypress. Utilize terminais separados para banco, API, Web e testes.
 
 Suba o PostgreSQL:
 
@@ -114,6 +146,8 @@ npm install
 npm run dev
 ```
 
+Antes de iniciar os testes, confirme que os serviços respondem em `http://localhost:3030/api/health` e `http://localhost:3000`.
+
 ## Execução dos testes
 
 API:
@@ -133,10 +167,10 @@ npx cypress run --browser electron --config video=false
 Feature específica:
 
 ```powershell
-npx cypress run --spec "cypress/e2e/features/usuarios/usuarios.feature"
+npx cypress run --spec "cypress/e2e/features/usuarios/usuariosApi.feature"
 ```
 
-Durante a migração, as configurações aceitam testes `.cy.js` e `.feature` simultaneamente.
+As configurações executam exclusivamente as Features Cucumber em `cypress/e2e/features`.
 
 ## Padrão BDD
 
@@ -160,7 +194,7 @@ Massas dinâmicas e reutilizáveis ficam em `apps/web/cypress/support/factories/
 
 Factories montam os dados; Page Objects e API Clients executam as ações. Dados estáticos de referência permanecem em `apps/web/cypress/fixtures/`; credenciais e segredos não devem ser armazenados nesses arquivos.
 
-## CI/CD
+## Quality gates e CI/CD
 
 O workflow [`qa-ci.yml`](.github/workflows/qa-ci.yml) executa:
 
@@ -171,43 +205,46 @@ O workflow [`qa-ci.yml`](.github/workflows/qa-ci.yml) executa:
 - geração dos relatórios Cucumber Web/API;
 - publicação automática do portal no GitHub Pages.
 
+A pipeline é executada em pushes e pull requests para `master`, por agendamento em dias úteis e também sob demanda. As suítes Web e API são separadas para tornar falhas mais fáceis de diagnosticar e impedir que uma área esconda regressões da outra.
+
 ## Segurança e performance
 
-| Iniciativa | Estado | Objetivo |
-| --- | --- | --- |
+| Iniciativa                        | Estado       | Objetivo                                                      |
+| --------------------------------- | ------------ | ------------------------------------------------------------- |
 | Autenticação, perfis e permissões | Implementado | Validar RBAC, revogação de token e acessos Admin, QA e Viewer |
-| Proteção de dados e segredos | Em evolução | Evitar dados sensíveis e utilizar variáveis de ambiente |
-| Contratos e JSON Schema | Planejado | Detectar quebras de contrato da API |
-| Performance de API com k6 | Planejado | Carga, tempo de resposta, throughput e taxa de erro |
-| Performance Web com Lighthouse | Planejado | Web Vitals, acessibilidade e boas práticas |
-| DAST com OWASP ZAP | Planejado | Verificações automatizadas de segurança |
-| Quality gates avançados | Planejado | Bloquear regressões de contrato, performance e segurança |
+| Proteção de dados e segredos      | Em evolução  | Evitar dados sensíveis e utilizar variáveis de ambiente       |
+| Contratos e JSON Schema           | Planejado    | Detectar quebras de contrato da API                           |
+| Performance de API com k6         | Planejado    | Carga, tempo de resposta, throughput e taxa de erro           |
+| Performance Web com Lighthouse    | Planejado    | Web Vitals, acessibilidade e boas práticas                    |
+| DAST com OWASP ZAP                | Planejado    | Verificações automatizadas de segurança                       |
+| Quality gates avançados           | Planejado    | Bloquear regressões de contrato, performance e segurança      |
 
-Essas implementações serão adicionadas gradualmente após a consolidação da migração BDD, sem misturar responsabilidades dos testes funcionais.
+Essas capacidades serão adicionadas como camadas independentes, sem misturar responsabilidades de testes funcionais, contratos, desempenho e segurança.
 
 ## Próximas evoluções
 
-1. concluir a migração estrutural Web e API;
-2. adicionar tags de smoke, regressão e cenários negativos;
-3. ampliar contratos, métricas e identificação de testes instáveis;
-4. implementar k6, Lighthouse, DAST e quality gates avançados.
+1. ampliar testes de contrato e validações com JSON Schema;
+2. adicionar métricas de estabilidade e identificação de testes instáveis;
+3. implementar testes de carga e desempenho da API com k6;
+4. integrar Lighthouse para Web Vitals e acessibilidade;
+5. adicionar verificações DAST com OWASP ZAP e quality gates específicos.
 
 ## Ambiente local
 
-| Serviço | URL |
-| --- | --- |
-| Web | `http://localhost:3000` |
-| API | `http://localhost:3030` |
-| Health | `http://localhost:3030/api/health` |
-| PostgreSQL | `localhost:5434` |
-| PgAdmin | `http://localhost:15434` |
+| Serviço    | URL                                |
+| ---------- | ---------------------------------- |
+| Web        | `http://localhost:3000`            |
+| API        | `http://localhost:3030`            |
+| Health     | `http://localhost:3030/api/health` |
+| PostgreSQL | `localhost:5434`                   |
+| PgAdmin    | `http://localhost:15434`           |
 
 Credenciais exclusivas do laboratório local:
 
-| Acesso | E-mail | Senha |
-| --- | --- | --- |
+| Acesso  | E-mail            | Senha    |
+| ------- | ----------------- | -------- |
 | API/Web | `qa@adminlab.com` | `pwd123` |
-| PgAdmin | `dba@pgadmin.com` | `dba` |
+| PgAdmin | `dba@pgadmin.com` | `dba`    |
 
 ## Bruno
 

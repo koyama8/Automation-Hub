@@ -15,9 +15,12 @@ export default defineConfig({
     async setupNodeEvents(on, config) {
       await addCucumberPreprocessorPlugin(on, config)
 
-      on('file:preprocessor', createBundler({
-        plugins: [createEsbuildPlugin(config)],
-      }))
+      on(
+        'file:preprocessor',
+        createBundler({
+          plugins: [createEsbuildPlugin(config)],
+        }),
+      )
 
       on('task', {
         deleteUser(email) {
@@ -27,9 +30,6 @@ export default defineConfig({
 
       return config
     },
-    specPattern: [
-      'cypress/e2e/**/*.cy.js',
-      'cypress/e2e/features/**/*.feature',
-    ],
+    specPattern: 'cypress/e2e/features/**/*.feature',
   },
 })
