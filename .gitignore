@@ -26,6 +26,10 @@ pnpm-debug.log*
 **/cypress/screenshots/
 **/cypress/videos/
 
+# Lighthouse CI
+**/.lighthouseci/
+**/lighthouse/reports/
+
 # Playwright
 **/playwright-report/
 **/blob-report/

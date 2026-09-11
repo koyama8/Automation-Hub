@@ -39,4 +39,30 @@ export default [
       'valid-typeof': 'error',
     },
   },
+  {
+    files: ['lighthouse/*.cjs', 'lighthouserc.cjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'commonjs',
+      globals: {
+        __dirname: 'readonly',
+        module: 'readonly',
+        process: 'readonly',
+        require: 'readonly',
+      },
+    },
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+    rules: {
+      eqeqeq: ['error', 'always'],
+      'no-dupe-keys': 'error',
+      'no-redeclare': 'error',
+      'no-undef': 'error',
+      'no-unexpected-multiline': 'error',
+      'no-unreachable': 'error',
+      'no-unused-vars': 'error',
+      'valid-typeof': 'error',
+    },
+  },
 ]
