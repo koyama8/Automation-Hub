@@ -30,6 +30,10 @@ pnpm-debug.log*
 **/.lighthouseci/
 **/lighthouse/reports/
 
+# k6
+**/performance/k6/results/*
+!**/performance/k6/results/.gitkeep
+
 # Playwright
 **/playwright-report/
 **/blob-report/

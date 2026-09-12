@@ -3,13 +3,11 @@
 [![Quality Gate](https://img.shields.io/github/actions/workflow/status/koyama8/Automation-Hub/qa-ci.yml?branch=master&label=QUALITY%20GATE&style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/koyama8/Automation-Hub/actions/workflows/qa-ci.yml)
 [![Relatório Cucumber](https://img.shields.io/badge/RELATORIO-CUCUMBER-00D084?style=for-the-badge&logo=cucumber&logoColor=white)](https://koyama8.github.io/Automation-Hub/)
 [![Cypress Cloud](https://img.shields.io/badge/CYPRESS%20CLOUD-RUNS-04C38E?style=for-the-badge&logo=cypress&logoColor=white)](https://cloud.cypress.io/projects/2hmvki/branches/master/runs)
-[![k6](https://img.shields.io/badge/PERFORMANCE-K6%20PLANEJADO-F97316?style=for-the-badge&logo=k6&logoColor=white)](#segurança-e-performance)
+[![k6](https://img.shields.io/badge/PERFORMANCE-K6%20CI-F97316?style=for-the-badge&logo=k6&logoColor=white)](https://koyama8.github.io/Automation-Hub/k6/)
 [![Lighthouse](https://img.shields.io/badge/PERFORMANCE-LIGHTHOUSE%20CI-F43F5E?style=for-the-badge&logo=lighthouse&logoColor=white)](https://koyama8.github.io/Automation-Hub/lighthouse/)
 [![Download do projeto](https://img.shields.io/badge/BAIXAR%20PROJETO-ZIP-1677FF?style=for-the-badge&logo=github&logoColor=white)](https://github.com/koyama8/Automation-Hub/archive/refs/heads/master.zip)
 
 Laboratório de **Quality Engineering (QE) e SDET** para desenvolvimento e validação de uma aplicação local completa. O projeto reúne automação Web e API com Cypress, arquitetura BDD por domínio, preparação de dados, controles de acesso, relatórios executivos e quality gates em CI/CD.
-
-> **Próxima camada:** k6 será usado para carga e desempenho da API. A auditoria Web com Lighthouse CI já está integrada ao ambiente local e à pipeline.
 
 ## Visão geral
 
@@ -17,6 +15,7 @@ Laboratório de **Quality Engineering (QE) e SDET** para desenvolvimento e valid
 | -------------------------- | ---------------------------------------- | --------------------------------------------- |
 | `apps/api/`                | API REST e automação de serviços         | Node.js, Express, Prisma, PostgreSQL, Cypress |
 | `apps/web/`                | Interface, automação E2E e auditoria Web | HTML, CSS, JavaScript, Cypress, Lighthouse CI |
+| `performance/k6/`          | Carga controlada e performance da API    | Grafana k6, checks, thresholds e relatórios   |
 | `bruno/QA Automation Lab/` | Coleção para testes manuais de API       | Bruno                                         |
 | `.github/workflows/`       | Pipeline de qualidade                    | GitHub Actions, Cypress Cloud, GitHub Pages   |
 
@@ -35,21 +34,23 @@ As principais práticas de Engenharia de Qualidade aplicadas são:
 - quality gates com ESLint, Prettier e bloqueio de testes focados por `.only`;
 - evidências de execução no Cypress Cloud e relatórios Cucumber publicados pelo GitHub Pages.
 - auditorias Lighthouse repetíveis, com medianas, limites de qualidade e diagnóstico automatizado.
+- testes k6 com perfis smoke/load, carga não destrutiva, thresholds e relatórios reproduzíveis.
 
 Esse desenho representa a atuação de um SDET além da escrita de scripts: arquitetura de testes, confiabilidade da suíte, testabilidade, integração contínua e comunicação objetiva da qualidade do produto.
 
 ## Arquitetura de automação
 
-| Capacidade             | Status       | Padrão adotado                            |
-| ---------------------- | ------------ | ----------------------------------------- |
-| Cypress Web e API      | Implementado | Suítes independentes                      |
-| BDD com Cucumber       | Implementado | Features e Steps organizados por domínio  |
-| Automação Web          | Implementado | Feature → Steps → Page Objects → Web      |
-| Automação de API       | Implementado | Feature → Steps → API Clients → API REST  |
-| CI/CD e evidências     | Implementado | GitHub Actions, Cypress Cloud e artefatos |
-| Relatórios Cucumber    | Implementado | HTML/JSON para Web e API no GitHub Pages  |
-| Performance Web        | Implementado | Lighthouse CI, baseline e artefatos       |
-| Performance API e DAST | Planejado    | k6 e OWASP ZAP                            |
+| Capacidade          | Status       | Padrão adotado                            |
+| ------------------- | ------------ | ----------------------------------------- |
+| Cypress Web e API   | Implementado | Suítes independentes                      |
+| BDD com Cucumber    | Implementado | Features e Steps organizados por domínio  |
+| Automação Web       | Implementado | Feature → Steps → Page Objects → Web      |
+| Automação de API    | Implementado | Feature → Steps → API Clients → API REST  |
+| CI/CD e evidências  | Implementado | GitHub Actions, Cypress Cloud e artefatos |
+| Relatórios Cucumber | Implementado | HTML/JSON para Web e API no GitHub Pages  |
+| Performance Web     | Implementado | Lighthouse CI, baseline e artefatos       |
+| Performance API     | Implementado | k6, checks, thresholds e relatórios       |
+| DAST                | Planejado    | OWASP ZAP                                 |
 
 As suítes Web e API foram consolidadas no padrão BDD. Features expressam os comportamentos, Steps coordenam os fluxos e as camadas de Page Objects, API Clients e Factories concentram responsabilidades técnicas e massas reutilizáveis.
 
@@ -104,12 +105,17 @@ qa-automation-lab/
 ├── bruno/QA Automation Lab/
 ├── database/seed/
 ├── docs/
+├── performance/k6/
+│   ├── api-performance.js                  # Cenários smoke e carga da API
+│   ├── config.js                           # Perfis, parâmetros e thresholds
+│   ├── reporter.js                         # Relatórios HTML, Markdown e JSON
+│   └── run.ps1                             # Execução local assistida
 └── docker-compose.yml
 ```
 
 ## Baixar e executar
 
-Pré-requisitos: **Node.js 24**, npm e Docker Desktop com Docker Compose. Git é necessário somente para a opção de clone.
+Pré-requisitos: **Node.js 24**, npm e Docker Desktop com Docker Compose. Para executar performance localmente, instale também o **Grafana k6**. Git é necessário somente para a opção de clone.
 
 Baixe pelo botão **BAIXAR PROJETO · ZIP** no topo, extraia o arquivo e abra um PowerShell na pasta extraída. Como alternativa, clone o repositório:
 
@@ -177,6 +183,15 @@ npm run lighthouse
 
 O comando executa três medições, calcula as medianas e salva os relatórios HTML, JSON e o resumo técnico em `apps/web/lighthouse/reports/`.
 
+Performance da API com k6, executada na raiz do repositório com PostgreSQL e API ativos:
+
+```powershell
+.\performance\k6\run.ps1 -Profile smoke
+.\performance\k6\run.ps1 -Profile load
+```
+
+O smoke valida ambiente, autenticação e relatórios com uma iteração. O perfil load mantém 10 usuários virtuais durante 30 segundos e exige `p95 < 800 ms`, falhas abaixo de 1% e pelo menos 99% dos checks aprovados.
+
 Feature específica:
 
 ```powershell
@@ -214,13 +229,17 @@ O workflow [`qa-ci.yml`](.github/workflows/qa-ci.yml) executa:
 - preparação do PostgreSQL, Prisma e massa inicial;
 - suítes Cypress Web e API em jobs separados;
 - auditoria Lighthouse CI com três execuções e limites monitorados;
+- carga k6 da API com thresholds que bloqueiam regressões de desempenho;
 - bloqueio de `.only` e registro no Cypress Cloud;
 - evidências em falhas, incluindo screenshots, vídeos e logs;
 - geração dos relatórios Cucumber Web/API;
 - publicação dos relatórios Lighthouse como artefatos por 14 dias;
+- publicação dos relatórios k6 em HTML, Markdown e JSON por 14 dias;
 - publicação automática do portal no GitHub Pages.
 
-A pipeline é executada em pushes e pull requests para `master`, por agendamento em dias úteis e também sob demanda. As suítes Web, API e Lighthouse são separadas para tornar falhas mais fáceis de diagnosticar e impedir que uma área esconda regressões da outra.
+A pipeline é executada em pushes e pull requests para `master`, por agendamento em dias úteis e também sob demanda. As suítes Web, API, Lighthouse e k6 são separadas para tornar falhas mais fáceis de diagnosticar e impedir que uma área esconda regressões da outra.
+
+O registro da validação técnica mais recente, incluindo resultados e impedimentos locais, está em [`docs/quality-execution.md`](docs/quality-execution.md).
 
 ## Lighthouse CI
 
@@ -243,6 +262,27 @@ Baseline obtida na validação local da implementação:
 
 O diagnóstico inicial registrou três oportunidades: adicionar uma meta description, disponibilizar um `robots.txt` válido e reduzir JavaScript não utilizado. Os números podem variar conforme máquina e versão do Chrome; por isso, os relatórios da pipeline são mantidos como artefatos para comparação.
 
+## k6 — Performance da API
+
+[![Abrir relatório k6](https://img.shields.io/badge/K6-ABRIR%20RELATÓRIO-F97316?style=for-the-badge&logo=k6&logoColor=white)](https://koyama8.github.io/Automation-Hub/k6/)
+
+O perfil de carga mantém **10 usuários virtuais durante 30 segundos** e exercita rotas de leitura da API após validar o health check e a autenticação. A execução possui thresholds para interromper regressões quando o `p95` ultrapassa 800 ms, a taxa de falhas HTTP alcança 1% ou menos de 99% dos checks são aprovados.
+
+Resultado da validação local da implementação:
+
+| Indicador               | Resultado |
+| ----------------------- | --------: |
+| Usuários virtuais       |        10 |
+| Duração da carga        |      30 s |
+| Requisições             |     1.110 |
+| Iterações concluídas    |       554 |
+| p95                     |  50,64 ms |
+| Falhas HTTP             |        0% |
+| Checks aprovados        |      100% |
+| Iterações interrompidas |         0 |
+
+Os resultados são gerados em HTML, Markdown e JSON. No CI, o relatório HTML é publicado automaticamente no portal do GitHub Pages; assim, o botão acima e o cartão **Carga da API** apresentam a evidência da execução mais recente da branch `master`.
+
 ## Segurança e performance
 
 | Iniciativa                        | Estado       | Objetivo                                                      |
@@ -250,7 +290,7 @@ O diagnóstico inicial registrou três oportunidades: adicionar uma meta descrip
 | Autenticação, perfis e permissões | Implementado | Validar RBAC, revogação de token e acessos Admin, QA e Viewer |
 | Proteção de dados e segredos      | Em evolução  | Evitar dados sensíveis e utilizar variáveis de ambiente       |
 | Contratos e JSON Schema           | Planejado    | Detectar quebras de contrato da API                           |
-| Performance de API com k6         | Planejado    | Carga, tempo de resposta, throughput e taxa de erro           |
+| Performance de API com k6         | Implementado | Carga, tempo de resposta, throughput e taxa de erro           |
 | Performance Web com Lighthouse    | Implementado | Performance, Web Vitals, acessibilidade, boas práticas e SEO  |
 | DAST com OWASP ZAP                | Planejado    | Verificações automatizadas de segurança                       |
 | Quality gates avançados           | Planejado    | Bloquear regressões de contrato, performance e segurança      |
@@ -261,7 +301,7 @@ Essas capacidades serão adicionadas como camadas independentes, sem misturar re
 
 1. ampliar testes de contrato e validações com JSON Schema;
 2. adicionar métricas de estabilidade e identificação de testes instáveis;
-3. implementar testes de carga e desempenho da API com k6;
+3. evoluir os testes k6 com perfis de estresse e resistência em ambiente dedicado;
 4. evoluir os limites Lighthouse de monitoramento para bloqueio gradual de regressões;
 5. adicionar verificações DAST com OWASP ZAP e quality gates específicos.
 

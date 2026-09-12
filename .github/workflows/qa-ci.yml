@@ -87,7 +87,8 @@ jobs:
         run: |
           echo "## Quality Gates BDD" >> "$GITHUB_STEP_SUMMARY"
           echo "- ESLint: API e Web" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Prettier: Features, Steps, Clients, Pages e Factories" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Prettier: Features, Steps, Clients, Pages, Factories e k6" >> "$GITHUB_STEP_SUMMARY"
+          echo "- k6: lint e formatacao do codigo de performance" >> "$GITHUB_STEP_SUMMARY"
           echo "- Testes focados (.only): bloqueados" >> "$GITHUB_STEP_SUMMARY"
 
   api-tests:
@@ -380,6 +381,125 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  k6-performance:
+    name: API Performance k6
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: dba
+          POSTGRES_PASSWORD: dba
+          POSTGRES_DB: QALabDB
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U dba -d QALabDB"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+
+      - name: Instalar dependencias da API
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Criar .env da API para performance
+        working-directory: apps/api
+        run: |
+          cat > .env << EOF
+          DATABASE_URL="${DATABASE_URL}"
+          PORT="${PORT}"
+          WEB_URL="${WEB_URL}"
+          ADMIN_EMAIL="${ADMIN_EMAIL}"
+          ADMIN_PASSWORD="${ADMIN_PASSWORD}"
+          JWT_SECRET="${JWT_SECRET}"
+          JWT_EXPIRES_IN="${JWT_EXPIRES_IN}"
+          RESET_TOKEN_MINUTES="${RESET_TOKEN_MINUTES}"
+          EOF
+
+      - name: Preparar banco da API
+        working-directory: apps/api
+        run: |
+          npm run prisma:generate
+          npx prisma migrate deploy
+          npm run prisma:seed
+
+      - name: Subir API
+        working-directory: apps/api
+        run: |
+          nohup npm start > api-k6.log 2>&1 &
+
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3030/api/health; then
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          cat api-k6.log
+          exit 1
+
+      - name: Instalar k6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: "2.1.0"
+
+      - name: Executar carga controlada da API
+        id: k6_load
+        env:
+          BASE_URL: http://localhost:3030
+          ADMIN_EMAIL: ${{ env.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ env.ADMIN_PASSWORD }}
+          K6_PROFILE: load
+          K6_RESULTS_DIR: performance/k6/results
+        run: |
+          mkdir -p performance/k6/results
+          k6 run performance/k6/api-performance.js
+
+      - name: Registrar resumo k6
+        if: always()
+        run: |
+          echo "## API Performance k6" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Resultado: ${{ steps.k6_load.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Perfil: 10 usuarios virtuais por 30 segundos" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -f performance/k6/results/summary.md ]; then
+            cat performance/k6/results/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Publicar relatorios k6
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-performance-reports
+          path: performance/k6/results
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publicar log da API
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-api-log
+          path: apps/api/api-k6.log
+          if-no-files-found: ignore
+          retention-days: 7
+
   publish-cucumber-reports:
     name: Publicar relatorios Cucumber
     if: github.event_name != 'pull_request'
@@ -387,6 +507,7 @@ jobs:
       - api-tests
       - web-tests
       - lighthouse-audit
+      - k6-performance
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -418,6 +539,12 @@ jobs:
         with:
           name: lighthouse-reports
           path: pages/lighthouse
+
+      - name: Baixar relatorio k6
+        uses: actions/download-artifact@v4
+        with:
+          name: k6-performance-reports
+          path: pages/k6
 
       - name: Montar portal de relatorios
         run: |
