@@ -107,15 +107,16 @@ function guardarResposta(resposta) {
 function criarPedidoElegivel() {
   return ClientesApi.cadastrarCliente(token, gerarClienteValido()).then(({ body }) => {
     const clientId = body.data.id
-    return ProdutosApi.cadastrarProduto(token, gerarProdutoValido({ priceCents: 10000 })).then(
-      ({ body: produtoBody }) => {
-        return PedidosApi.cadastrar(token, gerarPedidoValido(clientId, produtoBody.data.id)).then(
-          ({ body: pedidoBody }) => {
-            orderId = pedidoBody.data.id
-          },
-        )
-      },
-    )
+    return ProdutosApi.cadastrarProduto(
+      token,
+      gerarProdutoValido({ priceCents: 10000, stock: 10 }),
+    ).then(({ body: produtoBody }) => {
+      return PedidosApi.cadastrar(token, gerarPedidoValido(clientId, produtoBody.data.id)).then(
+        ({ body: pedidoBody }) => {
+          orderId = pedidoBody.data.id
+        },
+      )
+    })
   })
 }
 

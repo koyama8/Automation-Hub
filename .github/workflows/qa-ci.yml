@@ -180,6 +180,8 @@ jobs:
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -o pipefail
+          exec > >(tee cypress-api-ci.log) 2>&1
           if [ -n "$CYPRESS_RECORD_KEY" ]; then
             npx cypress run --record --key "$CYPRESS_RECORD_KEY" --group "API Cypress" --ci-build-id "${{ github.run_id }}-${{ github.run_attempt }}" --browser electron --config video=false
           else
@@ -213,6 +215,7 @@ jobs:
             apps/api/cypress/screenshots
             apps/api/cypress/videos
             apps/api/api-ci.log
+            apps/api/cypress-api-ci.log
           if-no-files-found: ignore
           retention-days: 7
 

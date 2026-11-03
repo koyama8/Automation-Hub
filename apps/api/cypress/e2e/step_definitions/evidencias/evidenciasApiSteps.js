@@ -116,13 +116,15 @@ function criarCliente() {
 
 function criarPedido() {
   return criarCliente().then(() => {
-    return ProdutosApi.cadastrarProduto(token, gerarProdutoValido()).then(({ body }) => {
-      return PedidosApi.cadastrar(token, gerarPedidoValido(clientId, body.data.id)).then(
-        ({ body: pedidoBody }) => {
-          orderId = pedidoBody.data.id
-        },
-      )
-    })
+    return ProdutosApi.cadastrarProduto(token, gerarProdutoValido({ stock: 10 })).then(
+      ({ body }) => {
+        return PedidosApi.cadastrar(token, gerarPedidoValido(clientId, body.data.id)).then(
+          ({ body: pedidoBody }) => {
+            orderId = pedidoBody.data.id
+          },
+        )
+      },
+    )
   })
 }
 
