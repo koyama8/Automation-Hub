@@ -71,7 +71,8 @@ class CheckoutPage {
 
       cy.contains('[data-cy="modal-list"] li', 'Total')
         .find('strong')
-        .should('contain.text', '116,91')
+        .invoke('text')
+        .should('match', /^R\$\s*116,91$/)
     })
   }
 
@@ -92,12 +93,18 @@ class CheckoutPage {
 
       cy.contains('[data-cy="modal-list"] li', 'Total')
         .find('strong')
-        .should('contain.text', '379,60')
+        .invoke('text')
+        .should('match', /^R\$\s*379,60$/)
     })
   }
 
   visualizarPedidoBoleto() {
     cy.get('[data-cy="success-modal"]').within(() => {
+      cy.contains('[data-cy="modal-list"] li', 'Pedido')
+        .find('strong')
+        .invoke('text')
+        .should('match', /^QA-\d{4}-\d+$/)
+
       cy.contains('[data-cy="modal-list"] li', 'Pagamento')
         .find('strong')
         .should('have.text', 'Boleto')
@@ -106,7 +113,8 @@ class CheckoutPage {
 
       cy.contains('[data-cy="modal-list"] li', 'Total')
         .find('strong')
-        .should('contain.text', '39,90')
+        .invoke('text')
+        .should('match', /^R\$\s*39,90$/)
     })
   }
 }
