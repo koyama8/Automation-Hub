@@ -52,7 +52,11 @@ export function buildOptions() {
     thresholds: {
       checks: [`rate>=${1 - settings.maxFailureRate}`],
       business_errors: [`rate<${settings.maxFailureRate}`],
+      "business_errors{endpoint:health}": [`rate<${settings.maxFailureRate}`],
+      "business_errors{endpoint:products}": [`rate<${settings.maxFailureRate}`],
       http_req_failed: [`rate<${settings.maxFailureRate}`],
+      "http_req_failed{endpoint:health}": [`rate<${settings.maxFailureRate}`],
+      "http_req_failed{endpoint:products}": [`rate<${settings.maxFailureRate}`],
       http_req_duration: [`p(95)<${settings.p95LimitMilliseconds}`],
       "http_req_duration{endpoint:health}": ["p(95)<500"],
       "http_req_duration{endpoint:products}": [

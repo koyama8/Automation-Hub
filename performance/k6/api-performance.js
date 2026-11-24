@@ -85,6 +85,17 @@ export default function (data) {
     const successful = check(response, {
       "produtos: status 200": (result) => result.status === 200,
       "produtos: contrato retorna uma lista": () => Array.isArray(body),
+      "produtos: precos validos em centavos": () =>
+        Array.isArray(body) &&
+        body.every(
+          (product) =>
+            Number.isInteger(product?.priceCents) && product.priceCents > 0,
+        ),
+      "produtos: estoque inteiro nao negativo": () =>
+        Array.isArray(body) &&
+        body.every(
+          (product) => Number.isInteger(product?.stock) && product.stock >= 0,
+        ),
     });
 
     businessErrors.add(!successful, { endpoint: "products" });
